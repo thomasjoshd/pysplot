@@ -3,8 +3,8 @@ thomas.joshd@gmail.com
 This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
-UPDATED="16-APR-2019"
-version="0.3-alpha"
+UPDATED="27-APR-2019"
+version="0.3.02"
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -180,22 +180,34 @@ class App:
         self.sp = fits.open(self.fname)
         header = self.sp[0].header
 
-        wcs = WCS(header)
-        #make index array
-        index = np.arange(header['NAXIS1'])
+        if header['NAXIS'] == 1:
+            wcs = WCS(header)
+            #make index array
+            index = np.arange(header['NAXIS1'])
+            wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
+            wavelength = wavelength.flatten()
+            wavelength = wavelength*u.AA
+            flux = self.sp[0].data
+            self.wavelength=wavelength
+            self.flux=flux
+            self.header=header
+            self.flux_orig=flux
+            self.sp.close()
+        else:
+            self.wavelength=0
+            self.flux=0
+            self.header=0
+            self.flux_orig=0
+            self.ax.clear()
+            self.canvas.draw()
+            tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
+            self.sp.close()
 
-        wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
-        wavelength = wavelength.flatten()
-        wavelength = wavelength*u.AA
-        flux = self.sp[0].data
-        self.wavelength=wavelength
-        self.flux=flux
-        self.header=header
-        self.flux_orig=flux
 
 
     def read_txt(self):
-            data=np.array(list(csv.reader(open(self.fname,'r'),delimiter=' ')))
+            f1=open(self.fname,'r')
+            data=np.array(list(csv.reader(f1,delimiter=' ')))
             wavelength=data[:,0].astype(float)
             self.wavelength=wavelength*u.AA
             try:
@@ -204,11 +216,13 @@ class App:
                 flux=data[:,1].astype(float)
             self.flux=flux
             self.flux_orig=flux
+            f1.close()
 
 
     def read_list(self):
         path=os.path.dirname(self.listname)
-        names=list(csv.reader(open(self.listname,'r')))
+        f1=open(self.listname,'r')
+        names=list(csv.reader(f1))
         for item in names:
             if '\\' in item[0] or '/' in item[0]:
                 self.fname=item[0]
@@ -218,6 +232,7 @@ class App:
                 self.read_txt()
             elif '.fit' in self.fname or '.FIT' in self.fname:
                 self.read_fits()
+        f1.close()
 
     def generate_plot(self):
         self.fig=plt.figure()
@@ -561,11 +576,13 @@ class App:
     def save_fits(self):
         self.sp[0].header=self.header
         self.sp[0].data=self.flux
-        savename=asksaveasfilename(defaultextension=".fits")
+        path=os.path.dirname(self.fname)
+        basename=os.path.basename(self.fname)
+        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
         self.sp.writeto(savename)
 
     def save1DText(self):
-        savename=asksaveasfilename(defaultextension=".txt")
+        savename=asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
         dataout=open(savename,'w')
         for i,val in enumerate(self.flux):
             dataout.write('%s %s\n'%(self.wavelength[i].value,self.flux[i]))
@@ -622,8 +639,10 @@ class App:
 
 #----------------------------------------------------------------------------------
 #Begin GUI
+
 root = tk.Tk() #main GUI window
 program=App(root)
+root.protocol("WM_DELETE_WINDOW", program._quit)
 root.mainloop() #lets the GUI run
 #root.destroy()
 
