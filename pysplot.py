@@ -3,7 +3,7 @@ thomas.joshd@gmail.com
 This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
-UPDATED="27-APR-2019"
+UPDATED="14-AUG-2019"
 version="0.3.02"
 from functools import partial
 import numpy as np #arrays and math
@@ -12,7 +12,6 @@ import os
 import tkinter as tk
 import tkinter.messagebox
 from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
-from functools import partial
 
 import matplotlib.pyplot as plt #basic plotting
 
