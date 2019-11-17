@@ -100,6 +100,8 @@ class App:
         modmenu.add_command(label="Set Continuum (s)", command=self.continuum)
         modmenu.add_command(label="Normalize (t)", command=self.normalize)
         modmenu.add_command(label="Reset Normalization parameters (q)", command=self.norm_clear)
+        modmenu.add_command(label="Save Norm Parameters (placeholder)")
+        modmenu.add_command(label="Load Norm Parameters (placeholder)")
         modmenu.add_separator()
         modmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
@@ -114,6 +116,8 @@ class App:
         fitmenu.add_command(label="Lorentzian (l)", command=partial(self.fit,func="lorentz"))
         fitmenu.add_separator()
         fitmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
+        fitmenu.add_separator()
+        fitmenu.add_command(label="Bisect a feature (placeholder)")
 
 
 
