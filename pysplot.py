@@ -100,8 +100,8 @@ class App:
         modmenu.add_command(label="Set Continuum (s)", command=self.continuum)
         modmenu.add_command(label="Normalize (t)", command=self.normalize)
         modmenu.add_command(label="Reset Normalization parameters (q)", command=self.norm_clear)
-        modmenu.add_command(label="Save Norm Parameters (placeholder)")
-        modmenu.add_command(label="Load Norm Parameters (placeholder)")
+        modmenu.add_command(label="Save Norm Parameters (placeholder)", command=self.SaveNormalization)
+        modmenu.add_command(label="Load Norm Parameters (placeholder)", command=self.LoadNormalization)
         modmenu.add_separator()
         modmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
@@ -117,7 +117,7 @@ class App:
         fitmenu.add_separator()
         fitmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
         fitmenu.add_separator()
-        fitmenu.add_command(label="Bisect a feature (placeholder)")
+        fitmenu.add_command(label="Bisect a feature (placeholder)", command=self.BisectLine)
 
 
 
@@ -440,9 +440,6 @@ class App:
         self.output.delete(0,tk.END)
         return x,y
 
-    def savenormalization(self):
-        pass
-
     def points2fit(self):
         #collects many points.
         self.output.delete(0,tk.END)
@@ -458,6 +455,44 @@ class App:
         self.pltregion(x,y,sym='s',c='red')
         self.output.delete(0,tk.END)
         return x,y
+
+    def BisectLine(self):
+        print("This feature is not yet implemented.")
+
+    # def WR_vel(w,s,L,R,thresh,centralwavelength):
+    #     #Bisect a Wolf Rayet line and find the center
+    #     lrange=chunk(w,L)
+    #     rrange=chunk(w,R)
+    #
+    #     wl=w[lrange[0]:lrange[1]]
+    #     wlnew=linspace(wl.min(),wl.max(),1000)
+    #
+    #     wr=w[rrange[0]:rrange[1]]
+    #     wrnew=linspace(wr.min(),wr.max(),1000)
+    #     sl=s[lrange[0]:lrange[1]]
+    #     sr=s[rrange[0]:rrange[1]]
+    #
+    #     fl=interp1d(wl,sl,bounds_error=False)
+    #     fr=interp1d(wr,sr,bounds_error=False)
+    #
+    #     #plot(wlnew,fl(wlnew),'-',color='black')
+    #     #plot(wrnew,fr(wrnew),'-',color='black')
+    #     center=[]
+    #     for t in thresh:
+    #     x1=wlnew[find_nearest_index(fl(wlnew),t)]
+    #     #scatter(x1,t,marker='s',color='red')
+    #     x2=wrnew[find_nearest_index(fr(wrnew),t)]
+    #     #scatter(x2,t,marker='s',color='red')
+    #     center.append((x2+x1)/2.)
+    #     #vlines(average(center),1,2)
+    #     #vlines(centralwavelength,1,2,color="red")
+    #
+    #     v=[]
+    #     for val in center:
+    #     v.append((val-centralwavelength)/centralwavelength*c-9.178)#9.178 km/s correction because spectra shifted to the red when I alinged to sodium dlines)
+    #     return v
+
+
 
     def eqw(self,event=None):
         # Measure equivalent width between two points IRAF style
@@ -616,7 +651,7 @@ class App:
         yn=np.array(self.y_norm)
         if len(self.x_norm) < 2:
             self.output.delete(0,tk.END)
-            self.output.insert(tk.END,"Please select region(s) for the continuum before useing normalize to fit.  Use Set Continuum or the s-key to set ranges.")
+            self.output.inserFt(tk.END,"Please select region(s) for the continuum before useing normalize to fit.  Use Set Continuum or the s-key to set ranges.")
         else:
             self.output.delete(0,tk.END)
             self.output.insert(tk.END,"The integer below will be used for the order of the polynomial fit.")
@@ -641,6 +676,13 @@ class App:
                    self.output.insert(tk.END,"Change the integer below and re-run the normalize command.")
                    goodfit = False
                    break
+
+    def SaveNormalization(self):
+        print("This feature is not yet implemented.")
+
+    def LoadNormalization(self):
+        print("This feature is not yet implemented.")
+
 
     def save_fits(self):
         self.sp[0].header=self.header
@@ -705,6 +747,7 @@ class App:
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
         b.pack()
+
 
 #----------------------------------------------------------------------------------
 #Begin GUI
