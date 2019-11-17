@@ -3,8 +3,8 @@ thomas.joshd@gmail.com
 This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
-UPDATED="27-APR-2019"
-version="0.3.02"
+UPDATED="16-NOV-2019"
+version="0.3.03"
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -26,6 +26,7 @@ except:
 
 from astropy.wcs import WCS
 from astropy.io import fits
+from specutils.io import read_fits
 
 import astropy.units as u
 from astropy.constants import c
@@ -207,6 +208,23 @@ class App:
             self.header=header
             self.flux_orig=flux
             self.sp.close()
+        elif header['NAXIS2'] == 1:
+            wcs = WCS(header)
+            #make index array
+            spectra_list = read_fits.read_fits_spectrum1d(self.fname)
+
+            index = np.arange(header['NAXIS1'])
+            wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
+            print('hello')
+            wavelength = wavelength.flatten()
+            wavelength = wavelength*u.AA
+            # print('hello')
+            flux = self.sp[2].data
+            self.wavelength=wavelength
+            self.flux=flux
+            self.header=header
+            self.flux_orig=flux
+            self.sp.close()
         else:
             # self.wavelength=0
             # self.flux=0
@@ -270,7 +288,7 @@ class App:
             self.ax.set_title("%s"%(self.fname),fontsize=12)
             spec,=self.ax.step(self.wavelength,self.flux)
             #spec,=self.ax.plot(self.wavelength,self.flux)
-            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
+            # self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
             self.ax.set_ylabel("Flux")
 
         #Overplot Mode
@@ -417,6 +435,9 @@ class App:
         self.pltregion(x,y,sym='s',c='black')
         self.output.delete(0,tk.END)
         return x,y
+
+    def savenormalization(self):
+        pass
 
     def points2fit(self):
         #collects many points.
