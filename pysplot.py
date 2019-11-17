@@ -4,7 +4,7 @@ This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
 UPDATED="16-NOV-2019"
-version="0.3.03"
+version="0.3.05"
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -93,15 +93,15 @@ class App:
         viewmenu.add_command(label="Grid Toggle (|)",command=self.gridtoggle)
         viewmenu.add_command(label="Over Plot ([)",command=self.overplottoggle)
         viewmenu.add_command(label="Stack Plot (])",command=self.stackplottoggle)
-        viewmenu.add_command(label="Zoom to Fit (z)",command=self.zoomout)
+        # viewmenu.add_command(label="Zoom to Fit (z)",command=self.zoomout)
 
         modmenu = tk.Menu(menu)
         menu.add_cascade(label="Modify", menu=modmenu)
         modmenu.add_command(label="Set Continuum (s)", command=self.continuum)
         modmenu.add_command(label="Normalize (t)", command=self.normalize)
         modmenu.add_command(label="Reset Normalization parameters (q)", command=self.norm_clear)
-        modmenu.add_command(label="Save Norm Parameters (placeholder)")
-        modmenu.add_command(label="Load Norm Parameters (placeholder)")
+        modmenu.add_command(label="Save Norm Parameters (placeholder)",command=self.SaveNorm)
+        modmenu.add_command(label="Load Norm Parameters (placeholder)",command=self.LoadNorm)
         modmenu.add_separator()
         modmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
@@ -117,7 +117,7 @@ class App:
         fitmenu.add_separator()
         fitmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
         fitmenu.add_separator()
-        fitmenu.add_command(label="Bisect a feature (placeholder)")
+        fitmenu.add_command(label="Bisect a feature",command=self.BisectLine)
 
 
 
@@ -132,26 +132,39 @@ class App:
         self.overplot=False
         self.stackplot=False
         self.stackint=0
+        self.listedfiles=[]
 
-##        self.ZP=zoom.ZoomPan()
+
+        self.master.bind('b',self.smooth)
+        self.master.bind('c',self.scopy)
+
         self.master.bind('e', self.eqw)
-        self.master.bind('o', self.openSpectra)
+
+        self.master.bind('g', partial(self.fit,"gauss"))
+
         self.master.bind('h', self.imhead)
+
+
+
+        self.master.bind('l', partial(self.fit,"lorentz"))
+
+
+        self.master.bind('o', self.openSpectra)
+
+        self.master.bind('q', self.norm_clear)
         self.master.bind('r', self.restore)
-        self.master.bind('z', self.zoomout)
         self.master.bind('s', self.continuum)
         self.master.bind('t', self.normalize)
-        self.master.bind('q', self.norm_clear)
-        self.master.bind('g', partial(self.fit,"gauss"))
+        self.master.bind('u', self.velocity)
         self.master.bind('v', partial(self.fit,"voigt"))
-        self.master.bind('l', partial(self.fit,"lorentz"))
+
         self.master.bind('|', self.gridtoggle)
         self.master.bind('[', self.overplottoggle)
         self.master.bind(']', self.stackplottoggle)
         self.master.bind('<space>', self.coord)
-        self.master.bind('u', self.velocity)
-        self.master.bind('c',self.scopy)
-        self.master.bind('b',self.smooth)
+
+
+
 
     def openSpectra(self,event=None):
         if self.overplot == False and self.stackplot == False:
@@ -186,15 +199,29 @@ class App:
                 self.splot()
                 self.stackint=self.stackint+1
             elif '.list' in item or '.lst' in item :
-                self.overplot=True
-                self.stackplot=False
+                self.overplot=False
+                self.stackplot=True
                 self.listname=item
                 self.read_list()
+                for listitem in self.listedfiles:
+                    if '.txt' in listitem or '.TXT' in listitem:
+                        self.fname=listitem
+                        print(self.fname)
+                        self.read_txt()
+                        self.splot()
+                        self.stackint=self.stackint+1
+                    elif '.fit' in listitem or '.FIT' in listitem:
+                        self.fname=listitem
+                        self.read_fits()
+                        self.splot()
+                        self.stackint=self.stackint+1
+
         self.norm_clear()
 
 
 
     def read_fits(self):
+        #need to add a way to read multispec fits files
         #Based on Read a UVES spectrum from the ESO pipeline
         self.sp = fits.open(self.fname)
         header = self.sp[0].header
@@ -230,14 +257,9 @@ class App:
             self.flux_orig=flux
             self.sp.close()
         else:
-            # self.wavelength=0
-            # self.flux=0
-            # self.header=0
-            # self.flux_orig=0
-            # self.ax.clear()
-            # self.canvas.draw()
+
             tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
-            # self.sp.close()
+
 
 
 
@@ -259,15 +281,12 @@ class App:
         path=os.path.dirname(self.listname)
         f1=open(self.listname,'r')
         names=list(csv.reader(f1))
+        self.listedfiles=[]
         for item in names:
             if '\\' in item[0] or '/' in item[0]:
-                self.fname=item[0]
+                self.listedfiles.append(item[0])
             else:
-                self.fname=os.path.abspath(os.path.join(path,item[0]))
-            if '.txt' in self.fname or '.TXT' in self.fname:
-                self.read_txt()
-            elif '.fit' in self.fname or '.FIT' in self.fname:
-                self.read_fits()
+                self.listedfiles.append(os.path.abspath(os.path.join(path,item[0])))
         f1.close()
 
     def generate_plot(self):
@@ -440,8 +459,6 @@ class App:
         self.output.delete(0,tk.END)
         return x,y
 
-    def savenormalization(self):
-        pass
 
     def points2fit(self):
         #collects many points.
@@ -454,10 +471,28 @@ class App:
         y=[]
         for i,j in enumerate(clicks):
             x.append(clicks[i][0])
+        #Bisect a Wolf Rayet line and find the center
             y.append(clicks[i][1])
         self.pltregion(x,y,sym='s',c='red')
         self.output.delete(0,tk.END)
         return x,y
+
+    def BisectLine(self,event=None):
+        self.measuremode()
+        lx,ly=self.region() #left edges of the feature to bisect
+        lxg,lyg=self.chop(self.wavelength,self.flux,lx[0],lx[1])
+        rx,ry=self.region() #right edges of the feature to bisect
+        rxg,ryg=self.chop(self.wavelength,self.flux,rx[0],rx[1])
+        center=(np.average(lxg)+np.average(rxg))/2.
+        stderror=np.sqrt( (np.std(lxg)/np.sqrt(len(lxg)))**2 + (np.std(rxg)/np.sqrt(len(rxg)))**2 )
+        print("Bisected Center: %s , standard error: %s" %(center,stderror  ))
+        self.output.delete(0,tk.END)
+        outstring="Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
+                   ", Stnd Error = "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
+        self.output.insert(tk.END,outstring)
+        self.ax.vlines(center.value,min(self.flux),max(self.flux))
+        self.canvas.draw()
+
 
     def eqw(self,event=None):
         # Measure equivalent width between two points IRAF style
@@ -642,7 +677,14 @@ class App:
                    goodfit = False
                    break
 
+    def SaveNorm(self):
+        print("Feature Not Implemented")
+
+    def LoadNorm(self):
+        print("Feature Not Implemented")
+
     def save_fits(self):
+        w.destroy()
         self.sp[0].header=self.header
         self.sp[0].data=self.flux
         path=os.path.dirname(self.fname)
@@ -655,6 +697,7 @@ class App:
         dataout=open(savename,'w')
         for i,val in enumerate(self.flux):
             dataout.write('%s %s\n'%(self.wavelength[i].value,self.flux[i]))
+        w.destroy()
         dataout.close()
 
     def _quit(self):
