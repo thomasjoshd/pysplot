@@ -3,7 +3,7 @@ thomas.joshd@gmail.com
 This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
-UPDATED="16-NOV-2019"
+UPDATED="17-NOV-2019"
 version="0.3.06"
 from functools import partial
 import numpy as np #arrays and math
@@ -100,10 +100,8 @@ class App:
         modmenu.add_command(label="Set Continuum (s)", command=self.continuum)
         modmenu.add_command(label="Normalize (t)", command=self.normalize)
         modmenu.add_command(label="Reset Normalization parameters (q)", command=self.norm_clear)
-
-        modmenu.add_command(label="Save Norm Parameters (placeholder)",command=self.SaveNorm)
-        modmenu.add_command(label="Load Norm Parameters (placeholder)",command=self.LoadNorm)
-
+        modmenu.add_command(label="Save Norm Parameters",command=self.SaveNorm)
+        modmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
         modmenu.add_separator()
         modmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
@@ -117,10 +115,14 @@ class App:
         fitmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
         fitmenu.add_command(label="Lorentzian (l)", command=partial(self.fit,func="lorentz"))
         fitmenu.add_separator()
+        fitmenu.add_command(label="Save EQW/Fit region", command=self.SaveEQW)
+        fitmenu.add_command(label="Load EQW/Fit region", command=self.LoadEQW)
+        fitmenu.add_separator()
         fitmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
         fitmenu.add_separator()
-
         fitmenu.add_command(label="Bisect a feature",command=self.BisectLine)
+        fitmenu.add_command(label="Save Bisection regions", command=self.SaveBisect)
+        fitmenu.add_command(label="Load Bisection regions", command=self.LoadBisect)
 
 
 
@@ -231,7 +233,7 @@ class App:
 
         if header['NAXIS'] == 1:
             wcs = WCS(header)
-            print(wcs)
+            # print(wcs)
             #make index array
             index = np.arange(header['NAXIS1'])
             wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
@@ -245,7 +247,7 @@ class App:
             self.sp.close()
         elif header['NAXIS'] > 1:
             wcs = WCS(header)
-            print(wcs)
+            # print(wcs)
 
             #make index array
             # spectra_list = read_fits.read_fits_spectrum1d(self.fname)
@@ -439,6 +441,7 @@ class App:
     def restore(self,event=None):
         self.flux=self.flux_orig
         self.splot()
+        self.norm_clear()
 
     def reset(self, event=None):
         self.splot()
@@ -500,9 +503,14 @@ class App:
 
 
     def eqw(self,event=None):
-        # Measure equivalent width between two points IRAF style
+        """Measure equivalent width between two points IRAF style"""
         self.measuremode()
-        x,y=self.region() #click points to slice data
+        if sum(self.saveregions_x) == 0 :
+            x,y=self.region() #click points to slice data
+            self.saveregions_x=x
+            self.saveregions_y=y
+        else:
+            x,y=(self.saveregions_x,self.saveregions_y)
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
 
         continuum=(yg[0]+yg[-1])/2
@@ -548,7 +556,9 @@ class App:
 
     def scopy_manual(self):
         #not working yet, the code doesn' wait for the dialog box entry.
-        #turned off in the menu options so not accessible to the user.
+        #turned off in the menu options so not accessible to t
+                                                            # ("Spectra List", "*.list"),
+                                                            # ("Spectra List", "*.lst"),he user.
         self.EntryDialog(message="Enter the left and right wavelengths to trim spectra, separated by a space.")
         print(self.response)
 ##        xg,yg=self.chop(self.wavelength,self.flux,x1,x2)
@@ -631,6 +641,49 @@ class App:
 
         self.canvas.draw()
 
+    def SaveEQW(self):
+        path=os.path.dirname(self.fname)
+        basename=os.path.basename("region.par")
+        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
+        dataout=open(savename,'w')
+        dataout.write('%s\n'%(self.fname))
+        for row in self.saveregions_x:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        for row in self.saveregions_y:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        dataout.close()
+        print("Region saved to:  %s"%(savename))
+        self.norm_clear()
+
+    def LoadEQW(self):
+        self.norm_clear()
+        file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
+                                                        ("All files", "*.*") ))
+        dataout=open(file)
+
+        # data=np.array(list(csv.reader(f1,delimiter=' ')))
+        for i,line in enumerate(dataout):
+            if i == 0 :
+                pass
+            elif i == 1 :
+                self.saveregions_x=np.array(line.split(),dtype=float)
+                # print(line.split()[0])
+            elif i == 2 :
+                self.saveregions_y=np.array(line.split(),dtype=float)
+            else:
+                pass
+        dataout.close()
+        self.ax.plot(self.saveregions_x,self.saveregions_y,'s',color='black')
+        self.canvas.draw()
+        print("Region loaded from:  %s"%(file))
+
+    def SaveBisect(self):
+        pass
+
+    def LoadBisect(self):
+        pass
 
     def norm_clear(self,event=None):
         self.x_norm=[]
@@ -638,6 +691,50 @@ class App:
         self.goodfit=False
         self.output.delete(0,tk.END)
         # self.splot()
+        self.saveregions_x=0
+        self.saveregions_y=0
+
+    def SaveNorm(self):
+        path=os.path.dirname(self.fname)
+        basename=os.path.basename("norm.par")
+        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
+        dataout=open(savename,'w')
+        dataout.write('%s\n'%(self.fname))
+        dataout.write('%s\n'%(self.order))
+        for row in self.x_norm:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        for row in self.y_norm:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        dataout.close()
+        print("Normalization Parameters Saved to:  %s"%(savename))
+        self.norm_clear()
+
+    def LoadNorm(self):
+        self.norm_clear()
+        file=askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
+                                                        ("All files", "*.*") ))
+        dataout=open(file)
+
+        # data=np.array(list(csv.reader(f1,delimiter=' ')))
+        for i,line in enumerate(dataout):
+            if i == 0 :
+                pass
+            elif i == 1 :
+                self.order=int(line)
+            elif i == 2 :
+                self.x_norm=np.array(line.split(),dtype=float)
+                # print(line.split()[0])
+            elif i == 3 :
+                self.y_norm=np.array(line.split(),dtype=float)
+            else:
+                pass
+        dataout.close()
+        self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
+        self.canvas.draw()
+        print("Normalization Parameters Loaded from:  %s"%(file))
+
 
     def continuum(self,event=None):
         #Create array of click to use as the continuum.
@@ -681,13 +778,6 @@ class App:
                    self.output.insert(tk.END,"Change the integer below and re-run the normalize command.")
                    goodfit = False
                    break
-
-    def SaveNorm(self):
-        print("Feature Not Implemented")
-
-    def LoadNorm(self):
-        print("Feature Not Implemented")
-
 
     def save_fits(self):
         w.destroy()
@@ -770,3 +860,5 @@ root.mainloop() #lets the GUI run
 #right now can't handle text spectra with headers
 
 #fix normalize, stackplot, and smooth to ask for integer before running.
+#save norm and fit parameters for loading on new spectra.
+#apply a routine to a stack of images (automate)
