@@ -241,25 +241,25 @@ class App:
             self.header=header
             self.flux_orig=flux
             self.sp.close()
-        # elif header['NAXIS'] > 1:
-        #     wcs = WCS(header)
-        #     print(wcs)
-        #
-        #     #make index array
-        #     # spectra_list = read_fits.read_fits_spectrum1d(self.fname)
-        #     index = np.arange(header['NAXIS1'])
-        #     # wavelength = wcs.wcs_pix2world(index[:,np.newaxis], [0])
-        #     # wavelength = wavelength.flatten()
-        #     # wavelength = wavelength*u.AA
-        #     wavelength= index*u.AA
-        #     flux = self.sp[0].data[0].flatten()
-        #     print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0].data))
-        #
-        #     self.wavelength=wavelength
-        #     self.flux=flux
-        #     self.header=header
-        #     self.flux_orig=flux
-        #     self.sp.close()
+        elif header['NAXIS'] > 1:
+            wcs = WCS(header)
+            print(wcs)
+
+            #make index array
+            # spectra_list = read_fits.read_fits_spectrum1d(self.fname)
+            index = np.arange(header['NAXIS1'])
+            # wavelength = wcs.wcs_pix2world(index[:,np.newaxis], [0])
+            # wavelength = wavelength.flatten()
+            # wavelength = wavelength*u.AA
+            wavelength= index*u.pixel
+            flux = self.sp[0].data[0].flatten()
+            print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0].data))
+
+            self.wavelength=wavelength
+            self.flux=flux
+            self.header=header
+            self.flux_orig=flux
+            self.sp.close()
         else:
             tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
 
