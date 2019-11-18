@@ -117,7 +117,9 @@ class App:
         fitmenu.add_separator()
         fitmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
         fitmenu.add_separator()
+
         fitmenu.add_command(label="Bisect a feature",command=self.BisectLine)
+
 
 
 
@@ -461,7 +463,6 @@ class App:
         self.output.delete(0,tk.END)
         return x,y
 
-
     def points2fit(self):
         #collects many points.
         self.output.delete(0,tk.END)
@@ -494,6 +495,7 @@ class App:
         self.output.insert(tk.END,outstring)
         self.ax.vlines(center.value,min(self.flux),max(self.flux))
         self.canvas.draw()
+
 
 
     def eqw(self,event=None):
@@ -697,7 +699,7 @@ class App:
         yn=np.array(self.y_norm)
         if len(self.x_norm) < 2:
             self.output.delete(0,tk.END)
-            self.output.insert(tk.END,"Please select region(s) for the continuum before useing normalize to fit.  Use Set Continuum or the s-key to set ranges.")
+            self.output.inserFt(tk.END,"Please select region(s) for the continuum before useing normalize to fit.  Use Set Continuum or the s-key to set ranges.")
         else:
             self.output.delete(0,tk.END)
             self.output.insert(tk.END,"The integer below will be used for the order of the polynomial fit.")
@@ -788,6 +790,7 @@ class App:
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
         b.pack()
+
 
 #----------------------------------------------------------------------------------
 #Begin GUI
