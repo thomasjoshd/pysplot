@@ -176,8 +176,6 @@ class App:
             file=askopenfilename(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Text Files", "*.txt*"),
-                                                            ("Spectra List", "*.list"),
-                                                            ("Spectra List", "*.lst"),
                                                             ("All files", "*.*") )) #file dialog
             lst=[file]
         else:
@@ -204,8 +202,8 @@ class App:
                 self.splot()
                 self.stackint=self.stackint+1
             elif '.list' in item or '.lst' in item :
-                self.overplot=False
-                self.stackplot=True
+                # self.overplot=False
+                # self.stackplot=True
                 self.listname=item
                 self.read_list()
                 for listitem in self.listedfiles:
