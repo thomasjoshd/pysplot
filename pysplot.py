@@ -4,7 +4,7 @@ This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
 UPDATED="16-NOV-2019"
-version="0.3.05"
+version="0.3.06"
 from functools import partial
 import numpy as np #arrays and math
 import csv
