@@ -115,10 +115,14 @@ class App:
         fitmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
         fitmenu.add_command(label="Lorentzian (l)", command=partial(self.fit,func="lorentz"))
         fitmenu.add_separator()
+        fitmenu.add_command(label="Save EQW/Fit region", command=self.SaveEQW)
+        fitmenu.add_command(label="Load EQW/Fit region", command=self.LoadEQW)
+        fitmenu.add_separator()
         fitmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
         fitmenu.add_separator()
-
         fitmenu.add_command(label="Bisect a feature",command=self.BisectLine)
+        fitmenu.add_command(label="Save Bisection regions", command=self.SaveBisect)
+        fitmenu.add_command(label="Load Bisection regions", command=self.LoadBisect)
 
 
 
@@ -499,9 +503,14 @@ class App:
 
 
     def eqw(self,event=None):
-        # Measure equivalent width between two points IRAF style
+        """Measure equivalent width between two points IRAF style"""
         self.measuremode()
-        x,y=self.region() #click points to slice data
+        if sum(self.saveregions_x) == 0 :
+            x,y=self.region() #click points to slice data
+            self.saveregions_x=x
+            self.saveregions_y=y
+        else:
+            x,y=(self.saveregions_x,self.saveregions_y)
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
 
         continuum=(yg[0]+yg[-1])/2
@@ -632,6 +641,49 @@ class App:
 
         self.canvas.draw()
 
+    def SaveEQW(self):
+        path=os.path.dirname(self.fname)
+        basename=os.path.basename("region.par")
+        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
+        dataout=open(savename,'w')
+        dataout.write('%s\n'%(self.fname))
+        for row in self.saveregions_x:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        for row in self.saveregions_y:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        dataout.close()
+        print("Region saved to:  %s"%(savename))
+        self.norm_clear()
+
+    def LoadEQW(self):
+        self.norm_clear()
+        file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
+                                                        ("All files", "*.*") ))
+        dataout=open(file)
+
+        # data=np.array(list(csv.reader(f1,delimiter=' ')))
+        for i,line in enumerate(dataout):
+            if i == 0 :
+                pass
+            elif i == 1 :
+                self.saveregions_x=np.array(line.split(),dtype=float)
+                # print(line.split()[0])
+            elif i == 2 :
+                self.saveregions_y=np.array(line.split(),dtype=float)
+            else:
+                pass
+        dataout.close()
+        self.ax.plot(self.saveregions_x,self.saveregions_y,'s',color='black')
+        self.canvas.draw()
+        print("Region loaded from:  %s"%(file))
+
+    def SaveBisect(self):
+        pass
+
+    def LoadBisect(self):
+        pass
 
     def norm_clear(self,event=None):
         self.x_norm=[]
@@ -639,6 +691,8 @@ class App:
         self.goodfit=False
         self.output.delete(0,tk.END)
         # self.splot()
+        self.saveregions_x=0
+        self.saveregions_y=0
 
     def SaveNorm(self):
         path=os.path.dirname(self.fname)
