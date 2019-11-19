@@ -110,11 +110,9 @@ class App:
         fitmenu = tk.Menu(menu)
         menu.add_cascade(label="Measure", menu=fitmenu)
         fitmenu.add_command(label="Equivalent Width (e)", command=self.eqw)
-        fitmenu.add_separator()
         fitmenu.add_command(label="Gaussian (g)", command=partial(self.fit,func="gauss"))
         fitmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
         fitmenu.add_command(label="Lorentzian (l)", command=partial(self.fit,func="lorentz"))
-        fitmenu.add_separator()
         fitmenu.add_command(label="Save EQW/Fit region", command=self.SaveEQW)
         fitmenu.add_command(label="Load EQW/Fit region", command=self.LoadEQW)
         fitmenu.add_separator()
@@ -448,12 +446,12 @@ class App:
 
 
     def pltregion(self,x,y,sym='-',c='black'):
-        #takes two clicks
+        """takes two clicks, and plots a line between them"""
         self.ax.plot(x,y,sym,color=c)
         self.canvas.draw()
 
     def region(self):
-        #uses two clicks to define a region for fitting or measuring.
+        """uses two clicks to define a region for fitting or measuring."""
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Left Click (x) on a point to the left and to the right of what you wish to select. Right Click (backspace) to remove a point.")
         clicks= plt.ginput(2)
@@ -500,11 +498,8 @@ class App:
         self.ax.vlines(center.value,min(self.flux),max(self.flux))
         self.canvas.draw()
 
-
-
-    def eqw(self,event=None):
-        """Measure equivalent width between two points IRAF style"""
-        self.measuremode()
+    def regionload(self):
+        """Loads saved regions and gets the cloest values in the data"""
         if sum(self.saveregions_x) == 0 :
             x,y=self.region() #click points to slice data
             self.saveregions_x=x
@@ -512,7 +507,13 @@ class App:
         else:
             x,y=(self.saveregions_x,self.saveregions_y)
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
+        return xg,yg
 
+
+    def eqw(self,event=None):
+        """Measure equivalent width between two points IRAF style"""
+        self.measuremode()
+        xg,yg=self.regionload()
         continuum=(yg[0]+yg[-1])/2
         dwidth=[]
         for i,f in enumerate(yg):
@@ -529,6 +530,8 @@ class App:
                    ", Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
+        self.norm_clear()
+
 
 
     def find_nearest_index(self,array,value):
@@ -546,6 +549,7 @@ class App:
         return c1,c2
 
     def scopy(self,event=None):
+        """Copy out a section of a spectrum to a new spectrum"""
         self.measuremode()
         x,y=self.region() #click points to slice data
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
@@ -567,10 +571,10 @@ class App:
 ##        self.splot()
 
     def fit(self,func="gauss",event=None):
+        """wrapper function for fitting line profiles"""
         # Fit the data using a Gaussian, Voigt, or Lorentzian profile
         self.measuremode()
-        x,y=self.region() #click points to slice data
-        xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
+        xg,yg=self.regionload()
         xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
         ygf=np.interp(xgf,xg,yg)
 
@@ -640,8 +644,10 @@ class App:
           print("Error with Fitting Function Selection")
 
         self.canvas.draw()
+        self.norm_clear()
 
     def SaveEQW(self):
+        """Save the regions used for equivalent width measurements and for fitting line profiles."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("region.par")
         savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
@@ -658,6 +664,7 @@ class App:
         self.norm_clear()
 
     def LoadEQW(self):
+        """Load the regions used for equivalent width measurements and for fitting line profiles."""
         self.norm_clear()
         file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
@@ -691,10 +698,11 @@ class App:
         self.goodfit=False
         self.output.delete(0,tk.END)
         # self.splot()
-        self.saveregions_x=0
-        self.saveregions_y=0
+        self.saveregions_x=[0,0]
+        self.saveregions_y=[0,0]
 
     def SaveNorm(self):
+        """Save the regions and powerlaw for the normalization."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("norm.par")
         savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
@@ -712,6 +720,7 @@ class App:
         self.norm_clear()
 
     def LoadNorm(self):
+        """Load the regions and powerlaw for the normalization."""
         self.norm_clear()
         file=askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
@@ -737,7 +746,7 @@ class App:
 
 
     def continuum(self,event=None):
-        #Create array of click to use as the continuum.
+        """Create array of click to use as the continuum."""
         self.measuremode()
         x,y=self.region() #click points to slice data
         self.pltregion(x,y,sym='-s',c='black')
