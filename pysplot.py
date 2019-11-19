@@ -78,7 +78,7 @@ class App:
         filemenu = tk.Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="Open 1-D Fits (o)",command=self.openSpectra)
-        filemenu.add_command(label="Restore Original (r)",command=self.restore)
+        filemenu.add_command(label="Restore Original",command=self.restore)
         filemenu.add_command(label="Image Header (h)",command=self.imhead)
         filemenu.add_separator()
         filemenu.add_command(label="Save New Fits",command=self.save_fits)
@@ -89,7 +89,7 @@ class App:
 
         viewmenu = tk.Menu(menu)
         menu.add_cascade(label="View", menu=viewmenu)
-        viewmenu.add_command(label="Reset View",command=self.reset)
+        viewmenu.add_command(label="Reset View (r)",command=self.reset)
         viewmenu.add_command(label="Grid Toggle (|)",command=self.gridtoggle)
         viewmenu.add_command(label="Over Plot ([)",command=self.overplottoggle)
         viewmenu.add_command(label="Stack Plot (])",command=self.stackplottoggle)
@@ -156,7 +156,7 @@ class App:
         self.master.bind('o', self.openSpectra)
 
         self.master.bind('q', self.norm_clear)
-        self.master.bind('r', self.restore)
+        self.master.bind('r', self.reset)
         self.master.bind('s', self.continuum)
         self.master.bind('t', self.normalize)
         self.master.bind('u', self.velocity)
@@ -443,6 +443,7 @@ class App:
 
     def reset(self, event=None):
         self.splot()
+        self.norm_clear()
 
 
     def pltregion(self,x,y,sym='-',c='black'):
@@ -530,7 +531,7 @@ class App:
                    ", Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
-        self.norm_clear()
+        # self.norm_clear()
 
 
 
@@ -551,12 +552,12 @@ class App:
     def scopy(self,event=None):
         """Copy out a section of a spectrum to a new spectrum"""
         self.measuremode()
-        x,y=self.region() #click points to slice data
-        xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
+        self.regionload()
         self.wavelength=xg
         self.flux=yg
         self.header['CRVAL1']=x[0]
         self.splot()
+        self.norm_clear()
 
     def scopy_manual(self):
         #not working yet, the code doesn' wait for the dialog box entry.
@@ -644,13 +645,13 @@ class App:
           print("Error with Fitting Function Selection")
 
         self.canvas.draw()
-        self.norm_clear()
+        # self.norm_clear()
 
     def SaveEQW(self):
         """Save the regions used for equivalent width measurements and for fitting line profiles."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("region.par")
-        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         for row in self.saveregions_x:
@@ -685,6 +686,8 @@ class App:
         self.ax.plot(self.saveregions_x,self.saveregions_y,'s',color='black')
         self.canvas.draw()
         print("Region loaded from:  %s"%(file))
+        self.output.delete(0,tk.END)
+        self.output.insert(tk.END,"Using a loaded region, when finish use View>Reset or press r.")
 
     def SaveBisect(self):
         pass
@@ -705,7 +708,7 @@ class App:
         """Save the regions and powerlaw for the normalization."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("norm.par")
-        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".par")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         dataout.write('%s\n'%(self.order))
@@ -743,6 +746,7 @@ class App:
         self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
         self.canvas.draw()
         print("Normalization Parameters Loaded from:  %s"%(file))
+        self.output.delete(0,tk.END), when finish use View>Reset or press r.")
 
 
     def continuum(self,event=None):
