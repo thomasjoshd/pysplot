@@ -746,7 +746,8 @@ class App:
         self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
         self.canvas.draw()
         print("Normalization Parameters Loaded from:  %s"%(file))
-        self.output.delete(0,tk.END), when finish use View>Reset or press r.")
+        self.output.delete(0,tk.END)
+        self.output.insert(tk.END,"Uisng loaded parameters, when finished use View>Reset or press r.")
 
 
     def continuum(self,event=None):
@@ -766,7 +767,7 @@ class App:
         yn=np.array(self.y_norm)
         if len(self.x_norm) < 2:
             self.output.delete(0,tk.END)
-            self.output.inserFt(tk.END,"Please select region(s) for the continuum before useing normalize to fit.  Use Set Continuum or the s-key to set ranges.")
+            self.output.insert(tk.END,"Please select region(s) for the continuum before useing normalize to fit.  Use Set Continuum or the s-key to set ranges.")
         else:
             self.output.delete(0,tk.END)
             self.output.insert(tk.END,"The integer below will be used for the order of the polynomial fit.")
