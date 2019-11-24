@@ -746,7 +746,7 @@ class App:
         self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
         self.canvas.draw()
         print("Normalization Parameters Loaded from:  %s"%(file))
-        self.output.delete(0,tk.END), when finish use View>Reset or press r.")
+        self.output.insert(tk.END,"Using a loaded region, when finish use View>Reset or press r.")
 
 
     def continuum(self,event=None):
