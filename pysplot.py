@@ -26,7 +26,7 @@ except:
 
 from astropy.wcs import WCS
 from astropy.io import fits
-from specutils.io import read_fits
+# from specutils.io import read_fits
 
 import astropy.units as u
 from astropy.constants import c
