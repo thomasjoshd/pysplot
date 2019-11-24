@@ -31,8 +31,11 @@ import astropy.units as u
 from astropy.constants import c
 
 from astropy.modeling import models, fitting
-from astropy.modeling.functional_models import Voigt1D,Lorentz1D
+#from astropy.modeling.functional_models import Voigt1D,Lorentz1D
 from astropy.convolution import convolve, Box1DKernel
+
+from specutils.spectra import Spectrum1D
+from specutils.fitting import fit_lines
 
 import datetime
 #import zoom
@@ -254,7 +257,7 @@ class App:
             # wavelength = wavelength*u.AA
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()
-            print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0].data))
+            # print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0].data))
 
             self.wavelength=wavelength
             self.flux=flux
@@ -500,12 +503,14 @@ class App:
 
     def regionload(self):
         """Loads saved regions and gets the cloest values in the data"""
-        if sum(self.saveregions_x) == 0 :
+        if self.loadedregions == False :
             x,y=self.region() #click points to slice data
             self.saveregions_x=x
             self.saveregions_y=y
-        else:
+        elif self.loadedregions == True:
             x,y=(self.saveregions_x,self.saveregions_y)
+        else:
+            print("Unexpected Error in regionload")
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
         return xg,yg
 
@@ -514,7 +519,7 @@ class App:
         """Measure equivalent width between two points IRAF style"""
         self.measuremode()
         xg,yg=self.regionload()
-        continuum=(yg[0]+yg[-1])/2
+        continuum=(yg[0]+yg[-1])/2 #sets the continuum to the average of the left and right click.
         dwidth=[]
         for i,f in enumerate(yg):
           if i ==0:
@@ -558,61 +563,74 @@ class App:
         self.splot()
         self.norm_clear()
 
-    def scopy_manual(self):
-        #not working yet, the code doesn' wait for the dialog box entry.
-        #turned off in the menu options so not accessible to t
-                                                            # ("Spectra List", "*.list"),
-                                                            # ("Spectra List", "*.lst"),he user.
-        self.EntryDialog(message="Enter the left and right wavelengths to trim spectra, separated by a space.")
-        print(self.response)
-##        xg,yg=self.chop(self.wavelength,self.flux,x1,x2)
-##        self.wavelength=xg
-##        self.flux=yg
-##        self.splot()
-
     def fit(self,func="gauss",event=None):
         """wrapper function for fitting line profiles"""
         # Fit the data using a Gaussian, Voigt, or Lorentzian profile
         self.measuremode()
-        xg,yg=self.regionload()
-        xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
-        ygf=np.interp(xgf,xg,yg)
+        xg,yg=self.regionload() #get regions
+        xgf=np.linspace(xg[0].value,xg[-1].value,len(xg)*3)
+        ygf=np.interp(xgf,xg.value,yg)
 
-        mid=len(yg)//2
-        linecoeff = np.polyfit(xgf,ygf,1)
-        ygf=ygf/np.polyval(linecoeff,xgf)
+        # mid=len(yg)//2 #get guess for line peak by taking center of clicks
+        xa=np.array([xgf[0],xgf[-1]])
+        ya=np.array([ygf[0],ygf[-1]])
+        linecoeff = np.polyfit(xa,ya,1) #does a linear polynomail fit to the data.
+        ygfn=ygf/np.polyval(linecoeff,xgf) #normalized
+        ygn=yg/np.polyval(linecoeff,xg/xg[0]) #xg/xg[0] to remove the unit
         invert=False
         reflevel=yg[0]
-        if yg[mid] < reflevel:
+        if yg[len(yg)//2] < reflevel:
             ygf=reflevel-ygf
             invert=True
+        # Create the spectrum
+
 
         if func=="gauss":
-          g_init = models.Gaussian1D(amplitude=np.max(yg)-reflevel, mean=np.mean(xg), stddev=xg[1]-xg[0])
+          g_init = models.Gaussian1D(amplitude=np.max(yg)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
+          # g_fit = fit_lines(spectrum, g_init)
+          # y_fit = g_fit(xg)
+          # plt.plot(xg, y_fit)
+
+          # g_init = models.Gaussian1D(amplitude=np.max(yg-reflevel)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
+          # g_fit = fit_lines(spectrum, g_init)
+          # y_fit = g_fit(xgf*xg[0]/xg[0].value)
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
-            plt.plot(xgf, g(xgf)*np.polyval(linecoeff,xgf), label='%s'%(func))
+              # spectrum = Spectrum1D(flux=yg*u.flx, spectral_axis=xg)
+              # g_init = models.Gaussian1D(amplitude=np.max(yg)*u.flx-reflevel*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
+              # g_fit = fit_lines(spectrum, g_init)
+              # y_fit = g_fit(xgf*xg[0]/xg[0].value)
+              # plt.plot(xgf, y_fit)
+            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
+            plt.plot(xgf, g(xgf*xg[0]/xg[0].value), label='%s'%(func))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
             amp=g.amplitude
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
-            plt.plot(xgf, (reflevel-g(xgf))*np.polyval(linecoeff,xgf), label='%s'%(func))
+              # spectrum = Spectrum1D(flux=(reflevel-yg)*u.flx, spectral_axis=xg)
+              # g_init = models.Gaussian1D(amplitude=np.max(reflevel-yg)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
+              # g_fit = fit_lines(spectrum, g_init)
+              # y_fit = g_fit(xgf*xg[0]/xg[0].value)
+              # plt.plot(xgf,(reflevel*u.flx-y_fit))#*np.polyval(linecoeff,xgf))
+              # plt.plot(xgf,((reflevel*u.flx-y_fit)*np.polyval(linecoeff,xgf)))
+            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
+            plt.plot(xgf, (reflevel*u.flx-g(xgf*xg[0]/xg[0].value)), label='%s'%(func))
             amp=-g.amplitude
           outstring="Gaussian Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM: "+ \
                            "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
           print(outstring)
           self.output.delete(0,tk.END)
           self.output.insert(tk.END, outstring)
+
+
         elif func=="voigt":
-          g_init = Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
+          g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)*u.flx-reflevel*u.flx , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
-            plt.plot(xgf, g(xgf)*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
+            plt.plot(xgf, g(xgf*xg[0]/xg[0].value))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=g.amplitude_L
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
-            plt.plot(xgf, (reflevel-g(xgf))*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
+            plt.plot(xgf, (reflevel*u.flx-g(xgf*xg[0]/xg[0].value)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=-g.amplitude_L
           outstring=  "Voigt Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM: "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_L)+\
@@ -622,15 +640,15 @@ class App:
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
         elif func=="lorentz":
-          g_init = Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, fwhm=xg[1]-xg[0])
+          g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)*u.flx-reflevel*u.flx, fwhm=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
-            plt.plot(xgf, g(xgf)*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
+            plt.plot(xgf, g(xgf*xg[0]/xg[0].value))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=g.amplitude
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
-            plt.plot(xgf, (reflevel-g(xgf))*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
+            plt.plot(xgf, (reflevel*u.flx-g(xgf*xg[0]/xg[0].value)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=-g.amplitude
           outstring= "Lorentz Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM: "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+\
@@ -687,6 +705,7 @@ class App:
         print("Region loaded from:  %s"%(file))
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Using a loaded region, when finish use View>Reset or press r.")
+        self.loadedregions=True
 
     def SaveBisect(self):
         pass
@@ -702,6 +721,7 @@ class App:
         # self.splot()
         self.saveregions_x=[0,0]
         self.saveregions_y=[0,0]
+        self.loadedregions=False
 
     def SaveNorm(self):
         """Save the regions and powerlaw for the normalization."""
@@ -747,6 +767,7 @@ class App:
         print("Normalization Parameters Loaded from:  %s"%(file))
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Uisng loaded parameters, when finished use View>Reset or press r.")
+        self.loadedregions=True
 
 
     def continuum(self,event=None):
