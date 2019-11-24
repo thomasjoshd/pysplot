@@ -590,9 +590,7 @@ class App:
         reflevel=yg[0]
         if yg[len(yg)//2] < reflevel:
             ygf=reflevel-ygf
-            invermessage="Set the continum on both sides of the feature. "t=True
-        # Create the spectrum
-
+            invert=True
 
         if func=="gauss":
           g_init = models.Gaussian1D(amplitude=np.max(yg)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
