@@ -34,8 +34,8 @@ from astropy.modeling import models, fitting
 #from astropy.modeling.functional_models import Voigt1D,Lorentz1D
 from astropy.convolution import convolve, Box1DKernel
 
-from specutils.spectra import Spectrum1D
-from specutils.fitting import fit_lines
+# from specutils.spectra import Spectrum1D
+# from specutils.fitting import fit_lines
 
 import datetime
 #import zoom
