@@ -4,7 +4,7 @@ This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
 UPDATED="24-NOV-2019"
-version="0.3.07"
+version="0.3.08"
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -494,10 +494,27 @@ class App:
     def BisectLine(self,event=None):
         """Designed for measuring the center of very broad Wolf-Rayet star emission lines, may work for other situtaitons."""
         self.measuremode()
-        lx,ly=self.region(message="Select two points along the left edge of the feature.") #left edges of the feature to bisect
-        lxg,lyg=self.chop(self.wavelength,self.flux,lx[0],lx[1])
-        rx,ry=self.region(message="Select two points along the right edge of the feature.") #right edges of the feature to bisect
+        if self.loadedregions == False:
+            lx,ly=self.region(message="Select two points along the left edge of the feature.") #left edges of the feature to bisect
+            rx,ry=self.region(message="Select two points along the right edge of the feature.") #right edges of the feature to bisect
+
+            for xi in lx:
+                self.x_norm.append(xi)
+            for yi in ly:
+                self.y_norm.append(yi)
+            for xi in rx:
+                self.x_norm.append(xi)
+            for yi in ry:
+                self.y_norm.append(yi)
+        elif self.loadedregions == True:
+            lx=np.array([self.x_norm[0],self.x_norm[1]])
+            rx=np.array([self.x_norm[2],self.x_norm[3]])
+            ly=np.array([self.y_norm[0],self.y_norm[1]])
+            ry=np.array([self.y_norm[2],self.y_norm[3]])
+
         rxg,ryg=self.chop(self.wavelength,self.flux,rx[0],rx[1])
+        lxg,lyg=self.chop(self.wavelength,self.flux,lx[0],lx[1])
+
         center=(np.average(lxg)+np.average(rxg))/2.
         stderror=np.sqrt( (np.std(lxg)/np.sqrt(len(lxg)))**2 + (np.std(rxg)/np.sqrt(len(rxg)))**2 )
         print("Bisected Center: %s , standard error: %s" %(center,stderror  ))
@@ -507,6 +524,7 @@ class App:
         self.output.insert(tk.END,outstring)
         self.ax.vlines(center.value,min(self.flux),max(self.flux))
         self.canvas.draw()
+        # self.norm_clear()
 
     def regionload(self,message=None):
         """Loads saved regions and gets the cloest values in the data"""
@@ -714,10 +732,49 @@ class App:
         self.loadedregions=True
 
     def SaveBisect(self):
-        pass
+        """Save the regions for bisection"""
+        path=os.path.dirname(self.fname)
+        basename=os.path.basename("bisect.par")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        dataout=open(savename,'w')
+        dataout.write('%s\n'%(self.fname))
+        for row in self.x_norm:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        for row in self.y_norm:
+            dataout.write('%s '%(row))
+        dataout.write('\n')
+        dataout.close()
+        print("Bisection Regions Saved to:  %s"%(savename))
+        self.norm_clear()
 
     def LoadBisect(self):
-        pass
+        """Load the regions bisection."""
+        self.norm_clear()
+        file=askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
+                                                        ("All files", "*.*") ))
+        dataout=open(file)
+
+        # data=np.array(list(csv.reader(f1,delimiter=' ')))
+        for i,line in enumerate(dataout):
+            if i == 0 :
+                pass
+            elif i == 1 :
+                self.x_norm=np.array(line.split(),dtype=float)
+                # print(line.split()[0])
+            elif i == 2 :
+                self.y_norm=np.array(line.split(),dtype=float)
+            else:
+                pass
+        dataout.close()
+        self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
+        self.canvas.draw()
+        print("Bisection Parameters Loaded from:  %s"%(file))
+        self.output.delete(0,tk.END)
+        self.output.insert(tk.END,"Uisng loaded parameters, when finished use View>Reset or press r.")
+        self.loadedregions=True
+        self.BisectLine()
+        self.loadedregions=False
 
     def norm_clear(self,event=None):
         """Clear and reset normalization parameters and region selections."""
