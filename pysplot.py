@@ -3,8 +3,8 @@ thomas.joshd@gmail.com
 This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
-UPDATED="17-NOV-2019"
-version="0.3.06"
+UPDATED="24-NOV-2019"
+version="0.3.07"
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -439,11 +439,13 @@ class App:
 
 
     def restore(self,event=None):
+        """Resets the spectrum to the original state."""
         self.flux=self.flux_orig
         self.splot()
         self.norm_clear()
 
     def reset(self, event=None):
+        """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
         self.splot()
         self.norm_clear()
 
@@ -453,10 +455,14 @@ class App:
         self.ax.plot(x,y,sym,color=c)
         self.canvas.draw()
 
-    def region(self):
+    def region(self,message=None):
         """uses two clicks to define a region for fitting or measuring."""
+        if message == None:
+            regionmessage="Left Click (x) on a point to the left and to the right of what you wish to select. Right Click (backspace) to remove a point."
+        else:
+            regionmessage=message
         self.output.delete(0,tk.END)
-        self.output.insert(tk.END,"Left Click (x) on a point to the left and to the right of what you wish to select. Right Click (backspace) to remove a point.")
+        self.output.insert(tk.END,regionmessage)
         clicks= plt.ginput(2)
         clicks= np.array(clicks)
         x=[]
@@ -469,7 +475,7 @@ class App:
         return x,y
 
     def points2fit(self):
-        #collects many points.
+        """collects many points. for fitting"""
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Left Click (x) to add points along the continuum.  Right click (backspace) removes a point, Middle Click (enter) ends selection.")
 
@@ -486,10 +492,11 @@ class App:
         return x,y
 
     def BisectLine(self,event=None):
+        """Designed for measuring the center of very broad Wolf-Rayet star emission lines, may work for other situtaitons."""
         self.measuremode()
-        lx,ly=self.region() #left edges of the feature to bisect
+        lx,ly=self.region(message="Select two points along the left edge of the feature.") #left edges of the feature to bisect
         lxg,lyg=self.chop(self.wavelength,self.flux,lx[0],lx[1])
-        rx,ry=self.region() #right edges of the feature to bisect
+        rx,ry=self.region(message="Select two points along the right edge of the feature.") #right edges of the feature to bisect
         rxg,ryg=self.chop(self.wavelength,self.flux,rx[0],rx[1])
         center=(np.average(lxg)+np.average(rxg))/2.
         stderror=np.sqrt( (np.std(lxg)/np.sqrt(len(lxg)))**2 + (np.std(rxg)/np.sqrt(len(rxg)))**2 )
@@ -501,10 +508,10 @@ class App:
         self.ax.vlines(center.value,min(self.flux),max(self.flux))
         self.canvas.draw()
 
-    def regionload(self):
+    def regionload(self,message=None):
         """Loads saved regions and gets the cloest values in the data"""
         if self.loadedregions == False :
-            x,y=self.region() #click points to slice data
+            x,y=self.region(message) #click points to slice data
             self.saveregions_x=x
             self.saveregions_y=y
         elif self.loadedregions == True:
@@ -540,11 +547,13 @@ class App:
 
 
     def find_nearest_index(self,array,value):
+        """Finds the closest data points to the input array."""
         array = np.asarray(array)
         idx = (np.abs(array - value)).argmin()
         return idx
 
     def chop(self,array1,array2,start1,stop1):
+        """Cuts out a region of the spectrum for fitting or other functions that should only be run on a section of the spectrum."""
         small=min([start1,stop1])
         large=max([start1,stop1])
         startidx=self.find_nearest_index(array1,small)
@@ -581,7 +590,7 @@ class App:
         reflevel=yg[0]
         if yg[len(yg)//2] < reflevel:
             ygf=reflevel-ygf
-            invert=True
+            invermessage="Set the continum on both sides of the feature. "t=True
         # Create the spectrum
 
 
@@ -662,7 +671,6 @@ class App:
           print("Error with Fitting Function Selection")
 
         self.canvas.draw()
-        # self.norm_clear()
 
     def SaveEQW(self):
         """Save the regions used for equivalent width measurements and for fitting line profiles."""
@@ -714,6 +722,7 @@ class App:
         pass
 
     def norm_clear(self,event=None):
+        """Clear and reset normalization parameters and region selections."""
         self.x_norm=[]
         self.y_norm=[]
         self.goodfit=False
@@ -782,6 +791,7 @@ class App:
             self.y_norm.append(yi)
 
     def normalize(self,event=None):
+        """Continuum normalize by using selected points as continuum."""
         self.measuremode()
         xn=np.array(self.x_norm)
         yn=np.array(self.y_norm)
@@ -814,6 +824,7 @@ class App:
                    break
 
     def save_fits(self):
+        """Save a new fits file with header."""
         w.destroy()
         self.sp[0].header=self.header
         self.sp[0].data=self.flux
@@ -823,6 +834,7 @@ class App:
         self.sp.writeto(savename)
 
     def save1DText(self):
+        """Save a headerless text spectrum."""
         savename=asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
         dataout=open(savename,'w')
         for i,val in enumerate(self.flux):
@@ -837,6 +849,7 @@ class App:
 
 
     def imhead(self,event=None):
+        """Display the image header as loaded from the file."""
         t=tk.Toplevel(self.master,height=600,width=600)
         t.wm_title("FITS Header")
         s=tk.Scrollbar(t)
@@ -851,6 +864,7 @@ class App:
         b.pack()
 
     def EntryDialog(self,message="Text Input"):
+        """Developement, not used nor working as intended."""
         t=tk.Toplevel(self.master,height=200,width=200)
         t.wm_title("Text Input Needed")
         tk.Label(t,text=message).pack()
@@ -863,6 +877,7 @@ class App:
         b2.pack()
 
     def fetch(self):
+        """Grabs input from the input box."""
         self.response=self.w.get()
 
     def destroychild(self,w):
@@ -894,5 +909,5 @@ root.mainloop() #lets the GUI run
 #right now can't handle text spectra with headers
 
 #fix normalize, stackplot, and smooth to ask for integer before running.
-#save norm and fit parameters for loading on new spectra.
+
 #apply a routine to a stack of images (automate)
