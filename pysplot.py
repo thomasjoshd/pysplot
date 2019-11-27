@@ -2,9 +2,10 @@
 thomas.joshd@gmail.com
 This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
-Uses Astropy library, and some parts are directly modified from the UVES tutorial."""
+Uses Astropy library, and some parts are directly modified from the UVES tutorial.
+Tested using astropy-3.2.3 numpy-1.17.4"""
 UPDATED="24-NOV-2019"
-version="0.3.08"
+version="0.4.00"
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -38,7 +39,6 @@ from specutils.spectra import Spectrum1D
 from specutils.fitting import fit_lines
 
 import datetime
-#import zoom
 
 plot_params = {'axes.linewidth': 1,
                'xtick.labelsize': 'medium',
@@ -107,7 +107,6 @@ class App:
         modmenu.add_separator()
         modmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
-##        modmenu.add_command(label="Trim Spectra (type limits)", command=self.scopy_manual)
 
         fitmenu = tk.Menu(menu)
         menu.add_cascade(label="Measure", menu=fitmenu)
@@ -124,14 +123,32 @@ class App:
         fitmenu.add_command(label="Save Bisection regions", command=self.SaveBisect)
         fitmenu.add_command(label="Load Bisection regions", command=self.LoadBisect)
 
-
-
+        stackmenu = tk.Menu(menu)
+        menu.add_cascade(label="Stack", menu=stackmenu)
+        stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
+        stackmenu.add_command(label="Print Stack List",command=self.stackprint)
+        stackmenu.add_command(label="Replot Stack",command=self.stackplot)
+        stackmenu.add_separator()
+        # stackmenu.add_command(label="Dynamical/Time Series Spectra",command=self.dynamical)
+        stackmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
+        stackmenu.add_command(label="Normalize",command=partial(self.stacker,func="norm"))
+        stackmenu.add_separator()
+        stackmenu.add_command(label="Load Region",command=self.LoadEQW)
+        stackmenu.add_command(label="Crop",command=partial(self.stacker,func="scopy"))
+        stackmenu.add_command(label="Equivalent Width",command=partial(self.stacker,func="eqw"))
+        stackmenu.add_command(label="Gaussian",command=partial(self.stacker,func="gauss"))
+        stackmenu.add_command(label="Voigt",command=partial(self.stacker,func="voigt"))
+        stackmenu.add_command(label="Lorentzian",command=partial(self.stacker,func="lorentz"))
+        stackmenu.add_separator()
+        stackmenu.add_command(label="Load Bisection regions", command=self.LoadBisect)
+        stackmenu.add_command(label="Bisect",command=partial(self.stacker,func="bisect"))
 
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About", command=self.About)
 
         #--------------------------------------------------
+        #some initial parameters
         self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra.")
         self.generate_plot()
         self.gridvalue=True
@@ -139,8 +156,10 @@ class App:
         self.stackplot=False
         self.stackint=0
         self.listedfiles=[]
+        self.stack=[]
 
 
+        #keyboard shortcuts (listed alphabetically)
         self.master.bind('b',self.smooth)
         self.master.bind('c',self.scopy)
 
@@ -172,15 +191,20 @@ class App:
 
 
 
-    def openSpectra(self,event=None):
+    def openSpectra(self,event=None,spec=None):
         """Open up spectra or lists of spectra"""
-        if self.overplot == False and self.stackplot == False:
+        if spec != None:
+            print(spec)
+            lst =[spec]
+        elif spec == None and self.overplot == False and self.stackplot == False:
             file=askopenfilename(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
             lst=[file]
-        else:
+            self.stack.append(lst)
+            self.norm_clear()
+        elif spec == None:
             filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Text Files", "*.txt*"),
@@ -188,13 +212,11 @@ class App:
                                                             ("Spectra List", "*.lst"),
                                                             ("All files", "*.*") )) #file dialog
             lst = list(filez)
-##        if len(lst) > 1:
-##            self.overplot=True
-##            self.stackplot=False
+            self.norm_clear()
+
         for item in lst:
-            # print(self.stackint)
             self.fname=item
-            print(self.fname)
+            # print(self.fname)
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
                 self.splot()
@@ -209,9 +231,10 @@ class App:
                 self.listname=item
                 self.read_list()
                 for listitem in self.listedfiles:
+                    self.stack.append(listitem)
                     if '.txt' in listitem or '.TXT' in listitem:
                         self.fname=listitem
-                        print(self.fname)
+                        # print(self.fname)
                         self.read_txt()
                         self.splot()
                         self.stackint=self.stackint+1
@@ -221,7 +244,8 @@ class App:
                         self.splot()
                         self.stackint=self.stackint+1
 
-        self.norm_clear()
+
+
 
 
 
@@ -239,7 +263,7 @@ class App:
             wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
             wavelength = wavelength.flatten()
             wavelength = wavelength*u.AA
-            flux = self.sp[0].data
+            flux = self.sp[0].data*u.flx
             self.wavelength=wavelength
             self.flux=flux
             self.header=header
@@ -256,8 +280,8 @@ class App:
             # wavelength = wavelength.flatten()
             # wavelength = wavelength*u.AA
             wavelength= index*u.pixel
-            flux = self.sp[0].data[0].flatten()
-            # print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0].data))
+            flux = self.sp[0].data[0].flatten()*u.flx
+            # print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0]print(self.stack).data))
 
             self.wavelength=wavelength
             self.flux=flux
@@ -279,8 +303,8 @@ class App:
                 flux=data[:,2].astype(float)
             except:
                 flux=data[:,1].astype(float)
-            self.flux=flux
-            self.flux_orig=flux
+            self.flux=flux*u.flx
+            self.flux_orig=flux*u.flx
             f1.close()
 
 
@@ -333,7 +357,7 @@ class App:
             # self.output.delete(0,tk.END)
             # self.output.insert(tk.END,"The number entered below will change the stack spacing.")
 ##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
-            spec,=self.ax.plot(self.wavelength,self.flux+self.stackint)
+            spec,=self.ax.plot(self.wavelength,self.flux+self.stackint*u.flx)
             # self.stackint=self.stackint+float(self.w1.get())
             self.ax.set_title("Stack Plot Mode, For Qualitative Comparison Only",fontsize=12)
             self.ax.set_ylabel("Stack Plot Flux")
@@ -381,6 +405,7 @@ class App:
 
     def stackplottoggle(self,event=None):
         self.ax.clear()
+        self.stack=[]
         self.stackint=0
         if self.stackplot == False:
             self.stackplot=True
@@ -391,6 +416,9 @@ class App:
             pass
         self.toolbar.update()
         self.canvas.draw()
+
+    def stackprint(self):
+        print(self.stack)
 
     def smooth(self,event=None):
         self.output.delete(0,tk.END)
@@ -406,9 +434,9 @@ class App:
         #self.splot()
 
     def coord(self,event=None):
-        #uses one click to print mouse position in the text box
+        """uses one click to print mouse position in the text box"""
         self.output.delete(0,tk.END)
-        self.output.insert(tk.END,"Left Click (x) on a point to the left and to the right of what you wish to measure. Right Click (backspace) to remove a point.")
+        self.output.insert(tk.END,"Left Click (x) on a point to display the coordinates.")
         clicks= plt.ginput(1)
         clicks= np.array(clicks)
         x=clicks[0][0]
@@ -418,22 +446,18 @@ class App:
         self.output.insert(tk.END,"Mouse Position: Wavelength = %s, Flux = %s" %(x,y))
 
     def velocity(self,event=None):
+        """#uses one click to convert wavelength to velocity and vice versa"""
         self.measuremode()
-        # print(self.wavelength.unit)
-        #uses one click to convert wavelength to velocity and vice versa
         if self.wavelength.unit == u.AA:
             self.output.delete(0,tk.END)
             self.output.insert(tk.END,"Left Click (x) on a point to the left and to the right of what you wish to measure. Right Click (backspace) to remove a point.")
             clicks= plt.ginput(1)
             clicks= np.array(clicks)
             self.wavecenter=clicks[0][0]*u.AA
-            # y=clicks[0][1]
             self.wavelength_backup=self.wavelength
             self.wavelength=(self.wavelength-self.wavecenter)/self.wavecenter*c.to('km/s')
-            # print(self.wavelength)
             self.splot()
         elif self.wavelength.unit == 'km / s':
-            # print(self.wavelength.unit)
             self.wavelength=self.wavelength_backup
             self.splot()
 
@@ -522,9 +546,8 @@ class App:
         outstring="Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
                    ", Stnd Error = "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
         self.output.insert(tk.END,outstring)
-        self.ax.vlines(center.value,min(self.flux),max(self.flux))
+        self.ax.vlines(center.value,min(self.flux.value),max(self.flux.value))
         self.canvas.draw()
-        # self.norm_clear()
 
     def regionload(self,message=None):
         """Loads saved regions and gets the cloest values in the data"""
@@ -553,14 +576,13 @@ class App:
             dwidth.append((1-f/continuum)*abs(xg[i]-xg[i-1]))
         width=sum(dwidth)
         bisect=(xg[0].value+xg[-1].value)/2.*xg[0].unit
-        self.ax.vlines(bisect.value,min(yg),max(yg))
+        self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
         self.canvas.draw()
         self.output.delete(0,tk.END)
         outstring="Equivalent Width = "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
                    ", Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
-        # self.norm_clear()
 
 
 
@@ -580,30 +602,33 @@ class App:
         c2=array2[startidx:stopidx]
         return c1,c2
 
-    def scopy(self,event=None):
+    def scopy(self,event=None,script=None):
         """Copy out a section of a spectrum to a new spectrum"""
         self.measuremode()
-        self.regionload()
+        xg,yg=self.regionload()
         self.wavelength=xg
         self.flux=yg
-        self.header['CRVAL1']=x[0]
+        self.header['CRVAL1']=xg[0].value
         self.splot()
-        self.norm_clear()
+        if script == None:
+            self.norm_clear()
+        else:
+            pass
 
     def fit(self,func="gauss",event=None):
         """wrapper function for fitting line profiles"""
         # Fit the data using a Gaussian, Voigt, or Lorentzian profile
         self.measuremode()
         xg,yg=self.regionload() #get regions
-        xgf=np.linspace(xg[0].value,xg[-1].value,len(xg)*3)
-        ygf=np.interp(xgf,xg.value,yg)
+        xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
+        ygf=np.interp(xgf,xg,yg)*u.flx
 
         # mid=len(yg)//2 #get guess for line peak by taking center of clicks
-        xa=np.array([xgf[0],xgf[-1]])
-        ya=np.array([ygf[0],ygf[-1]])
+        xa=np.array([xgf[0].value,xgf[-1].value])
+        ya=np.array([ygf[0].value,ygf[-1].value])
         linecoeff = np.polyfit(xa,ya,1) #does a linear polynomail fit to the data.
-        ygfn=ygf/np.polyval(linecoeff,xgf) #normalized
-        ygn=yg/np.polyval(linecoeff,xg/xg[0]) #xg/xg[0] to remove the unit
+        ygfn=ygf/np.polyval(linecoeff,xgf.value)*u.flx #normalized
+        ygn=yg/np.polyval(linecoeff,xg/xg[0])*u.flx #xg/xg[0] to remove the unit
         invert=False
         reflevel=yg[0]
         if yg[len(yg)//2] < reflevel:
@@ -611,33 +636,15 @@ class App:
             invert=True
 
         if func=="gauss":
-          g_init = models.Gaussian1D(amplitude=np.max(yg)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
+          g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
-          # g_fit = fit_lines(spectrum, g_init)
-          # y_fit = g_fit(xg)
-          # plt.plot(xg, y_fit)
-
-          # g_init = models.Gaussian1D(amplitude=np.max(yg-reflevel)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
-          # g_fit = fit_lines(spectrum, g_init)
-          # y_fit = g_fit(xgf*xg[0]/xg[0].value)
           if invert == False:
-              # spectrum = Spectrum1D(flux=yg*u.flx, spectral_axis=xg)
-              # g_init = models.Gaussian1D(amplitude=np.max(yg)*u.flx-reflevel*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
-              # g_fit = fit_lines(spectrum, g_init)
-              # y_fit = g_fit(xgf*xg[0]/xg[0].value)
-              # plt.plot(xgf, y_fit)
-            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
-            plt.plot(xgf, g(xgf*xg[0]/xg[0].value), label='%s'%(func))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
+            g = fit_g(g_init, xgf, ygf)
+            plt.plot(xgf, g(xgf), label='%s'%(func))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
             amp=g.amplitude
           elif invert == True:
-              # spectrum = Spectrum1D(flux=(reflevel-yg)*u.flx, spectral_axis=xg)
-              # g_init = models.Gaussian1D(amplitude=np.max(reflevel-yg)*u.flx, mean=np.mean(xg), stddev=xg[1]-xg[0])
-              # g_fit = fit_lines(spectrum, g_init)
-              # y_fit = g_fit(xgf*xg[0]/xg[0].value)
-              # plt.plot(xgf,(reflevel*u.flx-y_fit))#*np.polyval(linecoeff,xgf))
-              # plt.plot(xgf,((reflevel*u.flx-y_fit)*np.polyval(linecoeff,xgf)))
-            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
-            plt.plot(xgf, (reflevel*u.flx-g(xgf*xg[0]/xg[0].value)), label='%s'%(func))
+            g = fit_g(g_init, xgf, ygf)
+            plt.plot(xgf, (reflevel-g(xgf)), label='%s'%(func))
             amp=-g.amplitude
           outstring="Gaussian Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM: "+ \
                            "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
@@ -647,15 +654,15 @@ class App:
 
 
         elif func=="voigt":
-          g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)*u.flx-reflevel*u.flx , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
+          g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
-            plt.plot(xgf, g(xgf*xg[0]/xg[0].value))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf, ygf)
+            plt.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=g.amplitude_L
           elif invert == True:
-            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
-            plt.plot(xgf, (reflevel*u.flx-g(xgf*xg[0]/xg[0].value)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf, ygf)
+            plt.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=-g.amplitude_L
           outstring=  "Voigt Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM: "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_L)+\
@@ -665,15 +672,15 @@ class App:
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
         elif func=="lorentz":
-          g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)*u.flx-reflevel*u.flx, fwhm=xg[1]-xg[0])
+          g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, fwhm=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
-            plt.plot(xgf, g(xgf*xg[0]/xg[0].value))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf, ygf)
+            plt.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=g.amplitude
           elif invert == True:
-            g = fit_g(g_init, xgf*xg[0]/xg[0].value, ygf*u.flx)
-            plt.plot(xgf, (reflevel*u.flx-g(xgf*xg[0]/xg[0].value)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+            g = fit_g(g_init, xgf, ygf)
+            plt.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=-g.amplitude
           outstring= "Lorentz Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM: "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+\
@@ -843,9 +850,9 @@ class App:
         for xi in xg:
             self.x_norm.append(xi.value)
         for yi in yg:
-            self.y_norm.append(yi)
+            self.y_norm.append(yi.value)
 
-    def normalize(self,event=None):
+    def normalize(self,event=None,script=None):
         """Continuum normalize by using selected points as continuum."""
         self.measuremode()
         xn=np.array(self.x_norm)
@@ -861,32 +868,81 @@ class App:
                 linecoeff = np.polyfit(xn,yn,self.order)
                 nflux=self.flux/np.polyval(linecoeff,self.wavelength.value)
                 self.normtest,=self.ax.plot(self.wavelength,nflux)
-                self.ax.set_ylim([max(0,min(nflux)),min(100,max(nflux))])
+                self.ax.set_ylim([max(0,min(nflux.value)),min(100,max(nflux.value))])
                 self.canvas.draw()
-                answer=tkinter.messagebox.askyesno("Question","Proceed with the fit?")
-                if answer == True:
-                   self.goodfit = True
-                   self.ax.lines.remove(self.normtest)
-                   self.output.delete(0,tk.END)
-                   self.flux=nflux
-                   self.splot()
+                if script == None:
+                    answer=tkinter.messagebox.askyesno("Question","Proceed with the fit?")
+                    if answer == True:
+                       self.goodfit = True
+                       self.ax.lines.remove(self.normtest)
+                       self.output.delete(0,tk.END)
+                       self.flux=nflux
+                       self.splot()
 
+                    else:
+                       self.ax.lines.remove(self.normtest)
+                       self.output.delete(0,tk.END)
+                       self.output.insert(tk.END,"Change the integer below and re-run the normalize command.")
+                       goodfit = False
+                       break
                 else:
-                   self.ax.lines.remove(self.normtest)
-                   self.output.delete(0,tk.END)
-                   self.output.insert(tk.END,"Change the integer below and re-run the normalize command.")
-                   goodfit = False
-                   break
+                    self.goodfit = True
+                    self.ax.lines.remove(self.normtest)
+                    self.output.delete(0,tk.END)
+                    self.flux=nflux
+                    self.splot()
 
-    def save_fits(self):
+    def stackplot(self):
+        self.ax.clear()
+        self.stackint=0
+        self.stackplot=True
+        for file in self.stack:
+            self.openSpectra(spec=file)
+            self.splot()
+
+
+    def stacker(self,func=None):
+        if func == None:
+            print("No function selected for stacker.")
+        else:
+            for file in self.stack:
+                self.openSpectra(spec=file)
+                if func == "norm":
+                    self.normalize(script='Yes')
+                    self.goodfit = False
+                    self.save_fits(extend='-norm.fits')
+                elif func == "scopy":
+                    self.scopy(script='Yes')
+                    self.save_fits(extend='-crop.fits')
+                elif func == "eqw":
+                    self.eqw()
+                elif func == "gauss":
+                    self.fit(func="gauss")
+                elif func == "voigt":
+                    self.fit(func="voigt")
+                elif func == "lorentz":
+                    self.fit(func="lorentz")
+                elif func == "bisect":
+                    self.Bisect()
+                else:
+                    print("Stacker cannot handle a function.")
+
+            #save output with an extension
+            # example:  self.normalize(script='Yes')
+
+    def save_fits(self,extend=None):
         """Save a new fits file with header."""
-        w.destroy()
-        self.sp[0].header=self.header
-        self.sp[0].data=self.flux
+        hdu = fits.PrimaryHDU(self.flux.value,self.header)
         path=os.path.dirname(self.fname)
         basename=os.path.basename(self.fname)
-        savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
-        self.sp.writeto(savename)
+        path_wo_ext=os.path.splitext(self.fname)[0]
+        if extend == None:
+            savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
+            hdu.writeto(savename)
+        else:
+            savename=path_wo_ext+extend
+            hdu.writeto(savename)
+            print("Saved to: ", savename)
 
     def save1DText(self):
         """Save a headerless text spectrum."""
@@ -909,14 +965,15 @@ class App:
         t.wm_title("FITS Header")
         s=tk.Scrollbar(t)
         s.pack(side=tk.RIGHT,fill=tk.Y)
+        b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
+        b.pack()
         hlist=tk.Listbox(t,yscrollcommand=s.set,height=20,width=80)
 
         for keys in self.header.tostring(sep=',').split(','):
             hlist.insert(tk.END,"%s "%(keys))
         hlist.pack(side=tk.LEFT,fill=tk.BOTH)
         s.config(command=hlist.yview)
-        b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
-        b.pack()
+
 
     def EntryDialog(self,message="Text Input"):
         """Developement, not used nor working as intended."""
@@ -948,7 +1005,6 @@ class App:
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
         b.pack()
-
 
 #----------------------------------------------------------------------------------
 #Begin GUI
