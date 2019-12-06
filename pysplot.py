@@ -127,7 +127,7 @@ class App:
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
-        stackmenu.add_command(label="Replot Stack",command=self.stackplot)
+        stackmenu.add_command(label="Replot Stack",command=self.replotstack)
         stackmenu.add_separator()
         # stackmenu.add_command(label="Dynamical/Time Series Spectra",command=self.dynamical)
         stackmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
@@ -193,30 +193,41 @@ class App:
 
     def openSpectra(self,event=None,spec=None):
         """Open up spectra or lists of spectra"""
-        if spec != None:
-            print(spec)
-            lst =[spec]
-        elif spec == None and self.overplot == False and self.stackplot == False:
-            file=askopenfilename(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
-                                                            ("Fits Files", "*.FIT* "),
-                                                            ("Text Files", "*.txt*"),
-                                                            ("All files", "*.*") )) #file dialog
-            lst=[file]
-            self.stack.append(lst)
-            self.norm_clear()
-        elif spec == None:
-            filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
-                                                            ("Fits Files", "*.FIT* "),
-                                                            ("Text Files", "*.txt*"),
-                                                            ("Spectra List", "*.list"),
-                                                            ("Spectra List", "*.lst"),
-                                                            ("All files", "*.*") )) #file dialog
-            lst = list(filez)
-            self.norm_clear()
+        if spec == None:
+            if self.overplot == False and self.stackplot == False:
+                file=askopenfilename(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
+                                                                ("Fits Files", "*.FIT* "),
+                                                                ("Text Files", "*.txt*"),
+                                                                ("All files", "*.*") )) #file dialog
+                self.stack=[file]
+            else:
+                filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
+                                                                ("Fits Files", "*.FIT* "),
+                                                                ("Text Files", "*.txt*"),
+                                                                ("Spectra List", "*.list"),
+                                                                ("Spectra List", "*.lst"),
+                                                                ("All files", "*.*") )) #file dialog
+                lst=list(filez)
+                for item in lst:
+                    if '.list' in item or '.lst' in item :
+                        self.listname=item
+                        self.read_list()
+                        for listitem in self.listedfiles:
+                            self.stack.append(listitem)
+                    else:
+                        self.stack.append(item)
+        elif spec != None:
+            self.plotSpec(spec=spec)
+        self.norm_clear()
+        self.plotSpec()
 
-        for item in lst:
+    def plotSpec(self,spec=None):
+        if spec == None:
+            pltlist=self.stack
+        elif spec != None:
+            pltlist=spec
+        for item in pltlist:
             self.fname=item
-            # print(self.fname)
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
                 self.splot()
@@ -225,24 +236,24 @@ class App:
                 self.read_txt()
                 self.splot()
                 self.stackint=self.stackint+1
-            elif '.list' in item or '.lst' in item :
-                # self.overplot=False
-                # self.stackplot=True
-                self.listname=item
-                self.read_list()
-                for listitem in self.listedfiles:
-                    self.stack.append(listitem)
-                    if '.txt' in listitem or '.TXT' in listitem:
-                        self.fname=listitem
-                        # print(self.fname)
-                        self.read_txt()
-                        self.splot()
-                        self.stackint=self.stackint+1
-                    elif '.fit' in listitem or '.FIT' in listitem:
-                        self.fname=listitem
-                        self.read_fits()
-                        self.splot()
-                        self.stackint=self.stackint+1
+            # elif '.list' in item or '.lst' in item :
+            #     self.listname=item
+            #     self.read_list()
+            #     for listitem in self.listedfiles:
+            #         self.stack.append(listitem)
+            #         if '.txt' in listitem or '.TXT' in listitem:
+            #             self.fname=listitem
+            #             # print(self.fname)
+            #             self.read_txt()
+            #             self.splot()
+            #             self.stack.append(listitem)
+            #             self.stackint=self.stackint+1
+            #         elif '.fit' in listitem or '.FIT' in listitem:
+            #             self.fname=listitem
+            #             self.read_fits()
+            #             self.splot()
+            #             self.stack.append(listitem)
+            #             self.stackint=self.stackint+1
 
 
 
@@ -420,6 +431,10 @@ class App:
     def stackprint(self):
         print(self.stack)
 
+    def replotstack(self):
+        self.stackplot=True
+        self.reset()
+
     def smooth(self,event=None):
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Enter an integer for the boxcar smoothing:")
@@ -470,7 +485,12 @@ class App:
 
     def reset(self, event=None):
         """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
-        self.splot()
+        if self.stackplot == False:
+            self.splot()
+        elif self.stackplot == True:
+            self.stackint=0
+            self.ax.clear()
+            self.plotSpec()
         self.norm_clear()
 
 
@@ -892,19 +912,13 @@ class App:
                     self.flux=nflux
                     self.splot()
 
-    def stackplot(self):
-        self.ax.clear()
-        self.stackint=0
-        self.stackplot=True
-        for file in self.stack:
-            self.openSpectra(spec=file)
-            self.splot()
-
 
     def stacker(self,func=None):
+        """A helper function to automate tasks for many spectra."""
         if func == None:
             print("No function selected for stacker.")
         else:
+            self.measuremode()
             for file in self.stack:
                 self.openSpectra(spec=file)
                 if func == "norm":
