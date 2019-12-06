@@ -200,6 +200,7 @@ class App:
                                                                 ("Text Files", "*.txt*"),
                                                                 ("All files", "*.*") )) #file dialog
                 self.stack=[file]
+                self.norm_clear()
             else:
                 filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
                                                                 ("Fits Files", "*.FIT* "),
@@ -217,15 +218,16 @@ class App:
                     else:
                         self.stack.append(item)
         elif spec != None:
-            self.plotSpec(spec=spec)
-        self.norm_clear()
+            self.plotSpec(spec='Yes')
+
         self.plotSpec()
 
     def plotSpec(self,spec=None):
         if spec == None:
             pltlist=self.stack
         elif spec != None:
-            pltlist=spec
+            print(self.fname)
+            pltlist=self.fname
         for item in pltlist:
             self.fname=item
             if '.fit' in item or '.FIT' in item:
@@ -487,11 +489,13 @@ class App:
         """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
         if self.stackplot == False:
             self.splot()
+            self.norm_clear()
         elif self.stackplot == True:
             self.stackint=0
             self.ax.clear()
             self.plotSpec()
-        self.norm_clear()
+            # self.norm_clear()
+        self.region_clear()
 
 
     def pltregion(self,x,y,sym='-',c='black'):
@@ -575,8 +579,10 @@ class App:
             x,y=self.region(message) #click points to slice data
             self.saveregions_x=x
             self.saveregions_y=y
+            print("I seem confused")
         elif self.loadedregions == True:
             x,y=(self.saveregions_x,self.saveregions_y)
+            print("using loaded regions")
         else:
             print("Unexpected Error in regionload")
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
@@ -585,6 +591,7 @@ class App:
 
     def eqw(self,event=None):
         """Measure equivalent width between two points IRAF style"""
+        print("attempting EQW measure")
         self.measuremode()
         xg,yg=self.regionload()
         continuum=(yg[0]+yg[-1])/2 #sets the continuum to the average of the left and right click.
@@ -809,7 +816,8 @@ class App:
         self.y_norm=[]
         self.goodfit=False
         self.output.delete(0,tk.END)
-        # self.splot()
+
+    def region_clear(self):
         self.saveregions_x=[0,0]
         self.saveregions_y=[0,0]
         self.loadedregions=False
@@ -920,7 +928,8 @@ class App:
         else:
             self.measuremode()
             for file in self.stack:
-                self.openSpectra(spec=file)
+                self.fname=file
+                self.openSpectra(spec='Yes')
                 if func == "norm":
                     self.normalize(script='Yes')
                     self.goodfit = False
@@ -955,7 +964,7 @@ class App:
             hdu.writeto(savename)
         else:
             savename=path_wo_ext+extend
-            hdu.writeto(savename)
+            hdu.writeto(savename,overwrite=True)
             print("Saved to: ", savename)
 
     def save1DText(self):
