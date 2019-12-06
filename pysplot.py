@@ -126,8 +126,10 @@ class App:
         stackmenu = tk.Menu(menu)
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
+        stackmenu.add_command(label="Stack Clear",command=self.stackreset)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
-        stackmenu.add_command(label="Replot Stack",command=self.replotstack)
+        stackmenu.add_command(label="Save Stack List",command=self.stacksave)
+        stackmenu.add_command(label="Replot Stack",command=self.stackreplot)
         stackmenu.add_separator()
         # stackmenu.add_command(label="Dynamical/Time Series Spectra",command=self.dynamical)
         stackmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
@@ -157,6 +159,7 @@ class App:
         self.stackint=0
         self.listedfiles=[]
         self.stack=[]
+        self.loadedregions=False
 
 
         #keyboard shortcuts (listed alphabetically)
@@ -201,6 +204,12 @@ class App:
                                                                 ("All files", "*.*") )) #file dialog
                 self.stack=[file]
                 self.norm_clear()
+                if self.loadedregions==True:
+                    self.regionload()
+                    self.output.delete(0,tk.END)
+                    self.output.insert(tk.END,"Using a loaded region.  Use view>reset (r) to clear." )
+
+
             else:
                 filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
                                                                 ("Fits Files", "*.FIT* "),
@@ -218,15 +227,15 @@ class App:
                     else:
                         self.stack.append(item)
         elif spec != None:
-            self.plotSpec(spec='Yes')
+            self.plotSpectra(spec='Yes')
 
-        self.plotSpec()
+        self.plotSpectra()
 
-    def plotSpec(self,spec=None):
+    def plotSpectra(self,spec=None):
         if spec == None:
             pltlist=self.stack
         elif spec != None:
-            print(self.fname)
+            print('plot spectra: ',self.fname)
             pltlist=self.fname
         for item in pltlist:
             self.fname=item
@@ -410,30 +419,51 @@ class App:
     def overplottoggle(self,event=None):
         if self.overplot == False:
             self.overplot=True
+            self.ax.set_title("Overplot Plot Mode, For Qualitative Comparison Only",fontsize=12)
         elif self.overplot == True:
+            self.ax.set_title("Single Spectra Mode",fontsize=12)
             self.overplot = False
         else:
             pass
-        self.splot()
+        # self.splot()
+        self.toolbar.update()
+        self.canvas.draw()
 
     def stackplottoggle(self,event=None):
-        self.ax.clear()
-        self.stack=[]
-        self.stackint=0
         if self.stackplot == False:
             self.stackplot=True
             self.ax.set_title("Stack Plot Mode, For Qualitative Comparison Only",fontsize=12)
         elif self.stackplot == True:
+            self.ax.set_title("Single Spectra Mode",fontsize=12)
             self.stackplot = False
         else:
             pass
         self.toolbar.update()
         self.canvas.draw()
 
+    def stackreset(self):
+        self.ax.clear()
+        self.stack=[]
+        self.stackint=0
+        self.toolbar.update()
+        self.canvas.draw()
+
     def stackprint(self):
         print(self.stack)
 
-    def replotstack(self):
+    def stacksave(self):
+        """Save the stack for later re-loading."""
+        path=os.path.dirname(self.fname)
+        basename=os.path.basename("stack.list")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".list")
+        dataout=open(savename,'w')
+        for row in self.stack:
+            dataout.write('%s\n'%(row))
+        dataout.close()
+        print("Stack saved to:  %s"%(savename))
+
+
+    def stackreplot(self):
         self.stackplot=True
         self.reset()
 
@@ -493,7 +523,7 @@ class App:
         elif self.stackplot == True:
             self.stackint=0
             self.ax.clear()
-            self.plotSpec()
+            self.plotSpectra()
             # self.norm_clear()
         self.region_clear()
 
@@ -579,19 +609,21 @@ class App:
             x,y=self.region(message) #click points to slice data
             self.saveregions_x=x
             self.saveregions_y=y
-            print("I seem confused")
+            self.loadedregions=True
         elif self.loadedregions == True:
             x,y=(self.saveregions_x,self.saveregions_y)
             print("using loaded regions")
+            self.output.delete(0,tk.END)
+            self.output.insert(tk.END,"Using a loaded region. Use View>reset(r) to remove selected region.")
+            self.pltregion(x,y,sym='s',c='black')
         else:
-            print("Unexpected Error in regionload")
+            print("Unexpected Error in regionload()")
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
         return xg,yg
 
 
     def eqw(self,event=None):
         """Measure equivalent width between two points IRAF style"""
-        print("attempting EQW measure")
         self.measuremode()
         xg,yg=self.regionload()
         continuum=(yg[0]+yg[-1])/2 #sets the continuum to the average of the left and right click.
@@ -815,6 +847,7 @@ class App:
         self.x_norm=[]
         self.y_norm=[]
         self.goodfit=False
+        self.order=1
         self.output.delete(0,tk.END)
 
     def region_clear(self):
@@ -879,6 +912,7 @@ class App:
             self.x_norm.append(xi.value)
         for yi in yg:
             self.y_norm.append(yi.value)
+        self.loadedregions=True
 
     def normalize(self,event=None,script=None):
         """Continuum normalize by using selected points as continuum."""
@@ -931,22 +965,58 @@ class App:
                 self.fname=file
                 self.openSpectra(spec='Yes')
                 if func == "norm":
-                    self.normalize(script='Yes')
-                    self.goodfit = False
-                    self.save_fits(extend='-norm.fits')
+                    if self.loadedregions == True:
+                        self.normalize(script='Yes')
+                        self.goodfit = False
+                        # self.save_fits(extend='-norm.fits')
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region(s) and set the fit order for the continuum before useing normalize to fit.")
+                        print("No normalization parameters loaded.")
+                        break
                 elif func == "scopy":
-                    self.scopy(script='Yes')
-                    self.save_fits(extend='-crop.fits')
+                    if self.loadedregions == True:
+                        self.scopy(script='Yes')
+                        self.save_fits(extend='-crop.fits')
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region.")
+                        print("No region loaded.")
                 elif func == "eqw":
-                    self.eqw()
+                    if self.loadedregions == True:
+                        self.eqw()
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region.")
+                        print("No region loaded.")
                 elif func == "gauss":
-                    self.fit(func="gauss")
+                    if self.loadedregions == True:
+                        self.fit(func="gauss")
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region.")
+                        print("No region loaded.")
                 elif func == "voigt":
-                    self.fit(func="voigt")
+                    if self.loadedregions == True:
+                        self.fit(func="voigt")
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region.")
+                        print("No region loaded.")
                 elif func == "lorentz":
-                    self.fit(func="lorentz")
+                    if self.loadedregions == True:
+                        self.fit(func="lorentz")
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region.")
+                        print("No region loaded.")
                 elif func == "bisect":
-                    self.Bisect()
+                    if self.loadedregions == True:
+                        self.Bisect()
+                    else:
+                        self.output.delete(0,tk.END)
+                        self.output.insert(tk.END,"Please select region.")
+                        print("No region loaded.")
                 else:
                     print("Stacker cannot handle a function.")
 
@@ -959,6 +1029,10 @@ class App:
         path=os.path.dirname(self.fname)
         basename=os.path.basename(self.fname)
         path_wo_ext=os.path.splitext(self.fname)[0]
+        print(self.fname)
+        print(path)
+        print(basename)
+        print(path_wo_ext)
         if extend == None:
             savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
             hdu.writeto(savename)
