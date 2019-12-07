@@ -4,8 +4,7 @@ This program was designed to emulate some basic IRAF splot functions.
 Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
-UPDATED="5-DEC-2019"
-version="0.4.00"
+
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -39,6 +38,10 @@ from specutils.spectra import Spectrum1D
 from specutils.fitting import fit_lines
 
 import datetime
+
+UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
+version="0.4.01"
+
 
 plot_params = {'axes.linewidth': 1,
                'xtick.labelsize': 'medium',
@@ -130,7 +133,6 @@ class App:
         stackmenu = tk.Menu(menu)
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
-        stackmenu.add_command(label="Replot Stack",command=self.stackreplot)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Save Stack List",command=self.stacksave)
         stackmenu.add_command(label="Stack Clear",command=self.stackreset)
@@ -254,28 +256,6 @@ class App:
                 self.read_txt()
                 self.splot()
                 self.stackint=self.stackint+1
-            # elif '.list' in item or '.lst' in item :
-            #     self.listname=item
-            #     self.read_list()
-            #     for listitem in self.listedfiles:
-            #         self.stack.append(listitem)
-            #         if '.txt' in listitem or '.TXT' in listitem:
-            #             self.fname=listitem
-            #             # print(self.fname)
-            #             self.read_txt()
-            #             self.splot()
-            #             self.stack.append(listitem)
-            #             self.stackint=self.stackint+1
-            #         elif '.fit' in listitem or '.FIT' in listitem:
-            #             self.fname=listitem
-            #             self.read_fits()
-            #             self.splot()
-            #             self.stack.append(listitem)
-            #             self.stackint=self.stackint+1
-
-
-
-
 
 
     def read_fits(self):
@@ -409,12 +389,14 @@ class App:
 
 
     def zoomout(self,event=None):
+        """Not accessible from menu.  Was designed to replot a region, but the matplotlib toolbar is better."""
         self.ax.set_xlim([min(self.wavelength.value),max(self.wavelength.value)])
         self.ax.set_ylim([min(self.flux),max(self.flux)])
         self.canvas.draw()
 
 
     def gridtoggle(self,event=None):
+        """Toggles the plot grid on and off."""
         if self.gridvalue == False:
             self.gridvalue=True
         elif self.gridvalue == True:
@@ -425,6 +407,7 @@ class App:
         self.canvas.draw()
 
     def overplottoggle(self,event=None):
+        """Switches to overplot mode and replots the stack."""
         self.overplot=True
         self.stackplot=False
         self.ax.clear()
@@ -434,6 +417,7 @@ class App:
         self.canvas.draw()
 
     def stackplottoggle(self,event=None):
+        """Switches to stackplot mode and replots the stack."""
         self.stackplot=True
         self.overplot=False
         self.ax.clear()
@@ -443,6 +427,7 @@ class App:
         self.canvas.draw()
 
     def singleplottoggle(self,event=None):
+        """Single spectrum display mode, replots the last active spectrum."""
         self.stackplot=False
         self.overplot=False
         self.ax.set_title("Single Spectra Mode",fontsize=12)
@@ -452,6 +437,7 @@ class App:
 
 
     def stackreset(self):
+        """Reset the stacking parameters"""
         self.ax.clear()
         self.stack=[]
         self.stackint=0
@@ -478,10 +464,6 @@ class App:
         dataout.close()
         print("Stack saved to:  %s"%(savename))
 
-
-    def stackreplot(self):
-        self.stackplot=True
-        self.reset()
 
     def smooth(self,event=None):
         self.output.delete(0,tk.END)
