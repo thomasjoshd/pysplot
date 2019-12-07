@@ -95,6 +95,7 @@ class App:
         viewmenu.add_command(label="Grid Toggle (|)",command=self.gridtoggle)
         viewmenu.add_command(label="Over Plot ([)",command=self.overplottoggle)
         viewmenu.add_command(label="Stack Plot (])",command=self.stackplottoggle)
+        viewmenu.add_command(label="Single Plot (\\)",command=self.singleplottoggle)
 
 
         modmenu = tk.Menu(menu)
@@ -197,6 +198,7 @@ class App:
         self.master.bind('|', self.gridtoggle)
         self.master.bind('[', self.overplottoggle)
         self.master.bind(']', self.stackplottoggle)
+        self.master.bind('\\', self.singleplottoggle)
         self.master.bind('<space>', self.coord)
 
 
@@ -244,7 +246,6 @@ class App:
             pltlist=[self.fname]
         for item in pltlist:
             self.fname=item
-            print("blah:  ",item)
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
                 self.splot()
@@ -424,29 +425,31 @@ class App:
         self.canvas.draw()
 
     def overplottoggle(self,event=None):
-        if self.overplot == False:
-            self.overplot=True
-            self.ax.set_title("Overplot Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
-        elif self.overplot == True:
-            self.ax.set_title("Single Spectra Mode",fontsize=12)
-            self.overplot = False
-        else:
-            pass
-        # self.splot()
+        self.overplot=True
+        self.stackplot=False
+        self.ax.clear()
+        self.ax.set_title("Overplot Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
+        self.plotSpectra()
         self.toolbar.update()
         self.canvas.draw()
 
     def stackplottoggle(self,event=None):
-        if self.stackplot == False:
-            self.stackplot=True
-            self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
-        elif self.stackplot == True:
-            self.ax.set_title("Single Spectra Mode",fontsize=12)
-            self.stackplot = False
-        else:
-            pass
+        self.stackplot=True
+        self.overplot=False
+        self.ax.clear()
+        self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
+        self.plotSpectra()
         self.toolbar.update()
         self.canvas.draw()
+
+    def singleplottoggle(self,event=None):
+        self.stackplot=False
+        self.overplot=False
+        self.ax.set_title("Single Spectra Mode",fontsize=12)
+        self.splot()
+        self.toolbar.update()
+        self.canvas.draw()
+
 
     def stackreset(self):
         self.ax.clear()
@@ -971,11 +974,9 @@ class App:
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Please select region.")
         print("No region loaded.")
-        # self.greenlight=False
 
     def stacker(self,func=None):
         """A helper function to automate tasks for many spectra."""
-        # self.greenlight=True
         if func == None:
             print("No function selected for stacker.")
         else:
@@ -992,7 +993,6 @@ class App:
                         self.output.delete(0,tk.END)
                         self.output.insert(tk.END,"Please select continuum (s) and set the fit order for the continuum before useing normalize to fit.")
                         print("No normalization parameters loaded.")
-                        # self.greenlight=False
 
                 elif func == "scopy":
                     if self.loadedregions == True:
@@ -1027,11 +1027,8 @@ class App:
                         self.abort_stack()
                 else:
                     print("Stacker cannot handle a function.")
-                    # self.greenlight=False
 
 
-            #save output with an extension
-            # example:  self.normalize(script='Yes')
 
     def save_fits(self,extend=None):
         """Save a new fits file with header."""
