@@ -34,8 +34,8 @@ from astropy.modeling import models, fitting
 #from astropy.modeling.functional_models import Voigt1D,Lorentz1D
 from astropy.convolution import convolve, Box1DKernel
 
-from specutils.spectra import Spectrum1D
-from specutils.fitting import fit_lines
+# from specutils.spectra import Spectrum1D
+# from specutils.fitting import fit_lines
 
 import datetime
 
@@ -426,6 +426,10 @@ class App:
         self.overplot=False
         self.stackint=0
         self.stack=list(dict.fromkeys(self.stack)) #removes any duplicate file added to the list.
+        try:
+            self.stack.remove(())
+        except:
+            pass
         self.ax.clear()
         self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
         self.plotSpectra()
@@ -455,7 +459,7 @@ class App:
         """Prints stack to terminal.  And update later may make a pop-up window"""
         print("Stack:")
         for f in self.stack:
-            print(f)
+            print(f,type(f))
 
     def stacksave(self):
         """Save the stack for later re-loading."""
@@ -1022,24 +1026,29 @@ class App:
 
     def stackwindow(self,event=None):
         """Display the stack as buttons"""
-        self.stw=tk.Toplevel(self.master,height=200,width=600)
+        self.stw=tk.Toplevel(self.master,height=600,width=600)
         self.stw.wm_title("Examine Individual Spectra In Stack")
+        # self.stw.resizeable(0,0)
+        self.stw.maxsize(800,800)
+        f=tk.Frame(self.stw,height=600,width=600)
 
-        b = tk.Button(self.stw,text="Close", command=lambda: self.destroychild(self.stw))
+        f.grid(row=0,column=0)
+
+        b = tk.Button(f,text="Close", command=lambda: self.destroychild(self.stw))
         b.grid(row=0,column=0,pady=2,padx=2)
-        b = tk.Button(self.stw,text="Stack Plot", command=self.stackplottoggle)
+        b = tk.Button(f,text="Stack Plot", command=self.stackplottoggle)
         b.grid(row=0,column=1,pady=2,padx=2)
-        b = tk.Button(self.stw,text="Refresh List", command=self.stackwindowrefresh)
+        b = tk.Button(f,text="Refresh List", command=self.stackwindowrefresh)
         b.grid(row=0,column=2,pady=2,padx=2)
         specnumber=list(np.arange(len(self.stack))+1)
         specnumber.reverse()
         for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
-            button=tk.Button(self.stw,text=[s],command=partial(self.stackwindowplot,s))
-            l2=tk.Label(self.stw, text="%s"%(specnumber[i]))
+            button=tk.Button(f,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s))
+            l2=tk.Label(f, text="%s"%(specnumber[i]))
             l2.grid(row=i+2,column=0)
             button.grid(row=i+2,column=1,columnspan=2,pady=2)
-        s=tk.Scrollbar(self.stw)
-        s.grid(row=0,column=3,rowspan=i+2)
+        s=tk.Scrollbar(f,orient="vertical")
+        s.grid(row=1,column=3,rowspan=i+1, sticky=tk.N + tk.S + tk.E)
 
 
     def save_fits(self,extend=None):
