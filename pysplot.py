@@ -63,17 +63,20 @@ class App:
         self.master=master
         master.title("PySplot, Version %s"%str(version))
 
-        tk.Label(self.master, text="Prompt:").pack( side = tk.TOP)
-
+        l1=tk.Label(self.master, text="Prompt:").pack( side = tk.TOP)
+        # l1.grid(row=0,column=0)
         self.output=tk.Entry(self.master,width=100)
         self.output.pack(side = tk.TOP)
+        # self.output.grid(row=0,column=1)
 
-        tk.Label(self.master, text="Input:").pack( side = tk.TOP)
+        l2=tk.Label(self.master, text="Input:").pack( side = tk.TOP)
+        # l2.grid(row=1,column=0)
 
         self.w1v=tk.StringVar()
-        self.w1 = tk.Entry(self.master,text=self.w1v,width=10)
+        self.w1 = tk.Entry(self.master,text=self.w1v,width=100)
         self.w1.pack(side = tk.TOP)
         self.w1v.set(1)	#default value of so the program doesn't barf if accidentally pushed.
+        # self.w1.grid(row=1,column=1)
 
         #--------------------------------------------------
         #file menu
@@ -134,6 +137,7 @@ class App:
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
+        stackmenu.add_command(label="Stack Window",command=self.stackwindow)
         stackmenu.add_command(label="Save Stack List",command=self.stacksave)
         stackmenu.add_command(label="Stack Clear",command=self.stackreset)
 
@@ -438,11 +442,9 @@ class App:
 
     def stackreset(self):
         """Reset the stacking parameters"""
-        self.ax.clear()
         self.stack=[]
         self.stackint=0
-        self.toolbar.update()
-        self.canvas.draw()
+        self.stackplottoggle()
         self.loadednorm=False
         self.loadedbisect=False
         self.loadedregions=False
@@ -476,7 +478,6 @@ class App:
     def measuremode(self,event=None):
         self.stackplot=False
         self.overplot=False
-        # self.splot()
 
     def coord(self,event=None):
         """uses one click to print mouse position in the text box"""
@@ -1010,6 +1011,24 @@ class App:
                 else:
                     print("Stacker cannot handle a function.")
 
+    def stackwindowplot(self,spec):
+        self.fname=spec
+        self.singleplottoggle()
+        self.plotSpectra(spec='Yes')
+
+    def stackwindow(self,event=None):
+        """Display the stack as buttons"""
+        t=tk.Toplevel(self.master,height=200,width=600)
+        t.wm_title("Examine Individual Spectra In Stack")
+        # s=tk.Scrollbar(t)
+        # s.pack(side=tk.RIGHT,fill=tk.Y)
+        b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
+        b.grid(row=0,column=0,pady=2,padx=2)
+        b = tk.Button(t,text="Stack Plot", command=self.stackplottoggle)
+        b.grid(row=0,column=1,pady=2,padx=2)
+        for i,s in enumerate(self.stack):
+            button=tk.Button(t,text=[s],command=partial(self.stackwindowplot,s))
+            button.grid(row=i+2,column=0,columnspan=2,pady=2)
 
 
     def save_fits(self,extend=None):
@@ -1044,7 +1063,7 @@ class App:
     def imhead(self,event=None):
         """Display the image header as loaded from the file."""
         t=tk.Toplevel(self.master,height=600,width=600)
-        t.wm_title("FITS Header")
+        t.wm_title("FITS Header:  %s"%(self.fname))
         s=tk.Scrollbar(t)
         s.pack(side=tk.RIGHT,fill=tk.Y)
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
@@ -1095,12 +1114,3 @@ root = tk.Tk() #main GUI window
 program=App(root)
 root.protocol("WM_DELETE_WINDOW", program._quit)
 root.mainloop() #lets the GUI run
-
-
-#test some measurments of eqw, and gauss with iraf on same spectra.
-#doppler correct spectra
-#right now can't handle text spectra with headers
-
-#fix normalize, stackplot, and smooth to ask for integer before running.
-
-#apply a routine to a stack of images (automate)
