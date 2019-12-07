@@ -40,7 +40,7 @@ from specutils.fitting import fit_lines
 import datetime
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.4.01"
+version="0.4.05"
 
 
 plot_params = {'axes.linewidth': 1,
@@ -1125,3 +1125,6 @@ root = tk.Tk() #main GUI window
 program=App(root)
 root.protocol("WM_DELETE_WINDOW", program._quit)
 root.mainloop() #lets the GUI run
+
+#need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
+#this will be nice for stack plots, but will also allow dynamical spectra.
