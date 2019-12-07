@@ -239,6 +239,8 @@ class App:
                             self.stack.append(listitem)
                     else:
                         self.stack.append(item)
+            self.ax.clear()
+            self.stackint=0
             self.plotSpectra()
         elif spec != None:
             self.plotSpectra(spec='Yes')
@@ -424,6 +426,7 @@ class App:
         """Switches to stackplot mode and replots the stack."""
         self.stackplot=True
         self.overplot=False
+        self.stackint=0
         self.ax.clear()
         self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
         self.plotSpectra()
@@ -1016,19 +1019,31 @@ class App:
         self.singleplottoggle()
         self.plotSpectra(spec='Yes')
 
+    def stackwindowrefresh(self):
+        self.destroychild(self.stw)
+        self.stackwindow()
+        self.stackplottoggle()
+
     def stackwindow(self,event=None):
         """Display the stack as buttons"""
-        t=tk.Toplevel(self.master,height=200,width=600)
-        t.wm_title("Examine Individual Spectra In Stack")
-        # s=tk.Scrollbar(t)
-        # s.pack(side=tk.RIGHT,fill=tk.Y)
-        b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
+        self.stw=tk.Toplevel(self.master,height=200,width=600)
+        self.stw.wm_title("Examine Individual Spectra In Stack")
+
+        b = tk.Button(self.stw,text="Close", command=lambda: self.destroychild(self.stw))
         b.grid(row=0,column=0,pady=2,padx=2)
-        b = tk.Button(t,text="Stack Plot", command=self.stackplottoggle)
+        b = tk.Button(self.stw,text="Stack Plot", command=self.stackplottoggle)
         b.grid(row=0,column=1,pady=2,padx=2)
-        for i,s in enumerate(self.stack):
-            button=tk.Button(t,text=[s],command=partial(self.stackwindowplot,s))
-            button.grid(row=i+2,column=0,columnspan=2,pady=2)
+        b = tk.Button(self.stw,text="Refresh List", command=self.stackwindowrefresh)
+        b.grid(row=0,column=2,pady=2,padx=2)
+        specnumber=list(np.arange(len(self.stack))+1)
+        specnumber.reverse()
+        for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
+            button=tk.Button(self.stw,text=[s],command=partial(self.stackwindowplot,s))
+            l2=tk.Label(self.stw, text="%s"%(specnumber[i]))
+            l2.grid(row=i+2,column=0)
+            button.grid(row=i+2,column=1,columnspan=2,pady=2)
+        s=tk.Scrollbar(self.stw)
+        s.grid(row=0,column=3,rowspan=i+2)
 
 
     def save_fits(self,extend=None):
