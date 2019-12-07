@@ -239,9 +239,7 @@ class App:
                             self.stack.append(listitem)
                     else:
                         self.stack.append(item)
-            self.ax.clear()
-            self.stackint=0
-            self.plotSpectra()
+            self.stackplottoggle()
         elif spec != None:
             self.plotSpectra(spec='Yes')
 
@@ -427,6 +425,7 @@ class App:
         self.stackplot=True
         self.overplot=False
         self.stackint=0
+        self.stack=list(dict.fromkeys(self.stack)) #removes any duplicate file added to the list.
         self.ax.clear()
         self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
         self.plotSpectra()
@@ -523,10 +522,7 @@ class App:
             self.splot()
             self.norm_clear()
         elif self.stackplot == True:
-            self.stackint=0
-            self.ax.clear()
-            self.plotSpectra()
-            # self.norm_clear()
+            self.stackplottoggle()
         self.region_clear()
 
 
