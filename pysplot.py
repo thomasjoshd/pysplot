@@ -136,11 +136,10 @@ class App:
         stackmenu = tk.Menu(menu)
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
-        stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Stack Window",command=self.stackwindow)
+        stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Save Stack List",command=self.stacksave)
         stackmenu.add_command(label="Stack Clear",command=self.stackreset)
-
         stackmenu.add_separator()
         stackmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
         stackmenu.add_command(label="Normalize",command=partial(self.stacker,func="norm"))
@@ -441,7 +440,7 @@ class App:
         self.stackplot=False
         self.overplot=False
         self.ax.set_title("Single Spectra Mode",fontsize=12)
-        self.splot()
+        self.plotSpectra()
         self.toolbar.update()
         self.canvas.draw()
 
@@ -516,9 +515,12 @@ class App:
 
     def restore(self,event=None):
         """Resets the spectrum to the original state."""
-        self.flux=self.flux_orig
-        self.splot()
-        self.norm_clear()
+        try:
+            self.flux=self.flux_orig
+            self.splot()
+            self.norm_clear()
+        except:
+            pass
 
     def reset(self, event=None):
         """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
@@ -1020,59 +1022,86 @@ class App:
         self.plotSpectra(spec='Yes')
 
     def stackwindowrefresh(self):
-        self.destroychild(self.stw)
-        self.stackwindow()
+        # self.destroychild(self.stw)
+        # self.stackwindow()
+        self.stackwindow.l2.grid_remove()
         self.stackplottoggle()
+
+
+    def removefromstack(self):
+        t=tk.Toplevel(self.master,height=200,width=200)
+        t.wm_title("Text Input Needed")
+        tk.Label(t,text="Number of spectrum to delte from the list:").pack()
+        wv=tk.StringVar()
+        self.w = tk.Entry(t,text=wv,width=20)
+        self.w.pack()
+        b = tk.Button(t,text="Delete Spectrum", command=self.stack.pop(self.w))
+        b.pack()
+        b2 = tk.Button(t,text="Close Window", command=lambda: self.destroychild(t))
+        b2.pack()
+
 
     def stackwindow(self,event=None):
         """Display the stack as buttons"""
         self.stw=tk.Toplevel(self.master,height=600,width=600)
-        self.stw.wm_title("Examine Individual Spectra In Stack")
+        self.stw.wm_title("Spectra Stack: Examine Individual Spectra In Stack")
         # self.stw.resizeable(0,0)
         self.stw.maxsize(800,800)
         f=tk.Frame(self.stw,height=600,width=600)
-
         f.grid(row=0,column=0)
 
-        b = tk.Button(f,text="Close", command=lambda: self.destroychild(self.stw))
-        b.grid(row=0,column=0,pady=2,padx=2)
         b = tk.Button(f,text="Stack Plot", command=self.stackplottoggle)
+        b.grid(row=0,column=0,pady=2,padx=2)
+        b = tk.Button(f,text="Open Spectra", command=self.openSpectra)
         b.grid(row=0,column=1,pady=2,padx=2)
         b = tk.Button(f,text="Refresh List", command=self.stackwindowrefresh)
         b.grid(row=0,column=2,pady=2,padx=2)
+        b = tk.Button(f,text="Remove Selected", command=self.removefromstack)
+        b.grid(row=0,column=3,pady=2,padx=2)
+        b = tk.Button(f,text="Close Window", command=lambda: self.destroychild(self.stw))
+        b.grid(row=0,column=4,pady=2,padx=2)
+
+        stacklength=len(self.stack)
         specnumber=list(np.arange(len(self.stack))+1)
         specnumber.reverse()
+        i=0
         for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
             button=tk.Button(f,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s))
             l2=tk.Label(f, text="%s"%(specnumber[i]))
             l2.grid(row=i+2,column=0)
-            button.grid(row=i+2,column=1,columnspan=2,pady=2)
+            button.grid(row=i+2,column=1,columnspan=3,pady=2)
         s=tk.Scrollbar(f,orient="vertical")
-        s.grid(row=1,column=3,rowspan=i+1, sticky=tk.N + tk.S + tk.E)
+        s.grid(row=1,column=4,rowspan=i+1, sticky=tk.N + tk.S + tk.E)
 
 
     def save_fits(self,extend=None):
         """Save a new fits file with header."""
-        hdu = fits.PrimaryHDU(self.flux.value,self.header)
-        path=os.path.dirname(self.fname)
-        basename=os.path.basename(self.fname)
-        path_wo_ext=os.path.splitext(self.fname)[0]
-        if extend == None:
-            savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
-            hdu.writeto(savename)
-        else:
-            savename=path_wo_ext+extend
-            hdu.writeto(savename,overwrite=True)
-            print("Saved to: ", savename)
+        try:
+            hdu = fits.PrimaryHDU(self.flux.value,self.header)
+            path=os.path.dirname(self.fname)
+            basename=os.path.basename(self.fname)
+            path_wo_ext=os.path.splitext(self.fname)[0]
+            if extend == None:
+                savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
+                hdu.writeto(savename)
+            else:
+                savename=path_wo_ext+extend
+                hdu.writeto(savename,overwrite=True)
+                print("Saved to: ", savename)
+        except:
+            pass
 
     def save1DText(self):
         """Save a headerless text spectrum."""
-        savename=asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
-        dataout=open(savename,'w')
-        for i,val in enumerate(self.flux):
-            dataout.write('%s %s\n'%(self.wavelength[i].value,self.flux[i]))
-        w.destroy()
-        dataout.close()
+        try:
+            savename=asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
+            dataout=open(savename,'w')
+            for i,val in enumerate(self.flux):
+                dataout.write('%s %s\n'%(self.wavelength[i].value,self.flux[i]))
+            w.destroy()
+            dataout.close()
+        except:
+            pass
 
     def _quit(self):
         self.master.destroy()  # this is necessary on Windows to prevent
@@ -1082,19 +1111,21 @@ class App:
 
     def imhead(self,event=None):
         """Display the image header as loaded from the file."""
-        t=tk.Toplevel(self.master,height=600,width=600)
-        t.wm_title("FITS Header:  %s"%(self.fname))
-        s=tk.Scrollbar(t)
-        s.pack(side=tk.RIGHT,fill=tk.Y)
-        b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
-        b.pack()
-        hlist=tk.Listbox(t,yscrollcommand=s.set,height=20,width=80)
+        try:
+            t=tk.Toplevel(self.master,height=600,width=600)
+            t.wm_title("FITS Header:  %s"%(self.fname))
+            s=tk.Scrollbar(t)
+            s.pack(side=tk.RIGHT,fill=tk.Y)
+            b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
+            b.pack()
+            hlist=tk.Listbox(t,yscrollcommand=s.set,height=20,width=80)
 
-        for keys in self.header.tostring(sep=',').split(','):
-            hlist.insert(tk.END,"%s "%(keys))
-        hlist.pack(side=tk.LEFT,fill=tk.BOTH)
-        s.config(command=hlist.yview)
-
+            for keys in self.header.tostring(sep=',').split(','):
+                hlist.insert(tk.END,"%s "%(keys))
+            hlist.pack(side=tk.LEFT,fill=tk.BOTH)
+            s.config(command=hlist.yview)
+        except:
+            self.destroychild(t)
 
     def EntryDialog(self,message="Text Input"):
         """Developement, not used nor working as intended."""
