@@ -343,20 +343,20 @@ class App:
         f1.close()
 
     def generate_plot(self,exp=True):
-        # try:
-        #     self.figframe.destroy()
-        # except:
-        #     pass
-        # if exp == True:
-        #     self.figframe=tk.Frame()
-        #     self.figframe.pack(side=tk.LEFT, fill="both",expand=1)
-        # elif exp == False:
-        #     self.figframe=tk.Frame()
-        #     self.figframe.pack(side=tk.LEFT, fill="y")
-        # else:
-        #     print("Halp!")
-        self.figframe=tk.Frame()
-        self.figframe.pack(side=tk.LEFT, fill="y")
+        try:
+            self.figframe.destroy()
+        except:
+            pass
+        if exp == True:
+            self.figframe=tk.Frame()
+            self.figframe.pack(side=tk.LEFT, fill="both",expand=1)
+        elif exp == False:
+            self.figframe=tk.Frame()
+            self.figframe.pack(side=tk.LEFT, fill="y")
+        else:
+            print("Halp!")
+        # self.figframe=tk.Frame()
+        # self.figframe.pack(side=tk.LEFT, fill="y")
         self.fig=plt.figure()
         self.ax = self.fig.add_subplot(111)
         self.ax.tick_params(right= True,top= True,which='both')
@@ -459,10 +459,6 @@ class App:
         self.ax.clear()
         self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
         self.plotSpectra()
-        try:
-            self.stackwindowstack()
-        except:
-            pass
         self.stackpane()
         self.toolbar.update()
         self.canvas.draw()
@@ -490,7 +486,7 @@ class App:
         self.loadedregions=False
 
     def stackprint(self):
-        """Prints stack to terminal.  And update later may make a pop-up window"""
+        """Prints stack to terminal."""
         print("Stack:")
         for f in self.stack:
             print(f)
@@ -1076,7 +1072,10 @@ class App:
             pass
         else:
             self.stack.remove(self.fname)
-            self.stackplottoggle()
+            self.ax.clear()
+            self.canvas.draw()
+            self.stackpane()
+            # self.stackplottoggle()
             # self.stackpane_refresh()
 
     # def stackwindowstack(self):
@@ -1134,18 +1133,18 @@ class App:
     #
     #     self.stackwindowstack()
     #
-    # def hidepane(self):
-    #     self.canvasframe.destroy()
-    #     self.stackcanvas.destroy()
-    #     self.vsb.destroy()
-    #     self.buttonframe.destroy()
-    #     try:
-    #         self.canvas.destory()
-    #     except:
-    #         pass
-    #     self.figframe.destroy()
-    #     self.generate_plot()
-    #     self.plotSpectra()
+    def hidepane(self):
+        self.canvasframe.destroy()
+        self.stackcanvas.destroy()
+        self.vsb.destroy()
+        self.buttonframe.destroy()
+        try:
+            self.canvas.destory()
+        except:
+            pass
+        self.figframe.destroy()
+        self.generate_plot()
+        self.plotSpectra()
     #
     # def showpane(self):
     #     self.canvasframe.destroy()
@@ -1162,8 +1161,17 @@ class App:
     def stackpane(self,event=None):
         try:
             self.canvasframe.destroy()
+        except:
+            pass
+        try:
             self.stackcanvas.destroy()
+        except:
+            pass
+        try:
             self.vsb.destroy()
+        except:
+            pass
+        try:
             self.buttonframe.destroy()
         except:
             pass
@@ -1171,24 +1179,28 @@ class App:
         self.buttonframe=tk.Frame()
         self.buttonframe.pack(side="top")
         tk.Button(self.buttonframe,text="Remove Selected", command=self.removefromstack).pack(side="left")
-        # tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left")
+        tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left")
         self.canvasframe=tk.Frame()
         self.canvasframe.pack(side = "top", fill="both",expand="yes")
-        self.stackcanvas = tk.Canvas(self.canvasframe, borderwidth=0, background="#ffffff")
-        self.stackcanvas.pack(side="top", fill="y",expand="yes")
+        self.stackcanvas = tk.Canvas(self.canvasframe,background="#ffffff")
+        self.stackcanvas.pack(side="top", fill="both",expand="yes")
         # self.labelframe=tk.Frame(self.stackcanvas)
         # self.labelframe.pack(side = tk.LEFT, fill="y")
         self.stackframe=tk.Frame(self.stackcanvas)
-        self.stackframe.pack(side = "left", fill="y",expand="yes")
+        self.stackframe.pack(side = "left", fill="both",expand="yes")
+
+        self.stackcanvas.create_window((0,0), window=self.stackframe, anchor="nw",tags="self.stackframe")#,
 
         self.vsb = tk.Scrollbar(self.stackcanvas, orient="vertical", command=self.stackcanvas.yview)
-        self.stackcanvas.configure(yscrollcommand=self.vsb.set)
+        self.hsb = tk.Scrollbar(self.stackcanvas, orient="horizontal", command=self.stackcanvas.xview)
+        self.stackcanvas.configure(yscrollcommand=self.vsb.set,xscrollcommand=self.hsb.set)
         self.vsb.pack(side="right", fill="y")
+        self.hsb.pack(side="bottom", fill="x")
 
-        self.stackcanvas.create_window(4,4, window=self.stackframe, anchor="nw")#,
-
-
-        self.stackframe.bind("<Configure>", self.onFrameConfigure)
+        # self.stackframe.bind("<Configure>", self.onFrameConfigure)
+        self.canvasframe.bind("<Configure>", self.onFrameConfigure)
+        # self.canvasframe.bind("<Configure>", self.onFrameConfigure)
+        # self.figframe.bind("<Configure>", self.onFrameConfigure)
         # self.displaystack()
 
         specnumber=list(np.arange(len(self.stack))+1)
@@ -1200,15 +1212,17 @@ class App:
             tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
 
 
+
+
     # def displaystack(self):
 
-        specnumber=list(np.arange(len(self.stack))+1)
-        specnumber.reverse()
-        i=0
-        for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
-            t="%s"%(specnumber[i])
-            # tk.Label(self.labelframe, text=t).pack(side="top")
-            tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
+        # specnumber=list(np.arange(len(self.stack))+1)
+        # specnumber.reverse()
+        # i=0
+        # for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
+        #     t="%s"%(specnumber[i])
+        #     # tk.Label(self.labelframe, text=t).pack(side="top")
+        #     tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
