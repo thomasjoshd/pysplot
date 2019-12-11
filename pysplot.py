@@ -40,7 +40,7 @@ from astropy.convolution import convolve, Box1DKernel
 import datetime
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.4.05"
+version="0.5.00"
 
 
 plot_params = {'axes.linewidth': 1,
