@@ -136,8 +136,8 @@ class App:
         stackmenu = tk.Menu(menu)
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
-        stackmenu.add_command(label="Stack Window (w)",command=self.stackwindow)
-        stackmenu.add_command(label="NEW Stack Window",command=self.NEWstackwindow)
+        # stackmenu.add_command(label="Stack Window (w)",command=self.stackwindow)
+        stackmenu.add_command(label="Show Stack Pane",command=self.showpane)
         stackmenu.add_command(label="Remove Selected From Stack",command=self.removefromstack)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Save Stack List",command=self.stacksave)
@@ -201,12 +201,19 @@ class App:
         self.master.bind('t', self.normalize)
         self.master.bind('u', self.velocity)
         self.master.bind('v', partial(self.fit,"voigt"))
-        self.master.bind('w', self.stackwindow)
+
         self.master.bind('|', self.gridtoggle)
         self.master.bind('[', self.overplottoggle)
         self.master.bind(']', self.stackplottoggle)
         self.master.bind('\\', self.singleplottoggle)
         self.master.bind('<space>', self.coord)
+
+        self.master.bind("<MouseWheel>",self.MouseWheelHandler)
+        self.master.bind("<Button-4>",self.MouseWheelHandler)
+        self.master.bind("<Button-5>",self.MouseWheelHandler)
+
+    def MouseWheelHandler(self,event=None):
+        print("I sense scrolling")
 
 
     def openSpectra(self,event=None,spec=None):
@@ -335,14 +342,25 @@ class App:
                 self.listedfiles.append(os.path.abspath(os.path.join(path,item[0])))
         f1.close()
 
-    def generate_plot(self):
-        self.figframe=tk.Frame()
-        self.figframe.pack(side=tk.LEFT, fill="y")
+    def generate_plot(self,exp=True):
+        try:
+            self.figframe.destroy()
+        except:
+            pass
+        if exp == True:
+            self.figframe=tk.Frame()
+            self.figframe.pack(side=tk.LEFT, fill="both",expand=1)
+        elif exp == False:
+            self.figframe=tk.Frame()
+            self.figframe.pack(side=tk.LEFT, fill="y")
+        else:
+            print("Halp!")
+
         self.fig=plt.figure()
         self.ax = self.fig.add_subplot(111)
         self.ax.tick_params(right= True,top= True,which='both')
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.figframe)
-        self.canvas.get_tk_widget().pack(side=tk.LEFT, fill="y", expand=1)
+        self.canvas.get_tk_widget().pack(side=tk.LEFT, fill="both")
         try:
             self.toolbar = NavigationToolbar2TkAgg( self.canvas, self.figframe )
         except:
@@ -357,7 +375,7 @@ class App:
         #Normal plot mode
         if self.overplot == False and self.stackplot == False:
             self.ax.clear()
-            self.ax.set_title("%s"%(self.fname),fontsize=12)
+            self.ax.set_title("%s"%(self.fname),fontsize=10)
             spec,=self.ax.step(self.wavelength,self.flux)
             #spec,=self.ax.plot(self.wavelength,self.flux)
             # self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
@@ -366,7 +384,7 @@ class App:
         #Overplot Mode
         elif self.overplot == True and self.stackplot == False:
             self.output.delete(0,tk.END)
-            self.ax.set_title("Overplot Mode, Display For Qualitative Comparison Only",fontsize=12)
+            self.ax.set_title("Overplot Mode, Display For Qualitative Comparison Only",fontsize=10)
             spec,=self.ax.step(self.wavelength,self.flux)
             self.ax.set_ylabel("Flux")
 ##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
@@ -377,7 +395,7 @@ class App:
 ##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
             spec,=self.ax.plot(self.wavelength,self.flux+self.stackint*u.flx)
             # self.stackint=self.stackint+float(self.w1.get())
-            self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
+            self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=10)
             self.ax.set_ylabel("Stack Plot Flux")
 
 
@@ -389,8 +407,11 @@ class App:
             tkinter.messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
             self.restore()
 
-        self.ax.set_xlabel("%s"%self.wavelength.unit)
-        self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=12))
+        if self.wavelength.unit == 'km / s':
+            self.ax.set_xlabel("Velocity (%s)"%self.wavelength.unit)
+        else:
+            self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
+        self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
         plt.grid(self.gridvalue)
         self.toolbar.update()
         self.canvas.draw()
@@ -441,6 +462,7 @@ class App:
             self.stackwindowstack()
         except:
             pass
+        self.stackpane()
         self.toolbar.update()
         self.canvas.draw()
 
@@ -1032,7 +1054,7 @@ class App:
         self.fname=spec
         self.singleplottoggle()
         self.plotSpectra(spec='Yes')
-        self.stackwindowstack()
+        # self.stackwindowstack()
 
     # def stackwindowrefresh(self):
     #     # self.destroychild(self.stw)
@@ -1042,11 +1064,11 @@ class App:
 
     def stackwindowopenspectra(self):
         self.openSpectra()
-        self.stackwindowstack()
+        # self.stackwindowstack()
 
     def stackwindowclearstack(self):
         self.stackreset()
-        self.stackwindowstack()
+        # self.stackwindowstack()
 
     def removefromstack(self):
         if self.stackplot==True:
@@ -1054,118 +1076,143 @@ class App:
         else:
             self.stack.remove(self.fname)
             self.stackplottoggle()
-            self.NEWstackwindowstack()
+            # self.stackpane_refresh()
 
-    def stackwindowstack(self):
+    # def stackwindowstack(self):
+    #     try:
+    #         self.stackframe.grid_forget()
+    #         self.stackbutton.grid_forget()
+    #         self.stacklabel.grid_forget()
+    #         self.stackscroll.grid_forget()
+    #         self.stackframe.destroy()
+    #         self.stackbutton.destroy()
+    #         self.stacklabel.destroy()
+    #         self.stackscroll.destroy()
+    #     except:
+    #         pass
+    #     i=0
+    #     self.stackscroll=tk.Scrollbar(self.stw,orient="vertical")
+    #     self.stackscroll.grid(row=1,column=3, sticky=tk.N + tk.S + tk.E)
+    #     self.stackframe=tk.Frame(self.stw,height=600,width=600)
+    #     self.stackframe.grid(row=1,column=0,columnspan=2)
+    #     # slist=tk.Listbox(self.stackframe,yscrollcommand=self.stackscroll.set,height=40,width=40)
+    #     specnumber=list(np.arange(len(self.stack))+1)
+    #     specnumber.reverse()
+    #     i=0
+    #     for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
+    #         self.stackbutton=tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s))
+    #         self.stacklabel=tk.Label(self.stackframe, text="%s"%(specnumber[i]))
+    #         self.stacklabel.grid(row=i+2,column=0)
+    #         self.stackbutton.grid(row=i+2,column=1,columnspan=1,pady=2)
+    #
+    #     # self.stackscroll.configure(command=self.stackframe.yview)
+
+    #
+    # def stackwindow(self,event=None):
+    #     """Display the stack as buttons"""
+    #     self.stackplot=True
+    #     self.stw=tk.Toplevel(self.master,height=600,width=600)
+    #     self.stw.wm_title("Spectra Stack: Examine Individual Spectra In Stack")
+    #     self.stw.minsize(100,100)
+    #     self.stw.maxsize(400,800)
+    #     self.stw.bind('o', self.openSpectra)
+    #     self.stw.bind(']', self.stackplottoggle)
+    #     # self.stackwindowcanvas=tk.Canvas(self.stw, borderwidth=0, background="#ffffff")
+    #     # b = tk.Button(self.stw,text="Stack Plot (])", command=self.stackplottoggle)
+    #     # b.grid(row=0,column=0,pady=2,padx=2)
+    #     # b = tk.Button(self.stw,text="Open Spectra (o)", command=self.stackwindowopenspectra)
+    #     # b.grid(row=0,column=1,pady=2,padx=2)
+    #     # b = tk.Button(self.stw,text="Refresh List", command=self.stackwindowstack)
+    #     # b.grid(row=0,column=2,pady=2,padx=2)
+    #     b = tk.Button(self.stw,text="Remove Selected", command=self.removefromstack)
+    #     b.grid(row=0,column=0,pady=2,padx=2)
+    #     # b = tk.Button(self.stw,text="Clear Stack", command=self.stackwindowclearstack)
+    #     # b.grid(row=0,column=4,pady=2,padx=2)
+    #     # b = tk.Button(self.stw,text="Close Window", command=lambda: self.destroychild(self.stw))
+    #     # b.grid(row=0,column=5,pady=2,padx=2)
+    #
+    #     self.stackwindowstack()
+    #
+    def hidepane(self):
+        self.canvasframe.destroy()
+        self.stackcanvas.destroy()
+        self.vsb.destroy()
+        self.buttonframe.destroy()
         try:
-            self.stackframe.grid_forget()
-            self.stackbutton.grid_forget()
-            self.stacklabel.grid_forget()
-            self.stackscroll.grid_forget()
-            self.stackframe.destroy()
-            self.stackbutton.destroy()
-            self.stacklabel.destroy()
-            self.stackscroll.destroy()
+            self.canvas.destory()
         except:
             pass
-        i=0
-        self.stackscroll=tk.Scrollbar(self.stw,orient="vertical")
-        self.stackscroll.grid(row=1,column=3, sticky=tk.N + tk.S + tk.E)
-        self.stackframe=tk.Frame(self.stw,height=600,width=600)
-        self.stackframe.grid(row=1,column=0,columnspan=2)
-        # slist=tk.Listbox(self.stackframe,yscrollcommand=self.stackscroll.set,height=40,width=40)
-        specnumber=list(np.arange(len(self.stack))+1)
-        specnumber.reverse()
-        i=0
-        for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
-            self.stackbutton=tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s))
-            self.stacklabel=tk.Label(self.stackframe, text="%s"%(specnumber[i]))
-            self.stacklabel.grid(row=i+2,column=0)
-            self.stackbutton.grid(row=i+2,column=1,columnspan=1,pady=2)
+        self.figframe.destroy()
+        self.generate_plot()
+        self.plotSpectra()
 
-        # self.stackscroll.configure(command=self.stackframe.yview)
+    def showpane(self):
+        self.canvasframe.destroy()
+        try:
+            self.canvas.destory()
+        except:
+            pass
+        self.figframe.destroy()
+        self.generate_plot(exp=False)
+        self.stackpane()
+        self.plotSpectra()
 
 
-    def stackwindow(self,event=None):
-        """Display the stack as buttons"""
-        self.stackplot=True
-        self.stw=tk.Toplevel(self.master,height=600,width=600)
-        self.stw.wm_title("Spectra Stack: Examine Individual Spectra In Stack")
-        self.stw.minsize(100,100)
-        self.stw.maxsize(400,800)
-        self.stw.bind('o', self.openSpectra)
-        self.stw.bind(']', self.stackplottoggle)
-        # self.stackwindowcanvas=tk.Canvas(self.stw, borderwidth=0, background="#ffffff")
-        # b = tk.Button(self.stw,text="Stack Plot (])", command=self.stackplottoggle)
-        # b.grid(row=0,column=0,pady=2,padx=2)
-        # b = tk.Button(self.stw,text="Open Spectra (o)", command=self.stackwindowopenspectra)
-        # b.grid(row=0,column=1,pady=2,padx=2)
-        # b = tk.Button(self.stw,text="Refresh List", command=self.stackwindowstack)
-        # b.grid(row=0,column=2,pady=2,padx=2)
-        b = tk.Button(self.stw,text="Remove Selected", command=self.removefromstack)
-        b.grid(row=0,column=0,pady=2,padx=2)
-        # b = tk.Button(self.stw,text="Clear Stack", command=self.stackwindowclearstack)
-        # b.grid(row=0,column=4,pady=2,padx=2)
-        # b = tk.Button(self.stw,text="Close Window", command=lambda: self.destroychild(self.stw))
-        # b.grid(row=0,column=5,pady=2,padx=2)
+    def stackpane(self,event=None):
+        try:
+            self.canvasframe.destroy()
+            self.stackcanvas.destroy()
+            self.vsb.destroy()
+            self.buttonframe.destroy()
+        except:
+            pass
 
-        self.stackwindowstack()
-    #
-    def NEWstackwindow(self,event=None):
+        self.buttonframe=tk.Frame()
+        self.buttonframe.pack(side="top")
+        tk.Button(self.buttonframe,text="Remove Selected", command=self.removefromstack).pack(side="left")
+        tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left")
+        self.canvasframe=tk.Frame()
+        self.canvasframe.pack(side = "top", fill="both",expand="yes")
+        self.stackcanvas = tk.Canvas(self.canvasframe, borderwidth=0, background="#ffffff")
+        self.stackcanvas.pack(side="top", fill="y",expand="yes")
+        # self.labelframe=tk.Frame(self.stackcanvas)
+        # self.labelframe.pack(side = tk.LEFT, fill="y")
+        self.stackframe=tk.Frame(self.stackcanvas)
+        self.stackframe.pack(side = "left", fill="y",expand="yes")
 
-        # tk.Frame.__init__(self, root)
-        self.stackplot=True
-        # self.stw=tk.Toplevel(self.figframe)#,height=800,width=400)
-        # self.stw.wm_title("Spectra Stack: Examine Individual Spectra In Stack")
-        # self.stw.minsize(100,100)
-        # self.stw.maxsize(400,800)
-        # self.stw.bind('o', self.openSpectra)
-        # self.stw.bind(']', self.stackplottoggle)
+        self.vsb = tk.Scrollbar(self.stackcanvas, orient="vertical", command=self.stackcanvas.yview)
+        self.stackcanvas.configure(yscrollcommand=self.vsb.set)
+        self.vsb.pack(side="right", fill="y")
 
-        self.stackframe=tk.Frame()
-        self.stackframe.pack(side = tk.RIGHT, fill="y")
-        self.stackcanvas = tk.Canvas(self.figframe, borderwidth=0, background="#ffffff")
+        self.stackcanvas.create_window(4,4, window=self.stackframe, anchor="nw")#,
 
-        self.stackcanvas.pack(side=tk.RIGHT, fill="y", expand=1)
-        # topframe=tk.Frame(self.stackcanvas)
-        # topframe.pack(tk.TOP)
-        # tk.Button(topframe,text="Remove Selected", command=self.removefromstack).pack()
-        #
-        # self.frame = tk.Frame(self.stackcanvas)#, background="#ffffff")
-        # self.frame.pack(tk.RIGHT)
-        #
-        # self.vsb = tk.Scrollbar(self.stw, orient="vertical", command=self.stackcanvas.yview)
-        # self.stackcanvas.configure(yscrollcommand=self.vsb.set)
-        #
-        # self.vsb.pack(side="right", fill="y")
-        # self.stackcanvas.pack(side="left", fill="both", expand=True)
-        # self.stackcanvas.create_window(0,0, window=self.frame, anchor="nw")#,
-        #                           # tags="self.frame")
-        #
-        #
-        # self.frame.bind("<Configure>", self.onFrameConfigure)
-        # # self.labelframe.bind("<Configure>", self.onFrameConfigure)
-        #
-        # self.NEWstackwindowstack()
 
-    def NEWstackwindowstack(self):
-        # try:
-        #     self.frame.grid_forget()
-        #     self.frame.destroy()
-        # except:
-        #     pass
+        self.stackframe.bind("<Configure>", self.onFrameConfigure)
+        # self.displaystack()
 
         specnumber=list(np.arange(len(self.stack))+1)
         specnumber.reverse()
         i=0
         for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
             t="%s"%(specnumber[i])
-            tk.Label(self.frame, text=t).pack(side="left")
-            tk.Button(self.frame,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="left")
+            # tk.Label(self.labelframe, text=t).pack(side="top")
+            tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
+
+
+    # def displaystack(self):
+
+        specnumber=list(np.arange(len(self.stack))+1)
+        specnumber.reverse()
+        i=0
+        for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
+            t="%s"%(specnumber[i])
+            # tk.Label(self.labelframe, text=t).pack(side="top")
+            tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
         self.stackcanvas.configure(scrollregion=self.stackcanvas.bbox("all"))
+        # self.displaystack()
 
 
     def save_fits(self,extend=None):
@@ -1254,6 +1301,8 @@ class App:
 
 #----------------------------------------------------------------------------------
 #Begin GUI
+
+
 
 root = tk.Tk() #main GUI window
 program=App(root)
