@@ -137,7 +137,7 @@ class App:
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
         # stackmenu.add_command(label="Stack Window (w)",command=self.stackwindow)
-        stackmenu.add_command(label="Show Stack Pane",command=self.showpane)
+        stackmenu.add_command(label="Show Stack Pane",command=self.stackpane)
         stackmenu.add_command(label="Remove Selected From Stack",command=self.removefromstack)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Save Stack List",command=self.stacksave)
@@ -343,19 +343,20 @@ class App:
         f1.close()
 
     def generate_plot(self,exp=True):
-        try:
-            self.figframe.destroy()
-        except:
-            pass
-        if exp == True:
-            self.figframe=tk.Frame()
-            self.figframe.pack(side=tk.LEFT, fill="both",expand=1)
-        elif exp == False:
-            self.figframe=tk.Frame()
-            self.figframe.pack(side=tk.LEFT, fill="y")
-        else:
-            print("Halp!")
-
+        # try:
+        #     self.figframe.destroy()
+        # except:
+        #     pass
+        # if exp == True:
+        #     self.figframe=tk.Frame()
+        #     self.figframe.pack(side=tk.LEFT, fill="both",expand=1)
+        # elif exp == False:
+        #     self.figframe=tk.Frame()
+        #     self.figframe.pack(side=tk.LEFT, fill="y")
+        # else:
+        #     print("Halp!")
+        self.figframe=tk.Frame()
+        self.figframe.pack(side=tk.LEFT, fill="y")
         self.fig=plt.figure()
         self.ax = self.fig.add_subplot(111)
         self.ax.tick_params(right= True,top= True,which='both')
@@ -492,7 +493,7 @@ class App:
         """Prints stack to terminal.  And update later may make a pop-up window"""
         print("Stack:")
         for f in self.stack:
-            print(f,type(f))
+            print(f)
 
     def stacksave(self):
         """Save the stack for later re-loading."""
@@ -1133,29 +1134,29 @@ class App:
     #
     #     self.stackwindowstack()
     #
-    def hidepane(self):
-        self.canvasframe.destroy()
-        self.stackcanvas.destroy()
-        self.vsb.destroy()
-        self.buttonframe.destroy()
-        try:
-            self.canvas.destory()
-        except:
-            pass
-        self.figframe.destroy()
-        self.generate_plot()
-        self.plotSpectra()
-
-    def showpane(self):
-        self.canvasframe.destroy()
-        try:
-            self.canvas.destory()
-        except:
-            pass
-        self.figframe.destroy()
-        self.generate_plot(exp=False)
-        self.stackpane()
-        self.plotSpectra()
+    # def hidepane(self):
+    #     self.canvasframe.destroy()
+    #     self.stackcanvas.destroy()
+    #     self.vsb.destroy()
+    #     self.buttonframe.destroy()
+    #     try:
+    #         self.canvas.destory()
+    #     except:
+    #         pass
+    #     self.figframe.destroy()
+    #     self.generate_plot()
+    #     self.plotSpectra()
+    #
+    # def showpane(self):
+    #     self.canvasframe.destroy()
+    #     try:
+    #         self.canvas.destory()
+    #     except:
+    #         pass
+    #     self.figframe.destroy()
+    #     self.generate_plot(exp=False)
+    #     self.stackpane()
+    #     self.plotSpectra()
 
 
     def stackpane(self,event=None):
@@ -1170,7 +1171,7 @@ class App:
         self.buttonframe=tk.Frame()
         self.buttonframe.pack(side="top")
         tk.Button(self.buttonframe,text="Remove Selected", command=self.removefromstack).pack(side="left")
-        tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left")
+        # tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left")
         self.canvasframe=tk.Frame()
         self.canvasframe.pack(side = "top", fill="both",expand="yes")
         self.stackcanvas = tk.Canvas(self.canvasframe, borderwidth=0, background="#ffffff")
