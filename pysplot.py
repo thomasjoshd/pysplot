@@ -1136,7 +1136,7 @@ class App:
     def hidepane(self):
         self.canvasframe.destroy()
         self.stackcanvas.destroy()
-        self.vsb.destroy()
+        # self.vsb.destroy()
         self.buttonframe.destroy()
         try:
             self.canvas.destory()
@@ -1144,7 +1144,11 @@ class App:
             pass
         self.figframe.destroy()
         self.generate_plot()
-        self.plotSpectra()
+        if self.stackplot == True or self.overplot == True:
+            self.plotSpectra()
+        else:
+            self.plotSpectra(spec=self.fname)
+        # self.canvas.draw()
     #
     # def showpane(self):
     #     self.canvasframe.destroy()
