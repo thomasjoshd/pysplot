@@ -40,7 +40,7 @@ from astropy.convolution import convolve, Box1DKernel
 import datetime
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.5.00"
+version="0.5.01"
 
 
 plot_params = {'axes.linewidth': 1,
@@ -1242,4 +1242,4 @@ root.mainloop() #lets the GUI run
 
 #need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
 #this will be nice for stack plots, but will also allow dynamical spectra.
-# https://stackoverflow.com/questions/9763193/dynamically-changing-scrollregion-of-a-canvas-in-tkinter
+#need a logging system
