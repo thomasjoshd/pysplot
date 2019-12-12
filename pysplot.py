@@ -267,6 +267,7 @@ class App:
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
                 # self.hjd.append(float(self.header["HJD"]))
+                
                 self.splot()
                 self.stackint=self.stackint+1
             elif '.txt' in item or '.TXT' in item:
