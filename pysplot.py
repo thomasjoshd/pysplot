@@ -75,7 +75,7 @@ class App:
         self.w1v=tk.StringVar()
         self.w1 = tk.Entry(self.inputframe,text=self.w1v,width=100)
         self.w1.pack(side = tk.LEFT)
-        self.w1v.set(1)	#default value of so the program doesn't barf if accidentally pushed.
+        self.w1v.set(1)	#default value of so the program doesn't barf if accidentally used.
         # self.w1.grid(row=1,column=1)
 
         #--------------------------------------------------
@@ -102,6 +102,7 @@ class App:
         viewmenu.add_command(label="Over Plot ([)",command=self.overplottoggle)
         viewmenu.add_command(label="Stack Plot (])",command=self.stackplottoggle)
         viewmenu.add_command(label="Single Plot (\\)",command=self.singleplottoggle)
+        viewmenu.add_command(label="Dynamical",command=self.dynamical)
 
 
         modmenu = tk.Menu(menu)
@@ -177,6 +178,7 @@ class App:
         self.loadedregions=False
         self.loadednorm=False
         self.loadedbisect=False
+        self.hjd=[]
 
 
         #keyboard shortcuts (listed alphabetically)
@@ -209,9 +211,9 @@ class App:
         self.master.bind('\\', self.singleplottoggle)
         self.master.bind('<space>', self.coord)
 
-        self.master.bind("<MouseWheel>",self.MouseWheelHandler)
-        self.master.bind("<Button-4>",self.MouseWheelHandler)
-        self.master.bind("<Button-5>",self.MouseWheelHandler)
+        # self.master.bind("<MouseWheel>",self.MouseWheelHandler)
+        # self.master.bind("<Button-4>",self.MouseWheelHandler)
+        # self.master.bind("<Button-5>",self.MouseWheelHandler)
 
     def MouseWheelHandler(self,event=None):
         print("I sense scrolling")
@@ -265,6 +267,8 @@ class App:
             self.fname=item
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
+                # self.hjd.append(float(self.header["HJD"]))
+                
                 self.splot()
                 self.stackint=self.stackint+1
             elif '.txt' in item or '.TXT' in item:
@@ -281,7 +285,6 @@ class App:
 
         if header['NAXIS'] == 1:
             wcs = WCS(header)
-            # print(wcs)
             #make index array
             index = np.arange(header['NAXIS1'])
             wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
@@ -295,17 +298,9 @@ class App:
             self.sp.close()
         elif header['NAXIS'] > 1:
             wcs = WCS(header)
-            # print(wcs)
-
-            #make index array
-            # spectra_list = read_fits.read_fits_spectrum1d(self.fname)
             index = np.arange(header['NAXIS1'])
-            # wavelength = wcs.wcs_pix2world(index[:,np.newaxis], [0])
-            # wavelength = wavelength.flatten()
-            # wavelength = wavelength*u.AA
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()*u.flx
-            # print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0]print(self.stack).data))
 
             self.wavelength=wavelength
             self.flux=flux
@@ -390,14 +385,9 @@ class App:
             self.ax.set_title("Overplot Mode, Display For Qualitative Comparison Only",fontsize=10)
             spec,=self.ax.step(self.wavelength,self.flux)
             self.ax.set_ylabel("Flux")
-##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
-        #Stack Plot Mode
+
         elif self.overplot == False and self.stackplot == True:
-            # self.output.delete(0,tk.END)
-            # self.output.insert(tk.END,"The number entered below will change the stack spacing.")
-##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
             spec,=self.ax.plot(self.wavelength,self.flux+self.stackint*u.flx)
-            # self.stackint=self.stackint+float(self.w1.get())
             self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=10)
             self.ax.set_ylabel("Stack Plot Flux")
 
@@ -410,14 +400,18 @@ class App:
             tkinter.messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
             self.restore()
 
+        self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
+        plt.grid(self.gridvalue)
+        self.xaxislabel()
+        self.toolbar.update()
+        self.canvas.draw()
+
+    def xaxislabel(self):
         if self.wavelength.unit == 'km / s':
             self.ax.set_xlabel("Velocity (%s)"%self.wavelength.unit)
         else:
             self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
-        self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
-        plt.grid(self.gridvalue)
-        self.toolbar.update()
-        self.canvas.draw()
+
 
 
     def zoomout(self,event=None):
@@ -477,10 +471,27 @@ class App:
         self.toolbar.update()
         self.canvas.draw()
 
+    def dynamical(self):
+        print(self.hjd)
+        self.ax.clear()
+        self.ax.set_ylabel("HJD")
+        self.xaxislabel()
+        tt=arange(min(self.hjd), max(self.hjd),.5) #phase steps
+
+        # data=empty([len(tt),len(vel)],dtype=float)
+        # data.fill(nan)
+
+        self.toolbar.update()
+        self.canvas.draw()
+
+
+
+
 
     def stackreset(self):
         """Reset the stacking parameters"""
         self.stack=[]
+        self.hjd=[]
         self.stackint=0
         self.stackplottoggle()
         self.loadednorm=False
@@ -868,7 +879,6 @@ class App:
                                                         ("All files", "*.*") ))
         dataout=open(file)
 
-        # data=np.array(list(csv.reader(f1,delimiter=' ')))
         for i,line in enumerate(dataout):
             if i == 0 :
                 pass
@@ -922,7 +932,6 @@ class App:
                                                         ("All files", "*.*") ))
         dataout=open(file)
 
-        # data=np.array(list(csv.reader(f1,delimiter=' ')))
         for i,line in enumerate(dataout):
             if i == 0 :
                 pass
@@ -1225,7 +1234,7 @@ class App:
         t.wm_title("About")
         tk.Label(t,text="Author: Dr. Joshua Thomas \n thomas.joshd@gmail.com").pack()
         tk.Label(t,text="This program was designed to emulate some basic IRAF splot functions.").pack()
-        tk.Label(t,text="Uses Astropy library, and some parts are directly modified from the UVES tutorial.").pack()
+        tk.Label(t,text="Uses Astropy library.").pack()
         tk.Label(t,text="Version %s"%version).pack()
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
@@ -1244,3 +1253,5 @@ root.mainloop() #lets the GUI run
 #need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
 #this will be nice for stack plots, but will also allow dynamical spectra.
 #need a logging system
+#fits to features doesn't display correctly.  Perhaps a fit will zoom in and just show the fit.
+#implement mouse scroll wheel.
