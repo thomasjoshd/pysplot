@@ -40,7 +40,7 @@ from astropy.convolution import convolve, Box1DKernel
 import datetime
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.5.00"
+version="0.5.01"
 
 
 plot_params = {'axes.linewidth': 1,
@@ -119,6 +119,7 @@ class App:
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
         regionmenu.add_command(label="Define Single Region", command=self.regionload)
+        regionmenu.add_command(label="Clear Region", command=self.reset)
         regionmenu.add_command(label="Equivalent Width (e)", command=self.eqw)
         regionmenu.add_command(label="Gaussian (g)", command=partial(self.fit,func="gauss"))
         regionmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
@@ -140,20 +141,20 @@ class App:
         stackmenu.add_command(label="Show Stack Pane",command=self.stackpane)
         stackmenu.add_command(label="Remove Selected From Stack",command=self.removefromstack)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
-        stackmenu.add_command(label="Save Stack List",command=self.stacksave)
+        stackmenu.add_command(label="Save Stack List",command=self.savestack)
         stackmenu.add_command(label="Stack Clear",command=self.stackreset)
         stackmenu.add_separator()
-        stackmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
+        # stackmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
         stackmenu.add_command(label="Normalize",command=partial(self.stacker,func="norm"))
         stackmenu.add_separator()
-        stackmenu.add_command(label="Load Region",command=self.LoadRegion)
+        # stackmenu.add_command(label="Load Region",command=self.LoadRegion)
         stackmenu.add_command(label="Equivalent Width",command=partial(self.stacker,func="eqw"))
         stackmenu.add_command(label="Gaussian",command=partial(self.stacker,func="gauss"))
         stackmenu.add_command(label="Voigt",command=partial(self.stacker,func="voigt"))
         stackmenu.add_command(label="Lorentzian",command=partial(self.stacker,func="lorentz"))
         stackmenu.add_command(label="Crop",command=partial(self.stacker,func="scopy"))
         stackmenu.add_separator()
-        stackmenu.add_command(label="Load Bisection Regions", command=self.LoadBisect)
+        # stackmenu.add_command(label="Load Bisection Regions", command=self.LoadBisect)
         stackmenu.add_command(label="Bisect",command=partial(self.stacker,func="bisect"))
 
         stackmenu.add_separator()
@@ -270,7 +271,7 @@ class App:
                 self.read_txt()
                 self.splot()
                 self.stackint=self.stackint+1
-
+        self.plotRegions()
 
     def read_fits(self):
         #need to add a way to read multispec fits files
@@ -492,13 +493,15 @@ class App:
         for f in self.stack:
             print(f)
 
-    def stacksave(self):
+    def savestack(self,name="stack.list",stack=None):
         """Save the stack for later re-loading."""
+        if stack == None:
+            stack=self.stack
         path=os.path.dirname(self.fname)
-        basename=os.path.basename("stack.list")
+        basename=os.path.basename(name)
         savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".list")
         dataout=open(savename,'w')
-        for row in self.stack:
+        for row in stack:
             dataout.write('%s\n'%(row))
         dataout.close()
         print("Stack saved to:  %s"%(savename))
@@ -546,7 +549,7 @@ class App:
 
 
     def restore(self,event=None):
-        """Resets the spectrum to the original state."""
+        """Resets the last/current spectrum to the original state."""
         try:
             self.flux=self.flux_orig
             self.splot()
@@ -562,6 +565,8 @@ class App:
         elif self.stackplot == True:
             self.stackplottoggle()
         self.region_clear()
+        self.loadedbisect=False
+
 
 
     def pltregion(self,x,y,sym='-',c='black'):
@@ -807,14 +812,24 @@ class App:
         print("Region saved to:  %s"%(savename))
         self.norm_clear()
 
+    def plotRegions(self):
+        message="Using a loaded region, when finish use View>Reset or press r."
+        if self.loadednorm == True:
+            self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
+        if self.loadedbisect == True:
+            self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
+        if self.loadedregions == True:
+            self.ax.plot(self.saveregions_x,self.saveregions_y,'s',color='black')
+        self.canvas.draw()
+        self.output.delete(0,tk.END)
+        self.output.insert(tk.END,message)
+
     def LoadRegion(self):
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
         self.norm_clear()
         file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         dataout=open(file)
-
-        # data=np.array(list(csv.reader(f1,delimiter=' ')))
         for i,line in enumerate(dataout):
             if i == 0 :
                 pass
@@ -826,12 +841,8 @@ class App:
             else:
                 pass
         dataout.close()
-        self.ax.plot(self.saveregions_x,self.saveregions_y,'s',color='black')
-        self.canvas.draw()
-        print("Region loaded from:  %s"%(file))
-        self.output.delete(0,tk.END)
-        self.output.insert(tk.END,"Using a loaded region, when finish use View>Reset or press r.")
         self.loadedregions=True
+        self.plotRegions()
 
     def SaveBisect(self):
         """Save the regions for bisection"""
@@ -869,14 +880,9 @@ class App:
             else:
                 pass
         dataout.close()
-        self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
-        self.canvas.draw()
-        print("Bisection Parameters Loaded from:  %s"%(file))
-        self.output.delete(0,tk.END)
-        self.output.insert(tk.END,"Uisng loaded parameters, when finished use View>Reset or press r.")
-        self.loadedregions=True
-        self.BisectLine()
-        self.loadedregions=False
+        self.loadedbisect=True
+        self.plotRegions()
+
 
     def norm_clear(self,event=None):
         """Clear and reset normalization parameters and region selections."""
@@ -930,12 +936,8 @@ class App:
             else:
                 pass
         dataout.close()
-        self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
-        self.canvas.draw()
-        print("Normalization Parameters Loaded from:  %s"%(file))
-        self.output.delete(0,tk.END)
-        self.output.insert(tk.END,"Uisng loaded parameters, when finished use View>Reset or press r.")
         self.loadednorm=True
+        self.plotRegions()
 
 
     def continuum(self,event=None):
@@ -996,6 +998,7 @@ class App:
         print("No region loaded.")
 
     def stacker(self,func=None):
+        self.stackforsaving=[]
         """A helper function to automate tasks for many spectra."""
         if func == None:
             print("No function selected for stacker.")
@@ -1047,26 +1050,20 @@ class App:
                         self.abort_stack()
                 else:
                     print("Stacker cannot handle a function.")
-
+            if func == "norm":
+                self.savestack(name="norm.list",stack=self.stackforsaving)
+            elif func == "scopy":
+                self.savestack(name="crop.list",stack=self.stackforsaving)
     def stackwindowplot(self,spec):
         self.fname=spec
         self.singleplottoggle()
         self.plotSpectra(spec='Yes')
-        # self.stackwindowstack()
-
-    # def stackwindowrefresh(self):
-    #     # self.destroychild(self.stw)
-    #     # self.stackwindow()
-    #     self.stackwindow.f.destroy()
-    #     self.stackplottoggle()
 
     def stackwindowopenspectra(self):
         self.openSpectra()
-        # self.stackwindowstack()
 
     def stackwindowclearstack(self):
         self.stackreset()
-        # self.stackwindowstack()
 
     def removefromstack(self):
         if self.stackplot==True:
@@ -1076,68 +1073,12 @@ class App:
             self.ax.clear()
             self.canvas.draw()
             self.stackpane()
-            # self.stackplottoggle()
-            # self.stackpane_refresh()
+            self.output.delete(0,tk.END)
+            self.output.insert(tk.END,"You may replot the stack (]), overplot ([]), or choose a new spectrum from the stack.")
 
-    # def stackwindowstack(self):
-    #     try:
-    #         self.stackframe.grid_forget()
-    #         self.stackbutton.grid_forget()
-    #         self.stacklabel.grid_forget()
-    #         self.stackscroll.grid_forget()
-    #         self.stackframe.destroy()
-    #         self.stackbutton.destroy()
-    #         self.stacklabel.destroy()
-    #         self.stackscroll.destroy()
-    #     except:
-    #         pass
-    #     i=0
-    #     self.stackscroll=tk.Scrollbar(self.stw,orient="vertical")
-    #     self.stackscroll.grid(row=1,column=3, sticky=tk.N + tk.S + tk.E)
-    #     self.stackframe=tk.Frame(self.stw,height=600,width=600)
-    #     self.stackframe.grid(row=1,column=0,columnspan=2)
-    #     # slist=tk.Listbox(self.stackframe,yscrollcommand=self.stackscroll.set,height=40,width=40)
-    #     specnumber=list(np.arange(len(self.stack))+1)
-    #     specnumber.reverse()
-    #     i=0
-    #     for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
-    #         self.stackbutton=tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s))
-    #         self.stacklabel=tk.Label(self.stackframe, text="%s"%(specnumber[i]))
-    #         self.stacklabel.grid(row=i+2,column=0)
-    #         self.stackbutton.grid(row=i+2,column=1,columnspan=1,pady=2)
-    #
-    #     # self.stackscroll.configure(command=self.stackframe.yview)
-
-    #
-    # def stackwindow(self,event=None):
-    #     """Display the stack as buttons"""
-    #     self.stackplot=True
-    #     self.stw=tk.Toplevel(self.master,height=600,width=600)
-    #     self.stw.wm_title("Spectra Stack: Examine Individual Spectra In Stack")
-    #     self.stw.minsize(100,100)
-    #     self.stw.maxsize(400,800)
-    #     self.stw.bind('o', self.openSpectra)
-    #     self.stw.bind(']', self.stackplottoggle)
-    #     # self.stackwindowcanvas=tk.Canvas(self.stw, borderwidth=0, background="#ffffff")
-    #     # b = tk.Button(self.stw,text="Stack Plot (])", command=self.stackplottoggle)
-    #     # b.grid(row=0,column=0,pady=2,padx=2)
-    #     # b = tk.Button(self.stw,text="Open Spectra (o)", command=self.stackwindowopenspectra)
-    #     # b.grid(row=0,column=1,pady=2,padx=2)
-    #     # b = tk.Button(self.stw,text="Refresh List", command=self.stackwindowstack)
-    #     # b.grid(row=0,column=2,pady=2,padx=2)
-    #     b = tk.Button(self.stw,text="Remove Selected", command=self.removefromstack)
-    #     b.grid(row=0,column=0,pady=2,padx=2)
-    #     # b = tk.Button(self.stw,text="Clear Stack", command=self.stackwindowclearstack)
-    #     # b.grid(row=0,column=4,pady=2,padx=2)
-    #     # b = tk.Button(self.stw,text="Close Window", command=lambda: self.destroychild(self.stw))
-    #     # b.grid(row=0,column=5,pady=2,padx=2)
-    #
-    #     self.stackwindowstack()
-    #
     def hidepane(self):
         self.canvasframe.destroy()
         self.stackcanvas.destroy()
-        # self.vsb.destroy()
         self.buttonframe.destroy()
         try:
             self.canvas.destory()
@@ -1149,18 +1090,6 @@ class App:
             self.plotSpectra()
         else:
             self.plotSpectra(spec=self.fname)
-        # self.canvas.draw()
-    #
-    # def showpane(self):
-    #     self.canvasframe.destroy()
-    #     try:
-    #         self.canvas.destory()
-    #     except:
-    #         pass
-    #     self.figframe.destroy()
-    #     self.generate_plot(exp=False)
-    #     self.stackpane()
-    #     self.plotSpectra()
 
 
     def stackpane(self,event=None):
@@ -1183,18 +1112,16 @@ class App:
 
         self.buttonframe=tk.Frame()
         self.buttonframe.pack(side="top")
-        tk.Button(self.buttonframe,text="Remove Selected", command=self.removefromstack).pack(side="left")
-        tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left")
+        tk.Button(self.buttonframe,text="Remove Selected", command=self.removefromstack).pack(side="left",padx=2)
+        tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left",padx=2)
         self.canvasframe=tk.Frame()
         self.canvasframe.pack(side = "top", fill="both",expand="yes")
         self.stackcanvas = tk.Canvas(self.canvasframe,background="#ffffff")
         self.stackcanvas.pack(side="top", fill="both",expand="yes")
-        # self.labelframe=tk.Frame(self.stackcanvas)
-        # self.labelframe.pack(side = tk.LEFT, fill="y")
         self.stackframe=tk.Frame(self.stackcanvas)
         self.stackframe.pack(side = "left", fill="both",expand="yes")
 
-        self.stackcanvas.create_window((0,0), window=self.stackframe, anchor="nw",tags="self.stackframe")#,
+        self.stackcanvas.create_window((0,0), window=self.stackframe, anchor="nw",tags="self.stackframe")
 
         self.vsb = tk.Scrollbar(self.stackcanvas, orient="vertical", command=self.stackcanvas.yview)
         self.hsb = tk.Scrollbar(self.stackcanvas, orient="horizontal", command=self.stackcanvas.xview)
@@ -1202,37 +1129,21 @@ class App:
         self.vsb.pack(side="right", fill="y")
         self.hsb.pack(side="bottom", fill="x")
 
-        # self.stackframe.bind("<Configure>", self.onFrameConfigure)
         self.canvasframe.bind("<Configure>", self.onFrameConfigure)
-        # self.canvasframe.bind("<Configure>", self.onFrameConfigure)
-        # self.figframe.bind("<Configure>", self.onFrameConfigure)
-        # self.displaystack()
+
 
         specnumber=list(np.arange(len(self.stack))+1)
         specnumber.reverse()
         i=0
         for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
             t="%s"%(specnumber[i])
-            # tk.Label(self.labelframe, text=t).pack(side="top")
-            tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
+            tk.Button(self.stackframe,text="%s: %s"%(t,os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
 
 
-
-
-    # def displaystack(self):
-
-        # specnumber=list(np.arange(len(self.stack))+1)
-        # specnumber.reverse()
-        # i=0
-        # for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
-        #     t="%s"%(specnumber[i])
-        #     # tk.Label(self.labelframe, text=t).pack(side="top")
-        #     tk.Button(self.stackframe,text="%s"%(os.path.basename(s)),command=partial(self.stackwindowplot,s)).pack(side="top")
 
     def onFrameConfigure(self, event):
         '''Reset the scroll region to encompass the inner frame'''
         self.stackcanvas.configure(scrollregion=self.stackcanvas.bbox("all"))
-        # self.displaystack()
 
 
     def save_fits(self,extend=None):
@@ -1247,6 +1158,7 @@ class App:
                 hdu.writeto(savename)
             else:
                 savename=path_wo_ext+extend
+                self.stackforsaving.append(savename)
                 hdu.writeto(savename,overwrite=True)
                 print("Saved to: ", savename)
         except:
@@ -1331,4 +1243,4 @@ root.mainloop() #lets the GUI run
 
 #need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
 #this will be nice for stack plots, but will also allow dynamical spectra.
-# https://stackoverflow.com/questions/9763193/dynamically-changing-scrollregion-of-a-canvas-in-tkinter
+#need a logging system
