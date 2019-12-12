@@ -867,7 +867,6 @@ class App:
                                                         ("All files", "*.*") ))
         dataout=open(file)
 
-        # data=np.array(list(csv.reader(f1,delimiter=' ')))
         for i,line in enumerate(dataout):
             if i == 0 :
                 pass
@@ -921,7 +920,6 @@ class App:
                                                         ("All files", "*.*") ))
         dataout=open(file)
 
-        # data=np.array(list(csv.reader(f1,delimiter=' ')))
         for i,line in enumerate(dataout):
             if i == 0 :
                 pass
