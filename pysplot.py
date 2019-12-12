@@ -474,6 +474,11 @@ class App:
         self.ax.clear()
         self.ax.set_ylabel("HJD")
         self.xaxislabel()
+        tt=arange(min(self.hjd), max(self.hjd),.5) #phase steps
+
+        # data=empty([len(tt),len(vel)],dtype=float)
+        # data.fill(nan)
+
         self.toolbar.update()
         self.canvas.draw()
 
