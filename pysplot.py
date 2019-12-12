@@ -75,7 +75,7 @@ class App:
         self.w1v=tk.StringVar()
         self.w1 = tk.Entry(self.inputframe,text=self.w1v,width=100)
         self.w1.pack(side = tk.LEFT)
-        self.w1v.set(1)	#default value of so the program doesn't barf if accidentally pushed.
+        self.w1v.set(1)	#default value of so the program doesn't barf if accidentally used.
         # self.w1.grid(row=1,column=1)
 
         #--------------------------------------------------
@@ -209,9 +209,9 @@ class App:
         self.master.bind('\\', self.singleplottoggle)
         self.master.bind('<space>', self.coord)
 
-        self.master.bind("<MouseWheel>",self.MouseWheelHandler)
-        self.master.bind("<Button-4>",self.MouseWheelHandler)
-        self.master.bind("<Button-5>",self.MouseWheelHandler)
+        # self.master.bind("<MouseWheel>",self.MouseWheelHandler)
+        # self.master.bind("<Button-4>",self.MouseWheelHandler)
+        # self.master.bind("<Button-5>",self.MouseWheelHandler)
 
     def MouseWheelHandler(self,event=None):
         print("I sense scrolling")
@@ -280,7 +280,6 @@ class App:
 
         if header['NAXIS'] == 1:
             wcs = WCS(header)
-            # print(wcs)
             #make index array
             index = np.arange(header['NAXIS1'])
             wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
@@ -294,18 +293,10 @@ class App:
             self.sp.close()
         elif header['NAXIS'] > 1:
             wcs = WCS(header)
-            # print(wcs)
-
-            #make index array
-            # spectra_list = read_fits.read_fits_spectrum1d(self.fname)
             index = np.arange(header['NAXIS1'])
-            # wavelength = wcs.wcs_pix2world(index[:,np.newaxis], [0])
-            # wavelength = wavelength.flatten()
-            # wavelength = wavelength*u.AA
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()*u.flx
-            # print(np.shape(wavelength),np.shape(flux),np.shape(self.sp[0]print(self.stack).data))
-
+            
             self.wavelength=wavelength
             self.flux=flux
             self.header=header
@@ -1242,3 +1233,4 @@ root.mainloop() #lets the GUI run
 #this will be nice for stack plots, but will also allow dynamical spectra.
 #need a logging system
 #fits to features doesn't display correctly.  Perhaps a fit will zoom in and just show the fit.
+#implement mouse scroll wheel.
