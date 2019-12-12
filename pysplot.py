@@ -102,6 +102,7 @@ class App:
         viewmenu.add_command(label="Over Plot ([)",command=self.overplottoggle)
         viewmenu.add_command(label="Stack Plot (])",command=self.stackplottoggle)
         viewmenu.add_command(label="Single Plot (\\)",command=self.singleplottoggle)
+        viewmenu.add_command(label="Dynamical",command=self.dynamical)
 
 
         modmenu = tk.Menu(menu)
@@ -177,6 +178,7 @@ class App:
         self.loadedregions=False
         self.loadednorm=False
         self.loadedbisect=False
+        self.hjd=[]
 
 
         #keyboard shortcuts (listed alphabetically)
@@ -264,6 +266,7 @@ class App:
             self.fname=item
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
+                self.hjd.append(float(self.header["HJD"]))
                 self.splot()
                 self.stackint=self.stackint+1
             elif '.txt' in item or '.TXT' in item:
@@ -296,7 +299,7 @@ class App:
             index = np.arange(header['NAXIS1'])
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()*u.flx
-            
+
             self.wavelength=wavelength
             self.flux=flux
             self.header=header
@@ -380,14 +383,9 @@ class App:
             self.ax.set_title("Overplot Mode, Display For Qualitative Comparison Only",fontsize=10)
             spec,=self.ax.step(self.wavelength,self.flux)
             self.ax.set_ylabel("Flux")
-##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
-        #Stack Plot Mode
+
         elif self.overplot == False and self.stackplot == True:
-            # self.output.delete(0,tk.END)
-            # self.output.insert(tk.END,"The number entered below will change the stack spacing.")
-##            self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
             spec,=self.ax.plot(self.wavelength,self.flux+self.stackint*u.flx)
-            # self.stackint=self.stackint+float(self.w1.get())
             self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=10)
             self.ax.set_ylabel("Stack Plot Flux")
 
@@ -400,14 +398,18 @@ class App:
             tkinter.messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
             self.restore()
 
+        self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
+        plt.grid(self.gridvalue)
+        self.xaxislabel()
+        self.toolbar.update()
+        self.canvas.draw()
+
+    def xaxislabel(self):
         if self.wavelength.unit == 'km / s':
             self.ax.set_xlabel("Velocity (%s)"%self.wavelength.unit)
         else:
             self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
-        self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
-        plt.grid(self.gridvalue)
-        self.toolbar.update()
-        self.canvas.draw()
+
 
 
     def zoomout(self,event=None):
@@ -467,10 +469,22 @@ class App:
         self.toolbar.update()
         self.canvas.draw()
 
+    def dynamical(self):
+        print(self.hjd)
+        self.ax.clear()
+        self.ax.set_ylabel("HJD")
+        self.xaxislabel()
+        self.toolbar.update()
+        self.canvas.draw()
+
+
+
+
 
     def stackreset(self):
         """Reset the stacking parameters"""
         self.stack=[]
+        self.hjd=[]
         self.stackint=0
         self.stackplottoggle()
         self.loadednorm=False
