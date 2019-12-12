@@ -1222,7 +1222,7 @@ class App:
         t.wm_title("About")
         tk.Label(t,text="Author: Dr. Joshua Thomas \n thomas.joshd@gmail.com").pack()
         tk.Label(t,text="This program was designed to emulate some basic IRAF splot functions.").pack()
-        tk.Label(t,text="Uses Astropy library, and some parts are directly modified from the UVES tutorial.").pack()
+        tk.Label(t,text="Uses Astropy library.").pack()
         tk.Label(t,text="Version %s"%version).pack()
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
@@ -1241,3 +1241,4 @@ root.mainloop() #lets the GUI run
 #need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
 #this will be nice for stack plots, but will also allow dynamical spectra.
 #need a logging system
+#fits to features doesn't display correctly.  Perhaps a fit will zoom in and just show the fit.
