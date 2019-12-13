@@ -229,10 +229,10 @@ class App:
                                                                 ("All files", "*.*") )) #file dialog
                 self.stack=[file]
                 self.norm_clear()
-                if self.loadedregions==True:
-                    self.regionload()
-                    self.output.delete(0,tk.END)
-                    self.output.insert(tk.END,"Using a loaded region.  Use view>reset (r) to clear." )
+                # if self.loadedregions==True:
+                #     self.regionload()
+                #     self.output.delete(0,tk.END)
+                #     self.output.insert(tk.END,"Using a loaded region.  Use view>reset (r) to clear." )
                 self.plotSpectra()
 
             else:
@@ -266,7 +266,8 @@ class App:
             self.fname=item
             if '.fit' in item or '.FIT' in item:
                 self.read_fits()
-                self.hjd.append(float(self.header["HJD"]))
+                # self.hjd.append(float(self.header["HJD"]))
+
                 self.splot()
                 self.stackint=self.stackint+1
             elif '.txt' in item or '.TXT' in item:
@@ -662,10 +663,11 @@ class App:
             self.loadedregions=True
         elif self.loadedregions == True:
             x,y=(self.saveregions_x,self.saveregions_y)
-            print("using loaded regions")
-            self.output.delete(0,tk.END)
-            self.output.insert(tk.END,"Using a loaded region. Use View>reset(r) to remove selected region.")
-            self.pltregion(x,y,sym='s',c='black')
+            # print("using loaded regions")
+            # self.output.delete(0,tk.END)
+            # self.output.insert(tk.END,"Using a loaded region. Use View>reset(r) to remove selected region.")
+            # self.pltregion(x,y,sym='s',c='black')
+            self.plotRegions()
         else:
             print("Unexpected Error in regionload()")
         xg,yg=self.chop(self.wavelength,self.flux,x[0],x[1])
@@ -825,13 +827,18 @@ class App:
         message="Using a loaded region, when finish use View>Reset or press r."
         if self.loadednorm == True:
             self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
+            self.output.delete(0,tk.END)
+            self.output.insert(tk.END,message)
         if self.loadedbisect == True:
             self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
+            self.output.delete(0,tk.END)
+            self.output.insert(tk.END,message)
         if self.loadedregions == True:
             self.ax.plot(self.saveregions_x,self.saveregions_y,'s',color='black')
+            self.output.delete(0,tk.END)
+            self.output.insert(tk.END,message)
         self.canvas.draw()
-        self.output.delete(0,tk.END)
-        self.output.insert(tk.END,message)
+
 
     def LoadRegion(self):
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
