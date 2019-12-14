@@ -43,7 +43,7 @@ from scipy.interpolate import interp1d
 import datetime
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.5.01"
+version="0.6.00"
 
 
 plot_params = {'axes.linewidth': 1,
