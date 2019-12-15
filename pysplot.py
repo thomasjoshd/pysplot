@@ -179,8 +179,6 @@ class App:
         # stackmenu.add_command(label="Load Bisection Regions", command=self.LoadBisect)
         stackmenu.add_command(label="Bisect",command=partial(self.stacker,func="bisect"))
 
-        stackmenu.add_separator()
-        # stackmenu.add_command(label="Dynamical/Time Series Spectra",command=self.dynamical)
 
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
