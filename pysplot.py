@@ -255,11 +255,15 @@ class App:
         self.starlog.write('\n')
 
     def endoflog(self):
-        self.starlog.close()
+        if self.starlog.closed == False
+            self.starlog.close()
+            del self.starlog
 
-    def splittinglog(self):
-        self.endoflog()
-        self.captainslog()
+    def checklog(self):
+        try:
+            self.starlog
+        except:
+            self.captainslog()
 
     def openSpectra(self,event=None):
         """Open up spectrum or lists of spectra"""
@@ -316,7 +320,7 @@ class App:
                 for row in self.database:
                     self.stack.append(row)
                 self.stackplottoggle()
-        self.captainslog()
+
 
 
     def loadSpectra(self):
@@ -616,6 +620,7 @@ class App:
         self.loadedregions=False
         self.ax.clear()
         self.canvas.draw()
+        self.endoflog()
         if self.pane == True:
             self.stackpane()
 
@@ -823,6 +828,7 @@ class App:
                    ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
+        self.checklog()
         self.starlog.write(outstring)
         self.starlog.write('\n')
 
@@ -914,6 +920,7 @@ class App:
           outstring=t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
                            "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
+          self.checklog()
           self.starlog.write(outstring)
           self.starlog.write('\n')
           self.output.delete(0,tk.END)
@@ -941,6 +948,7 @@ class App:
                   ", Gaussian_FWHM, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_G)+\
                   ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
+          self.checklog()
           self.starlog.write(outstring)
           self.starlog.write('\n')
           self.output.delete(0,tk.END)
@@ -967,6 +975,7 @@ class App:
                   "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
                   ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
+          self.checklog()
           self.starlog.write(outstring)
           self.starlog.write('\n')
           self.output.delete(0,tk.END)
