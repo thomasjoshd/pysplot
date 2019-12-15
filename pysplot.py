@@ -248,16 +248,24 @@ class App:
 
     def captainslog(self):
         """Save the output from measuremetns to a csv"""
+        path=os.path.dirname(self.fname)
         time='{0:%Y%m%d.%H%M%S}'.format(datetime.datetime.now())
         basename=os.path.basename("pysplot-%s.log"%time)
-        self.starlog=open(basename,'w')
+        savename=os.path.join(path,basename)
+        print("Log being written to: %s"%savename)
+        self.starlog=open(savename,'w')
         self.starlog.write('PySplot Log %s'%time)
         self.starlog.write('\n')
 
     def endoflog(self):
-        if self.starlog.closed == False
-            self.starlog.close()
-            del self.starlog
+        try:
+            if self.starlog.closed == False:
+                self.starlog.close()
+                del self.starlog
+                print('del log mem')
+        except:
+            pass
+
 
     def checklog(self):
         try:
@@ -1356,7 +1364,8 @@ class App:
                 savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
                 hdu.writeto(savename)
             else:
-                savename=path_wo_ext+extend
+                savename=os.path.join(path_wo_ext,basename,extend)
+                # savename=path_wo_ext+extend #probably need to use an os.join here
                 self.stackforsaving.append(savename)
                 hdu.writeto(savename,overwrite=True)
                 print("Saved to: ", savename)
