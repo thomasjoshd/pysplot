@@ -190,6 +190,7 @@ class App:
         #some initial parameters
         self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra.")
         self.generate_plot()
+        self.captainslog()
         self.gridvalue=True
         self.overplot=False
         self.stackplot=False
@@ -200,6 +201,7 @@ class App:
         self.loadedregions=False
         self.loadednorm=False
         self.loadedbisect=False
+        self.pane=False
 
 
 
@@ -247,6 +249,16 @@ class App:
     def MouseWheelHandler(self,event=None):
         print("I sense scrolling")
 
+    def captainslog(self):
+        """Save the output from measuremetns to a csv"""
+        time='{0:%Y%m%d.%H%M%S}'.format(datetime.datetime.now())
+        basename=os.path.basename("pysplot-%s.log"%time)
+        self.starlog=open(basename,'w')
+        self.starlog.write('PySplot Log %s'%time)
+        self.starlog.write('\n')
+
+    def endoflog(self):
+        self.starlog.close()
 
     def openSpectra(self,event=None):
         """Open up spectrum or lists of spectra"""
@@ -790,10 +802,26 @@ class App:
         self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
         self.canvas.draw()
         self.output.delete(0,tk.END)
-        outstring="Equivalent Width: "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
-                   ", Bisected Click Center: "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
+        t=self.filedate()
+        outstring=t+"Equivalent Width, "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
+                   ", Bisected Click Center, "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
+        self.starlog.write(outstring)
+        self.starlog.write('\n')
+
+    def filedate(self):
+        basename=os.path.basename(self.fname)
+        d=self.database[self.fname]
+        try:
+            jd=str(d['header']['JD'])
+        except:
+            jd=''
+        try:
+            hjd=str(d['header']['HJD'])
+        except:
+            hjd=''
+        return "%s,JD, %s, HJD, %s,"%(basename,jd,hjd)
 
 
 
@@ -866,9 +894,12 @@ class App:
             amp=reflevel-g.amplitude
             # self.ax.plot(xgf,-ygfn)
             # self.ax.plot(xgf,-g(xgf))
-          outstring="Gaussian Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM: "+ \
-                           "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+          t=self.filedate()
+          outstring=t+"Gaussian Center, "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
+                           "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude, "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
           print(outstring)
+          self.starlog.write(outstring)
+          self.starlog.write('\n')
           self.output.delete(0,tk.END)
           self.output.insert(tk.END, outstring)
 
@@ -888,11 +919,14 @@ class App:
             # self.ax.plot(xg,-ygn)
             # self.ax.plot(xgf,-g(xgf))
             amp=reflevel-g.amplitude_L
-          outstring=  "Voigt Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM: "+\
+          t=self.filedate()
+          outstring=t+"Voigt Center, "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM, "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_L)+\
-                  ", Gaussian_FWHM: "+"{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_G)+\
-                  ", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+                  ", Gaussian_FWHM, "+"{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_G)+\
+                  ", Amplitude, "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
           print(outstring)
+          self.starlog.write(outstring)
+          self.starlog.write('\n')
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
 
@@ -912,11 +946,13 @@ class App:
             # self.ax.plot(xgf,-g(xgf))
             amp=reflevel-g.amplitude
 
-
-          outstring= "Lorentz Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM: "+\
+          t=self.filedate()
+          outstring=t+"Lorentz Center, "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+\
-                  ", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+                  ", Amplitude, "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
           print(outstring)
+          self.starlog.write(outstring)
+          self.starlog.write('\n')
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
 
@@ -1315,6 +1351,7 @@ class App:
             pass
 
     def _quit(self):
+        self.endoflog()
         self.master.destroy()  # this is necessary on Windows to prevent
                         # Fatal Python Error: PyEval_RestoreThread: NULL tstate
         self.master.quit()     # stops mainloop
@@ -1383,6 +1420,3 @@ root.mainloop() #lets the GUI run
 #this will be nice for stack plots, but will also allow dynamical spectra.
 
 #implement mouse scroll wheel.
-
-#need a logging system
-#now that I'm using dictionaries, perhaps measurements can be stored and the a log file with relevent information can be generated by the use to have the columns they want.
