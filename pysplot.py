@@ -84,17 +84,17 @@ class App:
         master.title("PySplot, Version %s"%str(version))
 
         self.promptframe=tk.Frame()
-        self.promptframe.pack(side=tk.TOP)
-        l1=tk.Label(self.promptframe, text="Prompt:").pack( side = tk.LEFT)
+        self.promptframe.pack(side="top")
+        l1=tk.Label(self.promptframe, text="Prompt:").pack( side = "left")
         self.output=tk.Entry(self.promptframe,width=100)
-        self.output.pack(side = tk.LEFT)
+        self.output.pack(side = "left")
 
         self.inputframe=tk.Frame()
-        self.inputframe.pack(side=tk.TOP)
-        l2=tk.Label(self.inputframe, text="Input:  ").pack( side = tk.LEFT)
+        self.inputframe.pack(side="top")
+        l2=tk.Label(self.inputframe, text="Input:  ").pack( side = "left")
         self.w1v=tk.StringVar()
         self.w1 = tk.Entry(self.inputframe,text=self.w1v,width=100)
-        self.w1.pack(side = tk.LEFT)
+        self.w1.pack(side = "left")
         self.w1v.set(1)	#default value of so the program doesn't barf if accidentally used.
 
         #--------------------------------------------------
