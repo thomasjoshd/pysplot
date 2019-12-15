@@ -190,7 +190,6 @@ class App:
         #some initial parameters
         self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra.")
         self.generate_plot()
-        self.captainslog()
         self.gridvalue=True
         self.overplot=False
         self.stackplot=False
@@ -301,6 +300,7 @@ class App:
                 for row in self.database:
                     self.stack.append(row)
                 self.stackplottoggle()
+        self.captainslog()
 
 
     def loadSpectra(self):
@@ -803,8 +803,8 @@ class App:
         self.canvas.draw()
         self.output.delete(0,tk.END)
         t=self.filedate()
-        outstring=t+"Equivalent Width, "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
-                   ", Bisected Click Center, "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
+        outstring=t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width)+\
+                   ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
         self.starlog.write(outstring)
@@ -895,8 +895,8 @@ class App:
             # self.ax.plot(xgf,-ygfn)
             # self.ax.plot(xgf,-g(xgf))
           t=self.filedate()
-          outstring=t+"Gaussian Center, "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
-                           "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude, "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+          outstring=t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
+                           "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
           self.starlog.write(outstring)
           self.starlog.write('\n')
@@ -920,10 +920,10 @@ class App:
             # self.ax.plot(xgf,-g(xgf))
             amp=reflevel-g.amplitude_L
           t=self.filedate()
-          outstring=t+"Voigt Center, "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM, "+\
-                  "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_L)+\
-                  ", Gaussian_FWHM, "+"{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_G)+\
-                  ", Amplitude, "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+          outstring=t+"Voigt Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM, "+\
+                  "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_L)+\
+                  ", Gaussian_FWHM, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_G)+\
+                  ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
           self.starlog.write(outstring)
           self.starlog.write('\n')
@@ -947,9 +947,9 @@ class App:
             amp=reflevel-g.amplitude
 
           t=self.filedate()
-          outstring=t+"Lorentz Center, "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
-                  "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+\
-                  ", Amplitude, "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+          outstring=t+"Lorentz Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
+                  "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
+                  ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
           self.starlog.write(outstring)
           self.starlog.write('\n')
@@ -1351,7 +1351,10 @@ class App:
             pass
 
     def _quit(self):
-        self.endoflog()
+        try:
+            self.endoflog()
+        except:
+            pass
         self.master.destroy()  # this is necessary on Windows to prevent
                         # Fatal Python Error: PyEval_RestoreThread: NULL tstate
         self.master.quit()     # stops mainloop
