@@ -259,15 +259,33 @@ class App:
     def endoflog(self):
         self.starlog.close()
 
+    def splittinglog(self):
+        self.endoflog()
+        self.captainslog()
+
     def openSpectra(self,event=None):
         """Open up spectrum or lists of spectra"""
         if self.overplot == False and self.stackplot == False:
-            file=askopenfilename(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
+            filez=askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
+                                                            ("Spectra List", "*.list"),
+                                                            ("Spectra List", "*.lst"),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
-            if len(file) > 0:
-                self.database[file]={}
+            if len(filez) > 0:
+                lst=list(filez)
+                for item in lst:
+                    if '.list' in item or '.lst' in item :
+                        self.stackplot=True
+                        self.stackplottoggle()
+                        self.listname=item
+                        self.read_list()
+                        for listitem in self.listedfiles:
+                            self.database[listitem]={}
+                    else:
+                        self.database[item]={}
+
+                # self.database[file]={}
                 self.norm_clear()
                 self.loadSpectra()
                 self.plotSpectra()
@@ -1253,12 +1271,12 @@ class App:
         self.canvasframe.destroy()
         self.stackcanvas.destroy()
         self.buttonframe.destroy()
-        try:
-            self.canvas.destory()
-        except:
-            pass
-        self.figframe.destroy()
-        self.generate_plot()
+        # try:
+        #     self.canvas.destory()
+        # except:
+        #     pass
+        # self.figframe.destroy()
+        # self.generate_plot()
         if self.stackplot == True or self.overplot == True:
             self.plotSpectra()
         else:
