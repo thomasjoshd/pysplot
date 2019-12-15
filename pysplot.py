@@ -14,7 +14,7 @@ import tkinter.messagebox
 from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
 
 import matplotlib.pyplot as plt #basic plotting
-from matplotlib import cm
+from matplotlib import cm #colormap for dynamical spectra
 
 try:
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -96,7 +96,6 @@ class App:
         self.w1 = tk.Entry(self.inputframe,text=self.w1v,width=100)
         self.w1.pack(side = tk.LEFT)
         self.w1v.set(1)	#default value of so the program doesn't barf if accidentally used.
-        # self.w1.grid(row=1,column=1)
 
         #--------------------------------------------------
         #file menu
@@ -140,13 +139,13 @@ class App:
 
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
-        regionmenu.add_command(label="Define Single Region", command=self.regionload)
-        regionmenu.add_command(label="Clear Region", command=self.reset)
+        regionmenu.add_command(label="Define Region (x)", command=self.regionload)
+        regionmenu.add_command(label="Clear Region (r)", command=self.reset)
         regionmenu.add_command(label="Equivalent Width (e)", command=self.eqw)
         regionmenu.add_command(label="Gaussian (g)", command=partial(self.fit,func="gauss"))
         regionmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
         regionmenu.add_command(label="Lorentzian (l)", command=partial(self.fit,func="lorentz"))
-        regionmenu.add_command(label="Crop Spectra", command=self.scopy)
+        regionmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         regionmenu.add_command(label="Save EQW/Fit Region", command=self.SaveRegion)
         regionmenu.add_command(label="Load EQW/Fit Region", command=self.LoadRegion)
 
@@ -162,6 +161,7 @@ class App:
         stackmenu.add_command(label="Show Stack Pane ({)",command=self.stackpane)
         stackmenu.add_command(label="Hide Stack Pane (})",command=self.hidepane)
         stackmenu.add_command(label="Remove Selected From Stack",command=self.removefromstack)
+        stackmenu.add_command(label="Detailed Database Entry",command=self.currentspectra)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Save Stack List",command=self.savestack)
         stackmenu.add_command(label="Stack Clear",command=self.stackreset)
@@ -205,7 +205,7 @@ class App:
 
         #keyboard shortcuts (listed alphabetically)
         self.master.bind('b',self.smooth)
-        # self.master.bind('c',self.scopy)
+        self.master.bind('c',self.scopy)
 
         self.master.bind('e', self.eqw)
 
@@ -226,6 +226,10 @@ class App:
         self.master.bind('t', self.normalize)
         self.master.bind('u', self.velocity)
         self.master.bind('v', partial(self.fit,"voigt"))
+
+        self.master.bind('x', self.regionload)
+
+
 
         self.master.bind('|', self.gridtoggle)
         self.master.bind('[', self.overplottoggle)
@@ -285,10 +289,6 @@ class App:
                 for row in self.database:
                     self.stack.append(row)
                 self.stackplottoggle()
-
-
-
-
 
 
     def loadSpectra(self):
@@ -591,6 +591,9 @@ class App:
         if self.pane == True:
             self.stackpane()
 
+    def currentspectra(self):
+        print(self.database[self.fname].keys())
+
     def stackprint(self):
         """Prints stack to terminal."""
         print("Stack:")
@@ -745,8 +748,8 @@ class App:
         stderror=np.sqrt( (np.std(lxg)/np.sqrt(len(lxg)))**2 + (np.std(rxg)/np.sqrt(len(rxg)))**2 )
         print("Bisected Center: %s , standard error: %s" %(center,stderror  ))
         self.output.delete(0,tk.END)
-        outstring="Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
-                   ", Stnd Error = "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
+        outstring="Bisected Click Center: "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
+                   ", Stnd Error: "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
         self.output.insert(tk.END,outstring)
         self.ax.vlines(center.value,min(self.flux.value),max(self.flux.value))
         self.canvas.draw()
@@ -787,8 +790,8 @@ class App:
         self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
         self.canvas.draw()
         self.output.delete(0,tk.END)
-        outstring="Equivalent Width = "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
-                   ", Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
+        outstring="Equivalent Width: "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
+                   ", Bisected Click Center: "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
 
@@ -817,11 +820,15 @@ class App:
         self.wavelength=xg
         self.flux=yg
         self.header['CRVAL1']=xg[0].value
+        # self.database[self.fname]['crop-header']=self.header
+        # self.database[self.fname]['crop-flux']=self.flux
+        # self.database[self.fname]['crop-wave']=self.wavelength
         self.splot()
         if script == None:
             self.norm_clear()
+            self.loadedregions=False
         else:
-            pass
+            self.plotRegions()
 
     def fit(self,func="gauss",event=None):
         """wrapper function for fitting line profiles"""
@@ -835,25 +842,30 @@ class App:
         xa=np.array([xgf[0].value,xgf[-1].value])
         ya=np.array([ygf[0].value,ygf[-1].value])
         linecoeff = np.polyfit(xa,ya,1) #does a linear polynomail fit to the data.
-        ygfn=ygf/np.polyval(linecoeff,xgf.value)*u.flx #normalized
+        ygfn=ygf/np.polyval(linecoeff,xgf.value)#*u.flx #normalized
         ygn=yg/np.polyval(linecoeff,xg/xg[0])*u.flx #xg/xg[0] to remove the unit
         invert=False
         reflevel=yg[0]
         if yg[len(yg)//2] < reflevel:
             ygf=reflevel-ygf
             invert=True
+        # self.ax.clear()
 
         if func=="gauss":
-          g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[1]-xg[0])
+          g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[2]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, yg)
             plt.plot(xgf, g(xgf), label='%s'%(func))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
             amp=g.amplitude
+            # self.ax.plot(xgf,ygfn)
+            # self.ax.plot(xgf,g(xgf))
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, reflevel-yg)
             plt.plot(xgf, (reflevel-g(xgf)), label='%s'%(func))
-            amp=-g.amplitude
+            amp=reflevel-g.amplitude
+            # self.ax.plot(xgf,-ygfn)
+            # self.ax.plot(xgf,-g(xgf))
           outstring="Gaussian Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM: "+ \
                            "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
           print(outstring)
@@ -865,13 +877,17 @@ class App:
           g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, yg)
             plt.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=g.amplitude_L
+            # self.ax.plot(xg,ygn)
+            # self.ax.plot(xgf,g(xgf))
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, reflevel-yg)
             plt.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-            amp=-g.amplitude_L
+            # self.ax.plot(xg,-ygn)
+            # self.ax.plot(xgf,-g(xgf))
+            amp=reflevel-g.amplitude_L
           outstring=  "Voigt Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM: "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_L)+\
                   ", Gaussian_FWHM: "+"{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_G)+\
@@ -879,17 +895,24 @@ class App:
           print(outstring)
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
+
         elif func=="lorentz":
           g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, fwhm=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, yg)
             plt.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+            # self.ax.plot(xg,ygn)
+            # self.ax.plot(xgf,g(xgf))
             amp=g.amplitude
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, reflevel-yg)
             plt.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-            amp=-g.amplitude
+            # self.ax.plot(xg,-ygn)
+            # self.ax.plot(xgf,-g(xgf))
+            amp=reflevel-g.amplitude
+
+
           outstring= "Lorentz Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM: "+\
                   "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+\
                   ", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
@@ -1358,7 +1381,8 @@ root.mainloop() #lets the GUI run
 
 #need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
 #this will be nice for stack plots, but will also allow dynamical spectra.
-#need a logging system
-#fits to features doesn't display correctly.  Perhaps a fit will zoom in and just show the fit.
+
 #implement mouse scroll wheel.
+
+#need a logging system
 #now that I'm using dictionaries, perhaps measurements can be stored and the a log file with relevent information can be generated by the use to have the columns they want.
