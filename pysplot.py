@@ -577,6 +577,8 @@ class App:
                 self.jd.append(self.header['JD'])
             except:
                 self.jd.append(i)
+        self.wavelength=self.database[self.stack[0]]['wavelength']
+        x=len(self.wavelength)
 
         self.ax.clear()
         self.ax.set_ylabel("JD-%s"%str(min(self.jd)))
@@ -585,40 +587,34 @@ class App:
 
         data=np.empty([len(tt),len(self.wavelength)],dtype=float)
         data.fill(np.nan)
-        print(self.jd)
+        self.jd=np.array(self.jd)-min(self.jd)
         #this isn't iterating over the contents of the dictionary!
-        for i,p in enumerate(np.array(self.jd)-min(self.jd)):
-        #     temp_spec=np.empty(len(self.wavelength),dtype=float)
-        #     for j,val in enumerate(self.wavelength):
-        #       temp_spec[j]=np.interp(val,self.wavelength,self.flux)
+        for i,row in enumerate(self.database):
+            self.flux=self.database[row]['flux']
+            self.wavelength=self.database[row]['wavelength']
+            temp_spec=np.empty(x,dtype=float)
+            for j,val in enumerate(self.wavelength):
+              temp_spec[j]=np.interp(val,self.wavelength,self.flux)
             try:
-                data[find_nearest_index(tt,p)-1,:]=self.flux
+                data[find_nearest_index(tt,self.jd[i])-1,:]=temp_spec
             except:
                 pass
-            data[find_nearest_index(tt,p),:]=self.flux
+            data[find_nearest_index(tt,self.jd[i]),:]=temp_spec
             try:
-                data[find_nearest_index(tt,p)+1,:]=self.flux
+                data[find_nearest_index(tt,self.jd[i])+1,:]=temp_spec
             except:
                 pass
 
-        #interpolate, but only along the time axis
-        # for i,junk in enumerate(data[0,:]):
-        #     data[:,i]=fill_nan(data[:,i])
+        # interpolate, but only along the time axis
+        for i,junk in enumerate(data[0,:]):
+            data[:,i]=fill_nan(data[:,i])
 
         cmap=cm.spectral
         cmap.set_under(color='white')
-        #gray()
-        #spectral()
-        # fig=figure()
-        # gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
-        # self.ax.subplot(gs[0])
-        #imshow(dd1,cmap=cmap,interpolation=None,extent=(vel[1],vel[-1],tt[0],tt[-1]),vmax=3,vmin=0,origin='lower',aspect='auto',alpha=1)
-        #imshow(dd1,cmap=cmap,interpolation=None,extent=(vel[1],vel[-1],tt[0],tt[-1]),origin='lower',aspect='auto',alpha=1)
-        #imshow(dd1,cmap=cmap,vmax=3,vmin=0,interpolation='hamming')
+        cbaxes = self.fig.add_axes([.88, .32, 0.03, .58])
+        #colorbar(cax = cbaxes).ax.tick_params(axis='y', direction='out')  #not sure where defined.
 
-        #imshow(data,cmap=cmap,interpolation='nearest',extent=(vel[1],vel[-1],tt[0],tt[-1]),vmax=3,vmin=0,origin='lower',aspect='auto',alpha=1)
-
-        self.ax.imshow(data,cmap=cmap,interpolation='nearest',origin='lower',aspect='auto',alpha=1)
+        self.ax.imshow(data,cmap=cmap,interpolation='nearest',extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]), origin='lower',aspect='auto',alpha=1)
 
         self.toolbar.update()
         self.canvas.draw()
