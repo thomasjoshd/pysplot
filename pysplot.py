@@ -82,6 +82,7 @@ class App:
     def __init__(self,master):
         self.master=master
         master.title("PySplot, Version %s"%str(version))
+        # master.geometry('800x600')
 
         self.promptframe=tk.Frame()
         self.promptframe.pack(side="top")
@@ -442,7 +443,7 @@ class App:
             self.figframe.pack(side="left", fill="both",expand=1)
         elif exp == False:
             self.figframe=tk.Frame()
-            self.figframe.pack(side="left", fill="y")
+            self.figframe.pack(side="left")
         else:
             print("Halp!")
         # self.figframe=tk.Frame()
@@ -578,22 +579,31 @@ class App:
                 self.jd.append(i)
 
         self.ax.clear()
-        self.ax.set_ylabel("JD")
+        self.ax.set_ylabel("JD-%s"%str(min(self.jd)))
         self.xaxislabel()
-        tt=np.arange(min(self.jd), max(self.jd),.5) #phase steps
+        tt=np.arange(0, max(self.jd)-min(self.jd),.5) #phase steps
 
         data=np.empty([len(tt),len(self.wavelength)],dtype=float)
         data.fill(np.nan)
-
-        for i,p in enumerate(self.jd):
-            temp_spec=np.empty(len(self.wavelength),dtype=float)
-            for j,val in enumerate(self.wavelength):
-              temp_spec[j]=np.interp(val,self.wavelength,self.flux)
-            data[find_nearest_index(tt,p),:]=temp_spec
+        print(self.jd)
+        #this isn't iterating over the contents of the dictionary!
+        for i,p in enumerate(np.array(self.jd)-min(self.jd)):
+        #     temp_spec=np.empty(len(self.wavelength),dtype=float)
+        #     for j,val in enumerate(self.wavelength):
+        #       temp_spec[j]=np.interp(val,self.wavelength,self.flux)
+            try:
+                data[find_nearest_index(tt,p)-1,:]=self.flux
+            except:
+                pass
+            data[find_nearest_index(tt,p),:]=self.flux
+            try:
+                data[find_nearest_index(tt,p)+1,:]=self.flux
+            except:
+                pass
 
         #interpolate, but only along the time axis
-        for i,junk in enumerate(data[0,:]):
-            data[:,i]=fill_nan(data[:,i])
+        # for i,junk in enumerate(data[0,:]):
+        #     data[:,i]=fill_nan(data[:,i])
 
         cmap=cm.spectral
         cmap.set_under(color='white')
@@ -1435,9 +1445,9 @@ class App:
     def About(self):
         t=tk.Toplevel(self.master,height=600,width=600)
         t.wm_title("About")
-        tk.Label(t,text="Author: Dr. Joshua Thomas \n thomas.joshd@gmail.com").pack()
+        tk.Label(t,text="Author: Dr. Joshua Thomas \n Clarkson University \n jthomas@clarkson.edu \n thomas.joshd@gmail.com").pack()
         tk.Label(t,text="This program was designed to emulate some basic IRAF splot functions.").pack()
-        tk.Label(t,text="Uses Astropy library.").pack()
+        tk.Label(t,text="Astropy, scipy, and numpy libraries are used.").pack()
         tk.Label(t,text="Version %s"%version).pack()
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
