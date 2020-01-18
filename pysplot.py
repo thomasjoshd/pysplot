@@ -349,14 +349,20 @@ class App:
                 self.wavelength=self.database[self.fname]['wavelength']
                 self.flux=self.database[self.fname]['flux']
                 self.flux_orig=self.database[self.fname]['flux_orig']
-                self.header=self.database[self.fname]['header']
+                try:
+                    self.header=self.database[self.fname]['header']
+                except:
+                    pass
                 self.splot()
         elif spec != None:
             self.fname=spec
             self.wavelength=self.database[self.fname]['wavelength']
             self.flux=self.database[self.fname]['flux']
             self.flux_orig=self.database[self.fname]['flux_orig']
-            self.header=self.database[self.fname]['header']
+            try:
+                self.header=self.database[self.fname]['header']
+            except:
+                pass
             self.splot()
 
     def read_fits(self):
