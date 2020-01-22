@@ -32,13 +32,9 @@ import astropy.units as u
 from astropy.constants import c
 
 from astropy.modeling import models, fitting
-#from astropy.modelinog.functional_models import Voigt1D,Lorentz1D
 from astropy.convolution import convolve, Box1DKernel
 
 from scipy.interpolate import interp1d
-
-# from specutils.spectra import Spectrum1D
-# from specutils.fitting import fit_lines
 
 import datetime
 
