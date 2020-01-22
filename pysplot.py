@@ -147,8 +147,7 @@ class App:
         regionmenu.add_command(label="Load EQW/Fit Region", command=self.LoadRegion)
 
         regionmenu.add_separator()
-        regionmenu.add_command(label="Special Region Functions")
-        regionmenu.add_command(label="Bisect Feature",command=self.BisectLine)
+        regionmenu.add_command(label="Bisect Feature (w)",command=self.BisectLine)
         regionmenu.add_command(label="Save Bisection Regions", command=self.SaveBisect)
         regionmenu.add_command(label="Load Bisection Regions", command=self.LoadBisect)
 
@@ -222,7 +221,7 @@ class App:
         self.master.bind('t', self.normalize)
         self.master.bind('u', self.velocity)
         self.master.bind('v', partial(self.fit,"voigt"))
-
+        self.master.bind('w', self.BisectLine)
         self.master.bind('x', self.regionload)
 
 
@@ -771,7 +770,8 @@ class App:
     def BisectLine(self,event=None):
         """Designed for measuring the center of very broad Wolf-Rayet star emission lines, may work for other situtaitons."""
         self.measuremode()
-        if self.loadedregions == False:
+        print("enter bisection mode.")
+        if self.loadedbisect == False:
             lx,ly=self.region(message="Select two points along the left edge of the feature.") #left edges of the feature to bisect
             rx,ry=self.region(message="Select two points along the right edge of the feature.") #right edges of the feature to bisect
 
@@ -783,7 +783,8 @@ class App:
                 self.x_norm.append(xi)
             for yi in ry:
                 self.y_norm.append(yi)
-        elif self.loadedregions == True:
+        elif self.loadedbisect == True:
+            print("Loaded bisection parameters.")
             lx=np.array([self.x_norm[0],self.x_norm[1]])
             rx=np.array([self.x_norm[2],self.x_norm[3]])
             ly=np.array([self.y_norm[0],self.y_norm[1]])
@@ -1093,6 +1094,7 @@ class App:
         dataout.close()
         self.loadedbisect=True
         self.plotRegions()
+        self.BisectLine()
 
 
     def norm_clear(self,event=None):
