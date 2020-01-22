@@ -1261,3 +1261,4 @@ root.mainloop() #lets the GUI run
 #need a logging system
 #fits to features doesn't display correctly.  Perhaps a fit will zoom in and just show the fit.
 #implement mouse scroll wheel.
+#need to switch to storing everything in a giant dictionary.
