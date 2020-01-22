@@ -365,6 +365,7 @@ class App:
             self.splot()
 
     def read_fits(self):
+        """Reads a fits file into the dictionary of stored spectra."""
         #need to add a way to read multispec fits files
         #Based on Read a UVES spectrum from the ESO pipeline
         self.sp = fits.open(self.fname)
@@ -372,16 +373,16 @@ class App:
 
         if header['NAXIS'] == 1:
             wcs = WCS(header)
-            #make index array
             index = np.arange(header['NAXIS1'])
             wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
             wavelength = wavelength.flatten()
             wavelength = wavelength*u.AA
+            try:
+                wavelength=wavelength/(1.0-header['VHELIO']/2.997925e05)
+                self.database[self.fname]['heliocentric']=header['VHELIO']
+            except:
+                pass
             flux = self.sp[0].data*u.flx
-            # self.wavelength=wavelength
-            # self.flux=flux
-            # self.header=header
-            # self.flux_orig=flux
             self.database[self.fname]['wavelength']=wavelength
             self.database[self.fname]['flux']=flux
             self.database[self.fname]['flux_orig']=flux
@@ -392,16 +393,10 @@ class App:
             index = np.arange(header['NAXIS1'])
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()*u.flx
-
             self.database[self.fname]['wavelength']=wavelength
             self.database[self.fname]['flux']=flux
             self.database[self.fname]['flux_orig']=flux
             self.database[self.fname]['header']=header
-            # self.wavelength=wavelength
-            # self.flux=flux
-            # self.header=header
-            # self.flux_orig=flux
-
             self.sp.close()
         else:
             tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
@@ -507,7 +502,10 @@ class App:
         if self.wavelength.unit == 'km / s':
             self.ax.set_xlabel("Velocity (%s)"%self.wavelength.unit)
         else:
-            self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
+            if 'heliocentric' in self.database[self.fname]:
+                    self.ax.set_xlabel("Heliocentric Wavelength (%s)"%self.wavelength.unit)
+            else:
+                self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
 
 
 
