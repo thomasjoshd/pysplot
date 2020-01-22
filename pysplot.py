@@ -263,7 +263,6 @@ class App:
         except:
             pass
 
-
     def checklog(self):
         try:
             self.starlog
