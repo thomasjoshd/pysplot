@@ -5,6 +5,11 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
+import sys
+if sys.version_info < (3, 5):
+    raise "must use python 3.6 or greater"
+else:
+    pass
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -12,7 +17,7 @@ import os
 import tkinter as tk
 import tkinter.messagebox
 from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
-
+#clean up the messy calls!!
 import matplotlib.pyplot as plt #basic plotting
 from matplotlib import cm #colormap for dynamical spectra
 
@@ -1094,7 +1099,7 @@ class App:
         dataout.close()
         self.loadedbisect=True
         self.plotRegions()
-        self.BisectLine()
+        # self.BisectLine()
 
 
     def norm_clear(self,event=None):
@@ -1257,7 +1262,7 @@ class App:
                         self.abort_stack()
                 elif func == "bisect":
                     if self.loadedbisect == True:
-                        self.Bisect()
+                        self.BisectLine()
                     else:
                         self.abort_stack()
                 else:
