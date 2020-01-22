@@ -14,6 +14,7 @@ import tkinter.messagebox
 from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
 
 import matplotlib.pyplot as plt #basic plotting
+from matplotlib import cm #colormap for dynamical spectra
 
 try:
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -31,16 +32,14 @@ import astropy.units as u
 from astropy.constants import c
 
 from astropy.modeling import models, fitting
-#from astropy.modeling.functional_models import Voigt1D,Lorentz1D
 from astropy.convolution import convolve, Box1DKernel
 
-# from specutils.spectra import Spectrum1D
-# from specutils.fitting import fit_lines
+from scipy.interpolate import interp1d
 
 import datetime
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.5.01"
+version="0.6.00"
 
 
 plot_params = {'axes.linewidth': 1,
@@ -58,25 +57,42 @@ plot_params = {'axes.linewidth': 1,
                #'axes.grid':True}
 plt.rcParams.update(plot_params)
 
+
+def find_nearest_index(A,value):
+    return (abs(A-value)).argmin()
+
+def fill_nan(A):
+    '''
+    interpolate to fill nan values
+    '''
+    inds = np.arange(A.shape[0])
+    good = np.where(np.isfinite(A))
+    if len(good[0]) == 0:
+        return np.nan_to_num(A)
+    f = interp1d(inds[good], A[good], bounds_error=False)
+    B = np.where(np.isfinite(A), A, f(inds))
+    return B
+
+
 class App:
     def __init__(self,master):
         self.master=master
         master.title("PySplot, Version %s"%str(version))
+        # master.geometry('800x600')
 
         self.promptframe=tk.Frame()
-        self.promptframe.pack(side=tk.TOP)
-        l1=tk.Label(self.promptframe, text="Prompt:").pack( side = tk.LEFT)
+        self.promptframe.pack(side="top")
+        l1=tk.Label(self.promptframe, text="Prompt:").pack( side = "left")
         self.output=tk.Entry(self.promptframe,width=100)
-        self.output.pack(side = tk.LEFT)
+        self.output.pack(side = "left")
 
         self.inputframe=tk.Frame()
-        self.inputframe.pack(side=tk.TOP)
-        l2=tk.Label(self.inputframe, text="Input:  ").pack( side = tk.LEFT)
+        self.inputframe.pack(side="top")
+        l2=tk.Label(self.inputframe, text="Input:  ").pack( side = "left")
         self.w1v=tk.StringVar()
         self.w1 = tk.Entry(self.inputframe,text=self.w1v,width=100)
-        self.w1.pack(side = tk.LEFT)
+        self.w1.pack(side = "left")
         self.w1v.set(1)	#default value of so the program doesn't barf if accidentally used.
-        # self.w1.grid(row=1,column=1)
 
         #--------------------------------------------------
         #file menu
@@ -93,6 +109,7 @@ class App:
         filemenu.add_separator()
         filemenu.add_command(label="Save Headerless Text Spectra",command=self.save1DText)
         filemenu.add_separator()
+        filemenu.add_command(label="Close All Spectra",command=self.stackreset)
         filemenu.add_command(label="Exit", command=self._quit)
 
         viewmenu = tk.Menu(menu)
@@ -102,7 +119,7 @@ class App:
         viewmenu.add_command(label="Over Plot ([)",command=self.overplottoggle)
         viewmenu.add_command(label="Stack Plot (])",command=self.stackplottoggle)
         viewmenu.add_command(label="Single Plot (\\)",command=self.singleplottoggle)
-        viewmenu.add_command(label="Dynamical",command=self.dynamical)
+        viewmenu.add_command(label="Dynamical--WIP (|)",command=self.dynamical)
 
 
         modmenu = tk.Menu(menu)
@@ -119,13 +136,13 @@ class App:
 
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
-        regionmenu.add_command(label="Define Single Region", command=self.regionload)
-        regionmenu.add_command(label="Clear Region", command=self.reset)
+        regionmenu.add_command(label="Define Region (x)", command=self.regionload)
+        regionmenu.add_command(label="Clear Region (r)", command=self.reset)
         regionmenu.add_command(label="Equivalent Width (e)", command=self.eqw)
         regionmenu.add_command(label="Gaussian (g)", command=partial(self.fit,func="gauss"))
         regionmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
         regionmenu.add_command(label="Lorentzian (l)", command=partial(self.fit,func="lorentz"))
-        regionmenu.add_command(label="Crop Spectra", command=self.scopy)
+        regionmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         regionmenu.add_command(label="Save EQW/Fit Region", command=self.SaveRegion)
         regionmenu.add_command(label="Load EQW/Fit Region", command=self.LoadRegion)
 
@@ -138,9 +155,10 @@ class App:
         stackmenu = tk.Menu(menu)
         menu.add_cascade(label="Stack", menu=stackmenu)
         stackmenu.add_command(label="Stack Plot Mode (])",command=self.stackplottoggle)
-        # stackmenu.add_command(label="Stack Window (w)",command=self.stackwindow)
-        stackmenu.add_command(label="Show Stack Pane",command=self.stackpane)
+        stackmenu.add_command(label="Show Stack Pane ({)",command=self.stackpane)
+        stackmenu.add_command(label="Hide Stack Pane (})",command=self.hidepane)
         stackmenu.add_command(label="Remove Selected From Stack",command=self.removefromstack)
+        stackmenu.add_command(label="Detailed Database Entry",command=self.currentspectra)
         stackmenu.add_command(label="Print Stack List",command=self.stackprint)
         stackmenu.add_command(label="Save Stack List",command=self.savestack)
         stackmenu.add_command(label="Stack Clear",command=self.stackreset)
@@ -158,8 +176,6 @@ class App:
         # stackmenu.add_command(label="Load Bisection Regions", command=self.LoadBisect)
         stackmenu.add_command(label="Bisect",command=partial(self.stacker,func="bisect"))
 
-        stackmenu.add_separator()
-        # stackmenu.add_command(label="Dynamical/Time Series Spectra",command=self.dynamical)
 
         helpmenu = tk.Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
@@ -167,23 +183,25 @@ class App:
 
         #--------------------------------------------------
         #some initial parameters
-        self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra.")
+        self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra. File>open (or press o)")
         self.generate_plot()
         self.gridvalue=True
         self.overplot=False
         self.stackplot=False
-        self.stackint=0
-        self.listedfiles=[]
         self.stack=[]
+        self.stackint=0
+        self.listedfiles=[] #used for lists files
+        self.database={}
         self.loadedregions=False
         self.loadednorm=False
         self.loadedbisect=False
-        self.hjd=[]
+        self.pane=False
+
 
 
         #keyboard shortcuts (listed alphabetically)
         self.master.bind('b',self.smooth)
-        # self.master.bind('c',self.scopy)
+        self.master.bind('c',self.scopy)
 
         self.master.bind('e', self.eqw)
 
@@ -205,10 +223,17 @@ class App:
         self.master.bind('u', self.velocity)
         self.master.bind('v', partial(self.fit,"voigt"))
 
+        self.master.bind('x', self.regionload)
+
+
+
         self.master.bind('|', self.gridtoggle)
         self.master.bind('[', self.overplottoggle)
         self.master.bind(']', self.stackplottoggle)
         self.master.bind('\\', self.singleplottoggle)
+        self.master.bind('|', self.dynamical)
+        self.master.bind('{', self.stackpane)
+        self.master.bind('}', self.hidepane)
         self.master.bind('<space>', self.coord)
 
         # self.master.bind("<MouseWheel>",self.MouseWheelHandler)
@@ -218,64 +243,122 @@ class App:
     def MouseWheelHandler(self,event=None):
         print("I sense scrolling")
 
+    def captainslog(self):
+        """Save the output from measuremetns to a csv"""
+        path=os.path.dirname(self.fname)
+        time='{0:%Y%m%d.%H%M%S}'.format(datetime.datetime.now())
+        basename=os.path.basename("pysplot-%s.log"%time)
+        savename=os.path.join(path,basename)
+        print("Log being written to: %s"%savename)
+        self.starlog=open(savename,'w')
+        self.starlog.write('PySplot Log %s'%time)
+        self.starlog.write('\n')
 
-    def openSpectra(self,event=None,spec=None):
-        """Open up spectra or lists of spectra"""
-        if spec == None:
-            if self.overplot == False and self.stackplot == False:
-                file=askopenfilename(title='Choose a list of spectra',filetypes=(("Fits Files", "*.fit*"),
-                                                                ("Fits Files", "*.FIT* "),
-                                                                ("Text Files", "*.txt*"),
-                                                                ("All files", "*.*") )) #file dialog
-                print(file,type(file))
-                self.stack=[file]
+    def endoflog(self):
+        try:
+            if self.starlog.closed == False:
+                self.starlog.close()
+                del self.starlog
+                print('del log mem')
+        except:
+            pass
+
+    def checklog(self):
+        try:
+            self.starlog
+        except:
+            self.captainslog()
+
+    def openSpectra(self,event=None):
+        """Open up spectrum or lists of spectra"""
+        if self.overplot == False and self.stackplot == False:
+            filez=askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
+                                                            ("Fits Files", "*.FIT* "),
+                                                            ("Spectra List", "*.list"),
+                                                            ("Spectra List", "*.lst"),
+                                                            ("Text Files", "*.txt*"),
+                                                            ("All files", "*.*") )) #file dialog
+            if len(filez) > 0:
+                lst=list(filez)
+                for item in lst:
+                    if '.list' in item or '.lst' in item :
+                        self.stackplot=True
+                        self.stackplottoggle()
+                        self.listname=item
+                        self.read_list()
+                        for listitem in self.listedfiles:
+                            self.database[listitem]={}
+                    else:
+                        self.database[item]={}
+
+                # self.database[file]={}
                 self.norm_clear()
-                # if self.loadedregions==True:
-                #     self.regionload()
-                #     self.output.delete(0,tk.END)
-                #     self.output.insert(tk.END,"Using a loaded region.  Use view>reset (r) to clear." )
+                self.loadSpectra()
                 self.plotSpectra()
-
-            else:
-                filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
-                                                                ("Spectra List", "*.lst"),
-                                                                ("Fits Files", "*.fit*"),
-                                                                ("Fits Files", "*.FIT* "),
-                                                                ("Text Files", "*.txt*"),
-                                                                ("All files", "*.*") )) #file dialog
+                self.plotRegions()
+                self.stack=[]
+                for row in self.database:
+                    self.stack.append(row)
+                if self.pane == True:
+                    self.stackpane()
+        else:
+            filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
+                                                            ("Spectra List", "*.lst"),
+                                                            ("Fits Files", "*.fit*"),
+                                                            ("Fits Files", "*.FIT* "),
+                                                            ("Text Files", "*.txt*"),
+                                                            ("All files", "*.*") )) #file dialog
+            if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
                     if '.list' in item or '.lst' in item :
                         self.listname=item
                         self.read_list()
                         for listitem in self.listedfiles:
-                            self.stack.append(listitem)
+                            self.database[listitem]={}
                     else:
-                        self.stack.append(item)
+                        self.database[item]={}
+                self.stackplot=True
+                self.loadSpectra()
+                self.stack=[]
+                for row in self.database:
+                    self.stack.append(row)
                 self.stackplottoggle()
-        elif spec != None:
-            self.plotSpectra(spec='Yes')
+
+
+
+    def loadSpectra(self):
+        for item in self.database:
+            self.fname=item
+            if '.fit' in item or '.FIT' in item:
+                self.read_fits()
+            elif '.txt' in item or '.TXT' in item:
+                self.read_txt()
 
 
     def plotSpectra(self,spec=None):
         if spec == None:
-            pltlist=self.stack
+            for i,f in enumerate(self.database):
+                self.fname=f
+                self.stackint=i
+                self.wavelength=self.database[self.fname]['wavelength']
+                self.flux=self.database[self.fname]['flux']
+                self.flux_orig=self.database[self.fname]['flux_orig']
+                try:
+                    self.header=self.database[self.fname]['header']
+                except:
+                    pass
+                self.splot()
         elif spec != None:
-            print('plot spectra: ',self.fname)
-            pltlist=[self.fname]
-        for item in pltlist:
-            self.fname=item
-            if '.fit' in item or '.FIT' in item:
-                self.read_fits()
-                # self.hjd.append(float(self.header["HJD"]))
-
-                self.splot()
-                self.stackint=self.stackint+1
-            elif '.txt' in item or '.TXT' in item:
-                self.read_txt()
-                self.splot()
-                self.stackint=self.stackint+1
-        self.plotRegions()
+            self.fname=spec
+            self.wavelength=self.database[self.fname]['wavelength']
+            self.flux=self.database[self.fname]['flux']
+            self.flux_orig=self.database[self.fname]['flux_orig']
+            try:
+                self.header=self.database[self.fname]['header']
+            except:
+                pass
+            self.splot()
 
     def read_fits(self):
         #need to add a way to read multispec fits files
@@ -291,10 +374,14 @@ class App:
             wavelength = wavelength.flatten()
             wavelength = wavelength*u.AA
             flux = self.sp[0].data*u.flx
-            self.wavelength=wavelength
-            self.flux=flux
-            self.header=header
-            self.flux_orig=flux
+            # self.wavelength=wavelength
+            # self.flux=flux
+            # self.header=header
+            # self.flux_orig=flux
+            self.database[self.fname]['wavelength']=wavelength
+            self.database[self.fname]['flux']=flux
+            self.database[self.fname]['flux_orig']=flux
+            self.database[self.fname]['header']=header
             self.sp.close()
         elif header['NAXIS'] > 1:
             wcs = WCS(header)
@@ -302,10 +389,15 @@ class App:
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()*u.flx
 
-            self.wavelength=wavelength
-            self.flux=flux
-            self.header=header
-            self.flux_orig=flux
+            self.database[self.fname]['wavelength']=wavelength
+            self.database[self.fname]['flux']=flux
+            self.database[self.fname]['flux_orig']=flux
+            self.database[self.fname]['header']=header
+            # self.wavelength=wavelength
+            # self.flux=flux
+            # self.header=header
+            # self.flux_orig=flux
+
             self.sp.close()
         else:
             tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
@@ -317,13 +409,16 @@ class App:
             f1=open(self.fname,'r')
             data=np.array(list(csv.reader(f1,delimiter=' ')))
             wavelength=data[:,0].astype(float)
-            self.wavelength=wavelength*u.AA
             try:
                 flux=data[:,2].astype(float)
             except:
+            #spec,=self.ax.plot(self.wavelength,self.flux)
+            # self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
                 flux=data[:,1].astype(float)
-            self.flux=flux*u.flx
-            self.flux_orig=flux*u.flx
+            flux=flux*u.flx
+            self.database[self.fname]['wavelength']=wavelength*u.AA
+            self.database[self.fname]['flux']=flux
+            self.database[self.fname]['flux_orig']=flux
             f1.close()
 
 
@@ -346,19 +441,19 @@ class App:
             pass
         if exp == True:
             self.figframe=tk.Frame()
-            self.figframe.pack(side=tk.LEFT, fill="both",expand=1)
+            self.figframe.pack(side="left", fill="both",expand=1)
         elif exp == False:
             self.figframe=tk.Frame()
-            self.figframe.pack(side=tk.LEFT, fill="y")
+            self.figframe.pack(side="left")
         else:
             print("Halp!")
         # self.figframe=tk.Frame()
         # self.figframe.pack(side=tk.LEFT, fill="y")
         self.fig=plt.figure()
         self.ax = self.fig.add_subplot(111)
-        self.ax.tick_params(right= True,top= True,which='both')
+        self.ax.tick_params(right= True,top= True,which="both")
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.figframe)
-        self.canvas.get_tk_widget().pack(side=tk.LEFT, fill="both")
+        self.canvas.get_tk_widget().pack(side="left", fill="both")
         try:
             self.toolbar = NavigationToolbar2TkAgg( self.canvas, self.figframe )
         except:
@@ -367,7 +462,7 @@ class App:
         self.ax.set_title("Single Spectra Mode",fontsize=12)
         self.toolbar.update()
         self.canvas.draw()
-        self.canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+        self.canvas._tkcanvas.pack(side="top", fill="both", expand=1)
 
     def splot(self):
         #Normal plot mode
@@ -375,8 +470,6 @@ class App:
             self.ax.clear()
             self.ax.set_title("%s"%(self.fname),fontsize=10)
             spec,=self.ax.step(self.wavelength,self.flux)
-            #spec,=self.ax.plot(self.wavelength,self.flux)
-            # self.ax.set_ylim([max(0,min(self.flux)),min(100,max(self.flux))])
             self.ax.set_ylabel("Flux")
 
         #Overplot Mode
@@ -439,25 +532,25 @@ class App:
         self.ax.clear()
         self.ax.set_title("Overplot Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
         self.plotSpectra()
-        self.toolbar.update()
-        self.canvas.draw()
+        self.stackpane()
+        self.plotRegions()
+
+        # self.toolbar.update()
+        # self.canvas.draw()
 
     def stackplottoggle(self,event=None):
         """Switches to stackplot mode and replots the stack."""
         self.stackplot=True
         self.overplot=False
-        self.stackint=0
-        self.stack=list(dict.fromkeys(self.stack)) #removes any duplicate file added to the list.
-        try:
-            self.stack.remove(())
-        except:
-            pass
+        # self.stack=list(dict.fromkeys(self.stack)) #removes any duplicate file added to the list.
         self.ax.clear()
         self.ax.set_title("Stack Plot Mode, Display For Qualitative Comparison Only",fontsize=12)
         self.plotSpectra()
         self.stackpane()
-        self.toolbar.update()
-        self.canvas.draw()
+        self.plotRegions()
+
+        # self.toolbar.update()
+        # self.canvas.draw()
 
     def singleplottoggle(self,event=None):
         """Single spectrum display mode, replots the last active spectrum."""
@@ -465,44 +558,97 @@ class App:
         self.overplot=False
         self.ax.set_title("Single Spectra Mode",fontsize=12)
         try:
+            self.plotSpectra(spec=self.fname)
+        except:
+            pass
+        try:
             self.plotSpectra(spec=self.stack[0])
         except:
             pass
-        self.toolbar.update()
-        self.canvas.draw()
+        self.plotRegions()
+        self.stackpane()
+        # self.toolbar.update()
+        # self.canvas.draw()
 
-    def dynamical(self):
-        print(self.hjd)
+    def dynamical(self,event=None):
+        self.jd=[]
+        for i,row in enumerate(self.database):
+            self.header=self.database[row]['header']
+            try:
+                self.jd.append(self.header['JD'])
+            except:
+                self.jd.append(i)
+        self.wavelength=self.database[self.stack[0]]['wavelength']
+        x=len(self.wavelength)
+
         self.ax.clear()
-        self.ax.set_ylabel("HJD")
+        self.ax.set_ylabel("JD-%s"%str(min(self.jd)))
         self.xaxislabel()
-        tt=arange(min(self.hjd), max(self.hjd),.5) #phase steps
+        tt=np.arange(0, max(self.jd)-min(self.jd),.5) #phase steps
 
-        # data=empty([len(tt),len(vel)],dtype=float)
-        # data.fill(nan)
+        data=np.empty([len(tt),len(self.wavelength)],dtype=float)
+        data.fill(np.nan)
+        self.jd=np.array(self.jd)-min(self.jd)
+        #this isn't iterating over the contents of the dictionary!
+        for i,row in enumerate(self.database):
+            self.flux=self.database[row]['flux']
+            self.wavelength=self.database[row]['wavelength']
+            temp_spec=np.empty(x,dtype=float)
+            for j,val in enumerate(self.wavelength):
+              temp_spec[j]=np.interp(val,self.wavelength,self.flux)
+            try:
+                data[find_nearest_index(tt,self.jd[i])-1,:]=temp_spec
+            except:
+                pass
+            data[find_nearest_index(tt,self.jd[i]),:]=temp_spec
+            try:
+                data[find_nearest_index(tt,self.jd[i])+1,:]=temp_spec
+            except:
+                pass
+
+        # interpolate, but only along the time axis
+        for i,junk in enumerate(data[0,:]):
+            data[:,i]=fill_nan(data[:,i])
+
+        cmap=cm.spectral
+        cmap.set_under(color='white')
+        cbaxes = self.fig.add_axes([.88, .32, 0.03, .58])
+        #colorbar(cax = cbaxes).ax.tick_params(axis='y', direction='out')  #not sure where defined.
+
+        self.ax.imshow(data,cmap=cmap,interpolation='nearest',extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]), origin='lower',aspect='auto',alpha=1)
 
         self.toolbar.update()
         self.canvas.draw()
-
-
-
 
 
     def stackreset(self):
         """Reset the stacking parameters"""
         self.stack=[]
-        self.hjd=[]
+        self.database.clear()
         self.stackint=0
-        self.stackplottoggle()
+        del self.wavelength
+        del self.flux
+        del self.flux_orig
+        del self.header
         self.loadednorm=False
         self.loadedbisect=False
         self.loadedregions=False
+        self.ax.clear()
+        self.canvas.draw()
+        self.endoflog()
+        if self.pane == True:
+            self.stackpane()
+
+    def currentspectra(self):
+        print(self.database[self.fname].keys())
 
     def stackprint(self):
         """Prints stack to terminal."""
         print("Stack:")
-        for f in self.stack:
+        for f in self.database:
             print(f)
+        print("Number in Stack: %s"%(str(len(self.database))))
+        print("End Stack.")
 
     def savestack(self,name="stack.list",stack=None):
         """Save the stack for later re-loading."""
@@ -571,7 +717,8 @@ class App:
     def reset(self, event=None):
         """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
         if self.stackplot == False:
-            self.splot()
+            if len(self.stack) > 0:
+                self.splot()
             self.norm_clear()
         elif self.stackplot == True:
             self.stackplottoggle()
@@ -649,8 +796,8 @@ class App:
         stderror=np.sqrt( (np.std(lxg)/np.sqrt(len(lxg)))**2 + (np.std(rxg)/np.sqrt(len(rxg)))**2 )
         print("Bisected Center: %s , standard error: %s" %(center,stderror  ))
         self.output.delete(0,tk.END)
-        outstring="Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
-                   ", Stnd Error = "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
+        outstring="Bisected Click Center: "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
+                   ", Stnd Error: "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
         self.output.insert(tk.END,outstring)
         self.ax.vlines(center.value,min(self.flux.value),max(self.flux.value))
         self.canvas.draw()
@@ -691,10 +838,27 @@ class App:
         self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
         self.canvas.draw()
         self.output.delete(0,tk.END)
-        outstring="Equivalent Width = "+"{0.value:0.03f} {0.unit:FITS}".format(width)+\
-                   ", Bisected Click Center = "+"{0.value:0.03f} {0.unit:FITS}".format(bisect)
+        t=self.filedate()
+        outstring=t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width)+\
+                   ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect)
         self.output.insert(tk.END,outstring)
         print(outstring)
+        self.checklog()
+        self.starlog.write(outstring)
+        self.starlog.write('\n')
+
+    def filedate(self):
+        basename=os.path.basename(self.fname)
+        d=self.database[self.fname]
+        try:
+            jd=str(d['header']['JD'])
+        except:
+            jd=''
+        try:
+            hjd=str(d['header']['HJD'])
+        except:
+            hjd=''
+        return "%s,JD, %s, HJD, %s,"%(basename,jd,hjd)
 
 
 
@@ -721,11 +885,15 @@ class App:
         self.wavelength=xg
         self.flux=yg
         self.header['CRVAL1']=xg[0].value
+        # self.database[self.fname]['crop-header']=self.header
+        # self.database[self.fname]['crop-flux']=self.flux
+        # self.database[self.fname]['crop-wave']=self.wavelength
         self.splot()
         if script == None:
             self.norm_clear()
+            self.loadedregions=False
         else:
-            pass
+            self.plotRegions()
 
     def fit(self,func="gauss",event=None):
         """wrapper function for fitting line profiles"""
@@ -739,28 +907,37 @@ class App:
         xa=np.array([xgf[0].value,xgf[-1].value])
         ya=np.array([ygf[0].value,ygf[-1].value])
         linecoeff = np.polyfit(xa,ya,1) #does a linear polynomail fit to the data.
-        ygfn=ygf/np.polyval(linecoeff,xgf.value)*u.flx #normalized
+        ygfn=ygf/np.polyval(linecoeff,xgf.value)#*u.flx #normalized
         ygn=yg/np.polyval(linecoeff,xg/xg[0])*u.flx #xg/xg[0] to remove the unit
         invert=False
         reflevel=yg[0]
         if yg[len(yg)//2] < reflevel:
             ygf=reflevel-ygf
             invert=True
+        # self.ax.clear()
 
         if func=="gauss":
-          g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[1]-xg[0])
+          g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[2]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, yg)
             plt.plot(xgf, g(xgf), label='%s'%(func))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
             amp=g.amplitude
+            # self.ax.plot(xgf,ygfn)
+            # self.ax.plot(xgf,g(xgf))
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, reflevel-yg)
             plt.plot(xgf, (reflevel-g(xgf)), label='%s'%(func))
-            amp=-g.amplitude
-          outstring="Gaussian Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.mean)+", FWHM: "+ \
-                           "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+            amp=reflevel-g.amplitude
+            # self.ax.plot(xgf,-ygfn)
+            # self.ax.plot(xgf,-g(xgf))
+          t=self.filedate()
+          outstring=t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
+                           "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
+          self.checklog()
+          self.starlog.write(outstring)
+          self.starlog.write('\n')
           self.output.delete(0,tk.END)
           self.output.insert(tk.END, outstring)
 
@@ -769,35 +946,53 @@ class App:
           g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, yg)
             plt.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
             amp=g.amplitude_L
+            # self.ax.plot(xg,ygn)
+            # self.ax.plot(xgf,g(xgf))
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, reflevel-yg)
             plt.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-            amp=-g.amplitude_L
-          outstring=  "Voigt Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM: "+\
-                  "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_L)+\
-                  ", Gaussian_FWHM: "+"{0.value:0.03f} {0.unit:FITS}".format(g.fwhm_G)+\
-                  ", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+            # self.ax.plot(xg,-ygn)
+            # self.ax.plot(xgf,-g(xgf))
+            amp=reflevel-g.amplitude_L
+          t=self.filedate()
+          outstring=t+"Voigt Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM, "+\
+                  "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_L)+\
+                  ", Gaussian_FWHM, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_G)+\
+                  ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
+          self.checklog()
+          self.starlog.write(outstring)
+          self.starlog.write('\n')
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
+
         elif func=="lorentz":
           g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, fwhm=xg[1]-xg[0])
           fit_g = fitting.LevMarLSQFitter()
           if invert == False:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, yg)
             plt.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+            # self.ax.plot(xg,ygn)
+            # self.ax.plot(xgf,g(xgf))
             amp=g.amplitude
           elif invert == True:
-            g = fit_g(g_init, xgf, ygf)
+            g = fit_g(g_init, xg, reflevel-yg)
             plt.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-            amp=-g.amplitude
-          outstring= "Lorentz Center: "+"{0.value:0.03f} {0.unit:FITS}".format(g.x_0)+", FWHM: "+\
-                  "{0.value:0.03f} {0.unit:FITS}".format(g.fwhm)+\
-                  ", Amplitude: "+"{0.value:0.03f} {0.unit:FITS}".format(amp)
+            # self.ax.plot(xg,-ygn)
+            # self.ax.plot(xgf,-g(xgf))
+            amp=reflevel-g.amplitude
+
+          t=self.filedate()
+          outstring=t+"Lorentz Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
+                  "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
+                  ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp)
           print(outstring)
+          self.checklog()
+          self.starlog.write(outstring)
+          self.starlog.write('\n')
           self.output.delete(0,tk.END)
           self.output.insert(tk.END,outstring)
 
@@ -1018,9 +1213,9 @@ class App:
         if func == None:
             print("No function selected for stacker.")
         else:
-            for f in self.stack:
+            for f in self.database:
                 self.fname=f
-                self.openSpectra(spec='Yes')
+                self.plotSpectra(spec=self.fname)
                 self.measuremode()
                 if func == "norm":
                     if self.loadednorm == True:
@@ -1069,10 +1264,11 @@ class App:
                 self.savestack(name="norm.list",stack=self.stackforsaving)
             elif func == "scopy":
                 self.savestack(name="crop.list",stack=self.stackforsaving)
+
     def stackwindowplot(self,spec):
-        self.fname=spec
         self.singleplottoggle()
-        self.plotSpectra(spec='Yes')
+        self.plotSpectra(spec=self.fname)
+        self.plotRegions()
 
     def stackwindowopenspectra(self):
         self.openSpectra()
@@ -1085,22 +1281,24 @@ class App:
             pass
         else:
             self.stack.remove(self.fname)
+            self.database.pop(self.fname)
             self.ax.clear()
             self.canvas.draw()
             self.stackpane()
             self.output.delete(0,tk.END)
             self.output.insert(tk.END,"You may replot the stack (]), overplot ([]), or choose a new spectrum from the stack.")
 
-    def hidepane(self):
+    def hidepane(self,event=None):
+        self.pane=False
         self.canvasframe.destroy()
         self.stackcanvas.destroy()
         self.buttonframe.destroy()
-        try:
-            self.canvas.destory()
-        except:
-            pass
-        self.figframe.destroy()
-        self.generate_plot()
+        # try:
+        #     self.canvas.destory()
+        # except:
+        #     pass
+        # self.figframe.destroy()
+        # self.generate_plot()
         if self.stackplot == True or self.overplot == True:
             self.plotSpectra()
         else:
@@ -1108,6 +1306,7 @@ class App:
 
 
     def stackpane(self,event=None):
+        self.pane=True
         try:
             self.canvasframe.destroy()
         except:
@@ -1128,7 +1327,7 @@ class App:
         self.buttonframe=tk.Frame()
         self.buttonframe.pack(side="top")
         tk.Button(self.buttonframe,text="Remove Selected", command=self.removefromstack).pack(side="left",padx=2)
-        tk.Button(self.buttonframe,text="Hide Pane", command=self.hidepane).pack(side="left",padx=2)
+        tk.Button(self.buttonframe,text="Hide Pane (})", command=self.hidepane).pack(side="left",padx=2)
         self.canvasframe=tk.Frame()
         self.canvasframe.pack(side = "top", fill="both",expand="yes")
         self.stackcanvas = tk.Canvas(self.canvasframe,background="#ffffff")
@@ -1147,7 +1346,7 @@ class App:
         self.canvasframe.bind("<Configure>", self.onFrameConfigure)
 
 
-        specnumber=list(np.arange(len(self.stack))+1)
+        specnumber=list(np.arange(len(self.database))+1)
         specnumber.reverse()
         i=0
         for i,s in enumerate(self.stack[::-1]): #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
@@ -1172,7 +1371,8 @@ class App:
                 savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
                 hdu.writeto(savename)
             else:
-                savename=path_wo_ext+extend
+                savename=os.path.join(path_wo_ext,basename,extend)
+                # savename=path_wo_ext+extend #probably need to use an os.join here
                 self.stackforsaving.append(savename)
                 hdu.writeto(savename,overwrite=True)
                 print("Saved to: ", savename)
@@ -1192,6 +1392,10 @@ class App:
             pass
 
     def _quit(self):
+        try:
+            self.endoflog()
+        except:
+            pass
         self.master.destroy()  # this is necessary on Windows to prevent
                         # Fatal Python Error: PyEval_RestoreThread: NULL tstate
         self.master.quit()     # stops mainloop
@@ -1238,9 +1442,9 @@ class App:
     def About(self):
         t=tk.Toplevel(self.master,height=600,width=600)
         t.wm_title("About")
-        tk.Label(t,text="Author: Dr. Joshua Thomas \n thomas.joshd@gmail.com").pack()
+        tk.Label(t,text="Author: Dr. Joshua Thomas \n Clarkson University \n jthomas@clarkson.edu \n thomas.joshd@gmail.com").pack()
         tk.Label(t,text="This program was designed to emulate some basic IRAF splot functions.").pack()
-        tk.Label(t,text="Uses Astropy library.").pack()
+        tk.Label(t,text="Astropy, scipy, and numpy libraries are used.").pack()
         tk.Label(t,text="Version %s"%version).pack()
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
@@ -1258,7 +1462,5 @@ root.mainloop() #lets the GUI run
 
 #need a way to stort the spectra in a stack by date, will require a way to examine the header and store to a list.
 #this will be nice for stack plots, but will also allow dynamical spectra.
-#need a logging system
-#fits to features doesn't display correctly.  Perhaps a fit will zoom in and just show the fit.
+
 #implement mouse scroll wheel.
-#need to switch to storing everything in a giant dictionary.
