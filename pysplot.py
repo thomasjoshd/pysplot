@@ -32,7 +32,7 @@ import astropy.units as u
 from astropy.constants import c
 
 from astropy.modeling import models, fitting
-#from astropy.modeling.functional_models import Voigt1D,Lorentz1D
+#from astropy.modelinog.functional_models import Voigt1D,Lorentz1D
 from astropy.convolution import convolve, Box1DKernel
 
 from scipy.interpolate import interp1d
@@ -187,7 +187,7 @@ class App:
 
         #--------------------------------------------------
         #some initial parameters
-        self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra.")
+        self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra. File>open (or press o)")
         self.generate_plot()
         self.gridvalue=True
         self.overplot=False
