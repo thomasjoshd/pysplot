@@ -5,6 +5,11 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
+import sys
+if sys.version_info < (3, 5):
+    raise "must use python 3.6 or greater"
+else:
+    pass
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -12,7 +17,7 @@ import os
 import tkinter as tk
 import tkinter.messagebox
 from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
-
+#clean up the messy calls!!
 import matplotlib.pyplot as plt #basic plotting
 from matplotlib import cm #colormap for dynamical spectra
 
@@ -360,6 +365,7 @@ class App:
             self.splot()
 
     def read_fits(self):
+        """Reads a fits file into the dictionary of stored spectra."""
         #need to add a way to read multispec fits files
         #Based on Read a UVES spectrum from the ESO pipeline
         self.sp = fits.open(self.fname)
@@ -367,16 +373,16 @@ class App:
 
         if header['NAXIS'] == 1:
             wcs = WCS(header)
-            #make index array
             index = np.arange(header['NAXIS1'])
             wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
             wavelength = wavelength.flatten()
             wavelength = wavelength*u.AA
+            try:
+                wavelength=wavelength/(1.0-header['VHELIO']/2.997925e05)
+                self.database[self.fname]['heliocentric']=header['VHELIO']
+            except:
+                pass
             flux = self.sp[0].data*u.flx
-            # self.wavelength=wavelength
-            # self.flux=flux
-            # self.header=header
-            # self.flux_orig=flux
             self.database[self.fname]['wavelength']=wavelength
             self.database[self.fname]['flux']=flux
             self.database[self.fname]['flux_orig']=flux
@@ -387,16 +393,10 @@ class App:
             index = np.arange(header['NAXIS1'])
             wavelength= index*u.pixel
             flux = self.sp[0].data[0].flatten()*u.flx
-
             self.database[self.fname]['wavelength']=wavelength
             self.database[self.fname]['flux']=flux
             self.database[self.fname]['flux_orig']=flux
             self.database[self.fname]['header']=header
-            # self.wavelength=wavelength
-            # self.flux=flux
-            # self.header=header
-            # self.flux_orig=flux
-
             self.sp.close()
         else:
             tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
@@ -502,7 +502,10 @@ class App:
         if self.wavelength.unit == 'km / s':
             self.ax.set_xlabel("Velocity (%s)"%self.wavelength.unit)
         else:
-            self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
+            if 'heliocentric' in self.database[self.fname]:
+                    self.ax.set_xlabel("Heliocentric Wavelength (%s)"%self.wavelength.unit)
+            else:
+                self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
 
 
 
@@ -1094,7 +1097,7 @@ class App:
         dataout.close()
         self.loadedbisect=True
         self.plotRegions()
-        self.BisectLine()
+        # self.BisectLine()
 
 
     def norm_clear(self,event=None):
@@ -1257,7 +1260,7 @@ class App:
                         self.abort_stack()
                 elif func == "bisect":
                     if self.loadedbisect == True:
-                        self.Bisect()
+                        self.BisectLine()
                     else:
                         self.abort_stack()
                 else:
