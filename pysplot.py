@@ -21,7 +21,7 @@ import tkinter.messagebox
 from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
 #clean up the messy calls!!
 import matplotlib.pyplot as plt #basic plotting
-from matplotlib import cm #colormap for dynamical spectra
+# from matplotlib import cm #colormap for dynamical spectra
 
 try:
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -551,6 +551,7 @@ class App:
 
     def stackplottoggle(self,event=None):
         """Switches to stackplot mode and replots the stack."""
+        self.output.delete(0,tk.END)
         self.stackplot=True
         self.overplot=False
         # self.stack=list(dict.fromkeys(self.stack)) #removes any duplicate file added to the list.
@@ -565,6 +566,7 @@ class App:
 
     def singleplottoggle(self,event=None):
         """Single spectrum display mode, replots the last active spectrum."""
+        self.output.delete(0,tk.END)
         self.stackplot=False
         self.overplot=False
         self.ax.set_title("Single Spectra Mode",fontsize=12)
@@ -582,6 +584,7 @@ class App:
         # self.canvas.draw()
 
     def dynamical(self,event=None):
+        self.output.delete(0,tk.END)
         self.jd=[]
         for i,row in enumerate(self.database):
             self.header=self.database[row]['header']
@@ -600,7 +603,6 @@ class App:
         data=np.empty([len(tt),len(self.wavelength)],dtype=float)
         data.fill(np.nan)
         self.jd=np.array(self.jd)-min(self.jd)
-        #this isn't iterating over the contents of the dictionary!
         for i,row in enumerate(self.database):
             self.flux=self.database[row]['flux']
             self.wavelength=self.database[row]['wavelength']
@@ -621,12 +623,13 @@ class App:
         for i,junk in enumerate(data[0,:]):
             data[:,i]=fill_nan(data[:,i])
 
-        cmap=cm.spectral
-        cmap.set_under(color='white')
-        cbaxes = self.fig.add_axes([.88, .32, 0.03, .58])
+        cmap=plt.get_cmap('Spectral')
+        # cmap.set_under(color='white')
+        # cbaxes = self.fig.add_axes([.88, .32, 0.03, .58])
         #colorbar(cax = cbaxes).ax.tick_params(axis='y', direction='out')  #not sure where defined.
 
-        self.ax.imshow(data,cmap=cmap,interpolation='nearest',extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]), origin='lower',aspect='auto',alpha=1)
+        self.ax.imshow(data,cmap=cmap,interpolation='nearest', origin='lower',aspect='auto',alpha=1)
+        # extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]),
 
         self.toolbar.update()
         self.canvas.draw()
@@ -1303,7 +1306,7 @@ class App:
             self.canvas.draw()
             self.stackpane()
             self.output.delete(0,tk.END)
-            self.output.insert(tk.END,"You may replot the stack (]), overplot ([]), or choose a new spectrum from the stack.")
+            self.output.insert(tk.END,"You may replot the stack (]), overplot ([), or choose a new spectrum from the stack.")
 
     def hidepane(self,event=None):
         self.pane=False
