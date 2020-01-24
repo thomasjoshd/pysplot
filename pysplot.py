@@ -5,6 +5,8 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
+version="0.6.02"
+
 import sys
 if sys.version_info < (3, 5):
     raise "must use python 3.6 or greater"
@@ -42,9 +44,10 @@ from astropy.convolution import convolve, Box1DKernel
 from scipy.interpolate import interp1d
 
 import datetime
+import webbrowser
 
 UPDATED='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now())
-version="0.6.00"
+
 
 
 plot_params = {'axes.linewidth': 1,
@@ -1461,8 +1464,14 @@ class App:
         tk.Label(t,text="Astropy, scipy, and numpy libraries are used.").pack()
         tk.Label(t,text="Version %s"%version).pack()
         tk.Label(t,text="Last Updated %s"%UPDATED).pack()
+        link2=tk.Label(t,text="Check for updates at:  https://github.com/thomasjoshd/pysplot", fg="blue", cursor="hand2")
+        link2.pack()
+        link2.bind("<Button-1>", lambda e: self.callback("https://github.com/thomasjoshd/pysplot"))
         b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
         b.pack()
+
+    def callback(self,url):
+        webbrowser.open_new(url)
 
 #----------------------------------------------------------------------------------
 #Begin GUI
