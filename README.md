@@ -25,6 +25,7 @@ Display 1-D spectra
 Polynomial continuum normalization.
 Boxcar smoothing.
 Convert display axis from wavelength to velocity and vice versa.
+Display heliocentric wavelenths if VHELIO keyword in header.
 
 Measure Equivalent Width.
 Fit Gaussian, Voigt, and Lorentzian to spectral features. (currently the display doesn't look good.)
@@ -35,4 +36,4 @@ Normalization parameters, regions, and bisection regions can all be saved/loaded
 
 The stack menu allows the application of any of the above features to an entire stack of spectra. (currently only tested on a stack of approximately uniform wavelength coverage.)
 
-(A csv log output is planned.)
+All measurements are recorded to a CSV log file in the directory where you are working.
