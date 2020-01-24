@@ -228,6 +228,7 @@ class App:
         self.master.bind('v', partial(self.fit,"voigt"))
         self.master.bind('w', self.BisectLine)
         self.master.bind('x', self.regionload)
+        self.master.bind('X', self.region_clear)
 
 
 
@@ -240,12 +241,12 @@ class App:
         self.master.bind('}', self.hidepane)
         self.master.bind('<space>', self.coord)
 
-        # self.master.bind("<MouseWheel>",self.MouseWheelHandler)
-        # self.master.bind("<Button-4>",self.MouseWheelHandler)
-        # self.master.bind("<Button-5>",self.MouseWheelHandler)
+        self.master.bind("<MouseWheel>",self.MouseWheelHandler)
+        self.master.bind("<Button-4>",self.MouseWheelHandler)
+        self.master.bind("<Button-5>",self.MouseWheelHandler)
 
     def MouseWheelHandler(self,event=None):
-        print("I sense scrolling")
+        print("Nyan")
 
     def captainslog(self):
         """Save the output from measuremetns to a csv"""
@@ -463,7 +464,7 @@ class App:
         self.canvas.draw()
         self.canvas._tkcanvas.pack(side="top", fill="both", expand=1)
 
-    def splot(self):
+    def splot(self,xlim=None,ylim=None):
         #Normal plot mode
         if self.overplot == False and self.stackplot == False:
             self.ax.clear()
@@ -493,9 +494,14 @@ class App:
             self.restore()
 
         self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
+        if xlim != None:
+            self.ax.set_xlim(xlim)
+            self.ax.set_ylim(ylim)
+
         plt.grid(self.gridvalue)
         self.xaxislabel()
-        self.toolbar.update()
+        if xlim == None:
+            self.toolbar.update()
         self.canvas.draw()
 
     def xaxislabel(self):
@@ -726,7 +732,6 @@ class App:
             self.stackplottoggle()
         self.region_clear()
         self.loadedbisect=False
-
 
 
     def pltregion(self,x,y,sym='-',c='black'):
@@ -1024,7 +1029,7 @@ class App:
         self.norm_clear()
 
     def plotRegions(self):
-        message="Using a loaded region, when finish use View>Reset or press r."
+        message="Using a loaded region, when finished use View>Reset or press r."
         if self.loadednorm == True:
             self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
             self.output.delete(0,tk.END)
@@ -1097,7 +1102,6 @@ class App:
         dataout.close()
         self.loadedbisect=True
         self.plotRegions()
-        # self.BisectLine()
 
 
     def norm_clear(self,event=None):
@@ -1108,10 +1112,15 @@ class App:
         self.order=1
         self.output.delete(0,tk.END)
 
-    def region_clear(self):
+    def region_clear(self,event=None):
         self.saveregions_x=[0,0]
         self.saveregions_y=[0,0]
         self.loadedregions=False
+        xlim=self.ax.get_xlim()
+        ylim=self.ax.get_ylim()
+
+        self.splot(xlim=xlim,ylim=ylim)
+
 
     def SaveNorm(self):
         """Save the regions and powerlaw for the normalization."""
