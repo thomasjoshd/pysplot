@@ -13,7 +13,7 @@ if sys.version_info < (3, 5):
 else:
     pass
 import platform
-OperatingSys=platform.system()
+OperatingSys=platform.system() #File dropdown not supported on Mac
 
 from functools import partial
 import numpy as np #arrays and math
