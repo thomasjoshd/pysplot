@@ -12,6 +12,9 @@ if sys.version_info < (3, 5):
     raise "must use python 3.6 or greater"
 else:
     pass
+import platform
+OperatingSys=platform.system()
+
 from functools import partial
 import numpy as np #arrays and math
 import csv
@@ -280,12 +283,15 @@ class App:
     def openSpectra(self,event=None):
         """Open up spectrum or lists of spectra"""
         if self.overplot == False and self.stackplot == False:
-            filez=askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
+            if 'Darwin' not in OperatingSys:
+                filez=askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Spectra List", "*.list"),
                                                             ("Spectra List", "*.lst"),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
+            else:
+                filez=askopenfilenames(title='Choose a single spectrum')
             if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
@@ -310,12 +316,15 @@ class App:
                 if self.pane == True:
                     self.stackpane()
         else:
-            filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
+            if 'Darwin' not in OperatingSys:
+                filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
                                                             ("Spectra List", "*.lst"),
                                                             ("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
+            else:
+                filez=askopenfilenames(title='Choose a single spectrum')
             if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
@@ -637,6 +646,8 @@ class App:
 
     def stackreset(self):
         """Reset the stacking parameters"""
+        self.output.delete(0,tk.END)
+        self.output.insert(tk.END,"Get started by opening a 1-D Spectrum or List of 1-D Spectra. File>open (or press o)")
         self.stack=[]
         self.database.clear()
         self.stackint=0
@@ -1054,8 +1065,11 @@ class App:
     def LoadRegion(self):
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
         self.norm_clear()
-        file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
+        if 'Darwin' not in OperatingSys:
+            file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
+        else:
+            file=askopenfilename(title='Choose a region parameter file (.par)')
         dataout=open(file)
         for i,line in enumerate(dataout):
             if i == 0 :
@@ -1091,8 +1105,11 @@ class App:
     def LoadBisect(self):
         """Load the regions bisection."""
         self.norm_clear()
-        file=askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
+        if 'Darwin' not in OperatingSys:
+            file=askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
+        else:
+            file=askopenfilename(title='Choose a bisection parameter file (.par)')
         dataout=open(file)
 
         for i,line in enumerate(dataout):
@@ -1119,6 +1136,7 @@ class App:
         self.output.delete(0,tk.END)
 
     def region_clear(self,event=None):
+        self.output.delete(0,tk.END)
         self.saveregions_x=[0,0]
         self.saveregions_y=[0,0]
         self.loadedregions=False
@@ -1149,8 +1167,11 @@ class App:
     def LoadNorm(self):
         """Load the regions and powerlaw for the normalization."""
         self.norm_clear()
-        file=askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
+        if 'Darwin' not in OperatingSys:
+            file=askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
+        else:
+            file=askopenfilename(title='Choose a normalization parameter file (.par)')
         dataout=open(file)
 
         for i,line in enumerate(dataout):
