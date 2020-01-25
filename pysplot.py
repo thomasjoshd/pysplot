@@ -604,9 +604,11 @@ class App:
         self.wavelength=self.database[self.stack[0]]['wavelength']
         x=len(self.wavelength)
 
-        self.ax.clear()
-        self.ax.set_ylabel("JD-%s"%str(min(self.jd)))
-        self.xaxislabel()
+        # self.ax.clear()
+        # self.ax.set_ylabel("JD-%s"%str(min(self.jd)))
+        # self.xaxislabel()
+        fig=plt.figure()
+        fax=plt.gca()
         tt=np.arange(0, max(self.jd)-min(self.jd),.5) #phase steps
 
         data=np.empty([len(tt),len(self.wavelength)],dtype=float)
@@ -629,19 +631,19 @@ class App:
                 pass
 
         # interpolate, but only along the time axis
-        for i,junk in enumerate(data[0,:]):
-            data[:,i]=fill_nan(data[:,i])
+        # for i,junk in enumerate(data[0,:]):
+        #     data[:,i]=fill_nan(data[:,i])
 
         cmap=plt.get_cmap('Spectral')
         # cmap.set_under(color='white')
         # cbaxes = self.fig.add_axes([.88, .32, 0.03, .58])
         #colorbar(cax = cbaxes).ax.tick_params(axis='y', direction='out')  #not sure where defined.
+# self.ax
+        fax.imshow(data,cmap=cmap,interpolation='nearest', origin='lower',aspect='auto',alpha=1, extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]))
+        plt.show(block=False)
 
-        self.ax.imshow(data,cmap=cmap,interpolation='nearest', origin='lower',aspect='auto',alpha=1)
-        # extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]),
-
-        self.toolbar.update()
-        self.canvas.draw()
+        # self.toolbar.update()
+        # self.canvas.draw()
 
 
     def stackreset(self):
