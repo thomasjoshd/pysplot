@@ -5,7 +5,7 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
-version="0.6.02"
+version="0.6.1"
 
 import sys
 if sys.version_info < (3, 5):
@@ -144,8 +144,6 @@ class App:
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
         modmenu.add_separator()
         modmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
-        modmenu.add_separator()
-        modmenu.add_command(label="Edit Header Keyword (H)", command=self.header_edit)
 
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
@@ -220,7 +218,6 @@ class App:
         self.master.bind('g', partial(self.fit,"gauss"))
 
         self.master.bind('h', self.imhead)
-        self.master.bind('H', self.header_edit)
 
 
 
@@ -1448,73 +1445,69 @@ class App:
     def imhead(self,event=None):
         """Display the image header as loaded from the file."""
         try:
-            t=tk.Toplevel(self.master,height=600,width=600)
-            t.wm_title("FITS Header:  %s"%(self.fname))
-            s=tk.Scrollbar(t)
-            s.pack(side=tk.RIGHT,fill=tk.Y)
+            self.headerwin=tk.Toplevel(self.master,height=600,width=600)
+            self.headerwin.wm_title("FITS Header:  %s"%(self.fname))
 
-            keywordframe=tk.Frame(t)
+
+            keywordframe=tk.Frame(self.headerwin)
             keywordframe.pack(side="top")
             l1=tk.Label(keywordframe, text="Header Keyword:").pack( side = "left")
-            entryvar1=tk.StringVar()
-            self.header_keyword = tk.Entry(keywordframe,text=entryvar1,width=60)
+            self.entryvar1=tk.StringVar()
+            self.header_keyword = tk.Entry(keywordframe,text=self.entryvar1,width=60)
             self.header_keyword.pack(side = "left")
-            entryvar1.set('')
+            self.entryvar1.set('')
             b = tk.Button(keywordframe,text="Set Value", command=self.header_set)
             b.pack(side = "left")
 
-            valueframe=tk.Frame(t)
+            valueframe=tk.Frame(self.headerwin)
             valueframe.pack(side="top")
             l2=tk.Label(valueframe, text="Value:  ").pack( side = "left")
-            entryvar2=tk.StringVar()
-            self.header_value = tk.Entry(valueframe,text=entryvar2,width=60)
+            self.entryvar2=tk.StringVar()
+            self.header_value = tk.Entry(valueframe,text=self.entryvar2,width=60)
             self.header_value.pack(side = "left")
-            self.w1v.set('')
+            self.entryvar2.set('')
 
+            b2 = tk.Button(valueframe,text="Close Window", command=lambda: self.destroychild(self.headerwin))
+            b2.pack(side = "left")
 
-            hlist=tk.Listbox(t,yscrollcommand=s.set,height=20,width=80)
-            # self.header_list()
+            # self.listframe=tk.Frame(self.headerwin)
+            # self.listframe.pack(side="top")
+            # hlist=tk.Listbox(self.listframe,yscrollcommand=s.set,height=20,width=80)
 
-            for keys in self.header.tostring(sep=',').split(','):
-                hlist.insert(tk.END,"%s "%(keys))
-            hlist.pack(side=tk.LEFT,fill=tk.BOTH)
-            s.config(command=hlist.yview)
+            self.header_list()
+
+            # for keys in self.header.tostring(sep=',').split(','):
+            #     hlist.insert(tk.END,"%s "%(keys))
+            # hlist.pack(side="left",fill=tk.BOTH)
+            # s.config(command=hlist.yview)
+
+            # b1 = tk.Button(valueframe,text="Load Keyword", command=hlist.curselection)
+            # b1.pack(side = "left")
 
         except:
-            self.destroychild(t)
+            self.destroychild(self.headerwin)
 
     def header_list(self,event=None):
+        self.listframe=tk.Frame(self.headerwin)
+        self.listframe.pack(side="top")
+        s=tk.Scrollbar(self.listframe)
+        s.pack(side="right",fill=tk.Y)
+        hlist=tk.Listbox(self.listframe,yscrollcommand=s.set,height=20,width=80)
         for keys in self.header.tostring(sep=',').split(','):
             hlist.insert(tk.END,"%s "%(keys))
         hlist.pack(side=tk.LEFT,fill=tk.BOTH)
         s.config(command=hlist.yview)
+        #header list doesn't auto resize with chaning the window size.
 
-    def header_edit(self,event=None):
-        """Get Header Keyword. and new value"""
-        t=tk.Toplevel(self.master,height=200,width=200)
-        t.wm_title("Header Keyword Editor")
-        tk.Label(t,text="Header Keyword").pack()
-        entryvar1=tk.StringVar()
-        self.header_keyword = tk.Entry(t,text=entryvar1,width=20)
-        self.header_keyword.pack()
-        entryvar1.set('')
-        tk.Label(t,text="Value").pack()
-
-        entryvar2=tk.StringVar()
-        self.header_value = tk.Entry(t,text=entryvar2,width=20)
-        self.header_value.pack()
-        entryvar2.set('')
-
-        b = tk.Button(t,text="Set Value", command=self.header_set)
-        b.pack()
-        b2 = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
-        b2.pack()
-
-    def header_set(self):
+    def header_set(self,event=None):
         """Write the new keyword/value to the header stored in the dictionary."""
-        print(self.header_keyword.get())
-        print(self.header_value.get())
-        # self.header_list()
+        self.header[self.header_keyword.get()]=self.header_value.get()
+        self.entryvar1.set('')
+        self.entryvar2.set('')
+        if self.listframe is not None:
+            self.listframe.destroy()
+            self.header_list()
+
 
     def destroychild(self,w):
         w.destroy()
