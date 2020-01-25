@@ -1492,8 +1492,6 @@ class App:
         self.header_disp.pack(side=tk.LEFT,fill=tk.BOTH,expand=1)
 
 
-        #header list doesn't auto resize with chaning the window size.
-
     def header_set(self,event=None):
         """Write the new keyword/value to the header stored in the dictionary."""
         self.header[self.header_keyword.get()]=self.header_value.get()
