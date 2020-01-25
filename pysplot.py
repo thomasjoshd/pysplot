@@ -144,6 +144,8 @@ class App:
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
         modmenu.add_separator()
         modmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
+        modmenu.add_separator()
+        modmenu.add_command(label="Edit Header Keyword (H)", command=self.header_edit)
 
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
@@ -218,6 +220,7 @@ class App:
         self.master.bind('g', partial(self.fit,"gauss"))
 
         self.master.bind('h', self.imhead)
+        self.master.bind('H', self.header_edit)
 
 
 
@@ -1449,33 +1452,69 @@ class App:
             t.wm_title("FITS Header:  %s"%(self.fname))
             s=tk.Scrollbar(t)
             s.pack(side=tk.RIGHT,fill=tk.Y)
-            b = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
-            b.pack()
+
+            keywordframe=tk.Frame(t)
+            keywordframe.pack(side="top")
+            l1=tk.Label(keywordframe, text="Header Keyword:").pack( side = "left")
+            entryvar1=tk.StringVar()
+            self.header_keyword = tk.Entry(keywordframe,text=entryvar1,width=60)
+            self.header_keyword.pack(side = "left")
+            entryvar1.set('')
+            b = tk.Button(keywordframe,text="Set Value", command=self.header_set)
+            b.pack(side = "left")
+
+            valueframe=tk.Frame(t)
+            valueframe.pack(side="top")
+            l2=tk.Label(valueframe, text="Value:  ").pack( side = "left")
+            entryvar2=tk.StringVar()
+            self.header_value = tk.Entry(valueframe,text=entryvar2,width=60)
+            self.header_value.pack(side = "left")
+            self.w1v.set('')
+
+
             hlist=tk.Listbox(t,yscrollcommand=s.set,height=20,width=80)
+            # self.header_list()
 
             for keys in self.header.tostring(sep=',').split(','):
                 hlist.insert(tk.END,"%s "%(keys))
             hlist.pack(side=tk.LEFT,fill=tk.BOTH)
             s.config(command=hlist.yview)
+
         except:
             self.destroychild(t)
 
-    def EntryDialog(self,message="Text Input"):
-        """Developement, not used nor working as intended."""
+    def header_list(self,event=None):
+        for keys in self.header.tostring(sep=',').split(','):
+            hlist.insert(tk.END,"%s "%(keys))
+        hlist.pack(side=tk.LEFT,fill=tk.BOTH)
+        s.config(command=hlist.yview)
+
+    def header_edit(self,event=None):
+        """Get Header Keyword. and new value"""
         t=tk.Toplevel(self.master,height=200,width=200)
-        t.wm_title("Text Input Needed")
-        tk.Label(t,text=message).pack()
-        wv=tk.StringVar()
-        self.w = tk.Entry(t,text=wv,width=20)
-        self.w.pack()
-        b = tk.Button(t,text="Set Value", command=self.fetch)
+        t.wm_title("Header Keyword Editor")
+        tk.Label(t,text="Header Keyword").pack()
+        entryvar1=tk.StringVar()
+        self.header_keyword = tk.Entry(t,text=entryvar1,width=20)
+        self.header_keyword.pack()
+        entryvar1.set('')
+        tk.Label(t,text="Value").pack()
+
+        entryvar2=tk.StringVar()
+        self.header_value = tk.Entry(t,text=entryvar2,width=20)
+        self.header_value.pack()
+        entryvar2.set('')
+
+        b = tk.Button(t,text="Set Value", command=self.header_set)
         b.pack()
         b2 = tk.Button(t,text="Close", command=lambda: self.destroychild(t))
         b2.pack()
 
-    def fetch(self):
-        """Grabs input from the input box."""
-        self.response=self.w.get()
+    def header_set(self):
+        """Write the new keyword/value to the header stored in the dictionary."""
+        print(self.header_keyword.get())
+        print(self.header_value.get())
+        # self.header_list()
 
     def destroychild(self,w):
         w.destroy()
