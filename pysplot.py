@@ -1448,7 +1448,6 @@ class App:
             self.headerwin=tk.Toplevel(self.master,height=600,width=600)
             self.headerwin.wm_title("FITS Header:  %s"%(self.fname))
 
-
             keywordframe=tk.Frame(self.headerwin)
             keywordframe.pack(side="top")
             l1=tk.Label(keywordframe, text="Header Keyword:").pack( side = "left")
@@ -1470,33 +1469,29 @@ class App:
             b2 = tk.Button(valueframe,text="Close Window", command=lambda: self.destroychild(self.headerwin))
             b2.pack(side = "left")
 
-            # self.listframe=tk.Frame(self.headerwin)
-            # self.listframe.pack(side="top")
-            # hlist=tk.Listbox(self.listframe,yscrollcommand=s.set,height=20,width=80)
-
             self.header_list()
 
-            # for keys in self.header.tostring(sep=',').split(','):
-            #     hlist.insert(tk.END,"%s "%(keys))
-            # hlist.pack(side="left",fill=tk.BOTH)
-            # s.config(command=hlist.yview)
-
-            # b1 = tk.Button(valueframe,text="Load Keyword", command=hlist.curselection)
-            # b1.pack(side = "left")
+            self.header_disp.bind("<Double-Button-1>",self.grab_keyword)
 
         except:
             self.destroychild(self.headerwin)
 
+    def grab_keyword(self,event=None):
+        self.entryvar1.set(self.header_disp.get(tk.ACTIVE).split()[0])
+
     def header_list(self,event=None):
         self.listframe=tk.Frame(self.headerwin)
-        self.listframe.pack(side="top")
+        self.listframe.pack(side="top")#,fill="both",exapand=1)
         s=tk.Scrollbar(self.listframe)
-        s.pack(side="right",fill=tk.Y)
-        hlist=tk.Listbox(self.listframe,yscrollcommand=s.set,height=20,width=80)
+        s.pack(side="right",fill=tk.Y)#,expand=1)
+        self.header_disp=tk.Listbox(self.listframe,yscrollcommand=s.set,height=40,width=80)
         for keys in self.header.tostring(sep=',').split(','):
-            hlist.insert(tk.END,"%s "%(keys))
-        hlist.pack(side=tk.LEFT,fill=tk.BOTH)
-        s.config(command=hlist.yview)
+            self.header_disp.insert(tk.END,"%s "%(keys))
+
+        s.config(command=self.header_disp.yview)
+        self.header_disp.pack(side=tk.LEFT,fill=tk.BOTH,expand=1)
+
+
         #header list doesn't auto resize with chaning the window size.
 
     def header_set(self,event=None):
