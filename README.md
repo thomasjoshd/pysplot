@@ -14,7 +14,7 @@ Open fit, fits, and headerless text spectra
 
 Save modifed spectra as fit, fits, headerless txt.
 
-Display image header.
+Display image header, add and edit existing header keywords.
 
 Display 1-D spectra
   single spectrum mode
