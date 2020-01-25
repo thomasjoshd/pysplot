@@ -1334,12 +1334,7 @@ class App:
         self.canvasframe.destroy()
         self.stackcanvas.destroy()
         self.buttonframe.destroy()
-        # try:
-        #     self.canvas.destory()
-        # except:
-        #     pass
-        # self.figframe.destroy()
-        # self.generate_plot()
+
         if self.stackplot == True or self.overplot == True:
             self.plotSpectra()
         else:
