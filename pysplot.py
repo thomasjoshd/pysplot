@@ -5,7 +5,7 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
-version="0.6.2"
+version="0.6.3"
 
 import sys
 if sys.version_info < (3, 5):
@@ -138,6 +138,7 @@ class App:
         modmenu.add_command(label="Load Norm Parameters",command=self.LoadNorm)
         modmenu.add_separator()
         modmenu.add_command(label="Boxcar Smooth (b)", command=self.smooth)
+        modmenu.add_command(label="Crop Spectra (c)", command=self.scopy)
         modmenu.add_separator()
         modmenu.add_command(label="Convert Wavelength <-> Velocity (u)", command=self.velocity)
 
@@ -720,7 +721,7 @@ class App:
         self.measuremode()
         if self.wavelength.unit == u.AA:
             self.output.delete(0,tk.END)
-            self.output.insert(tk.END,"Left Click (x) on a point to the left and to the right of what you wish to measure. Right Click (backspace) to remove a point.")
+            self.output.insert(tk.END,"Left Click (x) on where you want zero to be.")
             clicks= plt.ginput(1)
             clicks= np.array(clicks)
             self.wavecenter=clicks[0][0]*u.AA
@@ -1539,3 +1540,5 @@ root.mainloop() #lets the GUI run
 #this will be nice for stack plots, but will also allow dynamical spectra.
 
 #implement mouse scroll wheel.
+
+#right now heliocentric correction is done when the file is read, which doesn't allow for updating if the keyword is changed in the new header editing mode.
