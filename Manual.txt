@@ -9,43 +9,82 @@ For a general overview of the features and requirements, see README.md
 
 General Program Tips
 
-The purpose of this file is to guide you through using pysplot to examine and modify 1D spectra.  PySplot assumes you have a 1D extracted, wavelength calibrated spectrum (though it will open one not wavelength calibrated).
+The purpose of this file is to guide you through using pysplot to examine and
+modify 1D spectra.  PySplot assumes you have a 1D extracted, wavelength
+calibrated spectrum (though it will open one not wavelength calibrated).
 
-The keyboard shortcuts for various functions in the application are in () in the menus.  For example, open is (o).  The shortcuts are case sensitive, most are lowercase.  They also for the most part only work in the window with the attached menu.  So (o) doesn't do anything if the header window is in focus.
+The keyboard shortcuts for various functions in the application are in () in
+the menus.  For example, open is (o).  The shortcuts are case sensitive, most
+are lowercase.  They also for the most part only work in the window with the
+attached menu.  So (o) doesn't do anything if the header window is in focus.
 
-The "Prompt:" and "Input:" boxes above the plot area, but below the menu are for program interaction.  The prompt is how the program "talks" to the user, sometimes with hints on how to use a function once selected from a menu or keyboard shortcut.  Any measurement is also displayed in the prompt.  The input box starts with a default "1" and is the default integer used in the normalization routine.  Very few functions use the input currently.
+The "Prompt:" and "Input:" boxes above the plot area, but below the menu are
+for program interaction.  The prompt is how the program "talks" to the user,
+sometimes with hints on how to use a function once selected from a menu or
+keyboard shortcut.  Any measurement is also displayed in the prompt.  The input
+ box starts with a default "1" and is the default integer used in the
+ normalization routine.  Very few functions use the input currently.
 
-On Windows and Linux the file menus have  -------- lines at the top, if you click this it "tears out" the menu giving you a new mini window, useful if you like to think of "tool bars".
+On Windows and Linux the file menus have  -------- lines at the top, if you
+click this it "tears out" the menu giving you a new mini window, useful if you
+like to think of "tool bars".
 
-The plot window has 3 modes: single spectrum, over plot, and stack plot.  The modes that display multiple spectra will trigger a side pane with an interactive list.  The pane can be hidden with buttons or shortcuts.  By clicking on a spectrum in the sidepane it will go into single plot mode and display the selected spectrum. The button "Remove Selected" can now be used to remove a specific spectrum from the stack.  At this point you need to tell it what type of plot you want overplot ([) or stackplot (]), and the stack will be replotted.
+The plot window has 3 modes: single spectrum, over plot, and stack plot.  The
+modes that display multiple spectra will trigger a side pane with an
+interactive list.  The pane can be hidden with buttons or shortcuts.
+By clicking on a spectrum in the sidepane it will go into single plot mode and
+display the selected spectrum. The button "Remove Selected" can now be used to
+remove a specific spectrum from the stack.  At this point you need to tell it
+what type of plot you want overplot ([) or stackplot (]), and the stack will
+be replotted.
 
-The icons at the bottom of the plot window are the matplotlib interactive plot buttons.  "Home" resets to the original view.  The + lets you pan.  The magnifying glass lets you zoom in.  The left arrow takes you back one view edit, and the right arrow takes you forward in you view edit.  The subplot button isn't much use here, its part of the toolbar from matplotlib.  The "save" icon lets you save the displayed graph in your favorite image format.  At the lower right are the x and y positions of the cursor.
-
-
+The icons at the bottom of the plot window are the matplotlib interactive plot
+ buttons.  "Home" resets to the original view.  The + lets you pan.  The
+ magnifying glass lets you zoom in.  The left arrow takes you back one view
+ edit, and the right arrow takes you forward in you view edit.  The subplot
+ button isn't much use here, its part of the toolbar from matplotlib.  The
+ "save" icon lets you save the displayed graph in your favorite image format.
+ At the lower right are the x and y positions of the cursor.
 
 
 Menus
 
 File menu:
-The file menu lets you open spectra, and lists of spectra. When in single plot mode it will say choose a spectrum and default to fits (windows/Linux).  In a multi spectra mode it defaults to a list file, but again not on Mac.  Any type of file can be opened regardless of what the window title says (the program will switch to multiplot mode if you select a list).  However, once you are in multiplot mode it assumes any further lists or fits files are to be added to the stack.  You can also select more than one file at a time with control or shift click on Linux/windows.
+The file menu lets you open spectra, and lists of spectra. When in single plot
+mode it will say choose a spectrum and default to fits (windows/Linux).  In a
+multi spectra mode it defaults to a list file, but again not on Mac.  Any type
+of file can be opened regardless of what the window title says (the program
+will switch to multiplot mode if you select a list).  However, once you are in
+multiplot mode it assumes any further lists or fits files are to be added to
+the stack.  You can also select more than one file at a time with control or
+shift click on Linux/windows.
 
-Restore only makes sense in the context of single plot mode, and is for when you mess up a normalization.
+Opening fits or headerless text spectra is done from the File>open menu (o).
 
-Header opens up the header window and displays the header.  Keywords and values can be added or changed.  Double clicking on a keyword will let you edit that keyword without having to type it out.
+Restore only makes sense in the context of single plot mode, and is for when
+you mess up a normalization.
 
-Save new fits only works for one file at a time in single plot mode, the same goes for save headerless text spectrum.
+Header opens up the header window and displays the header.  Keywords and
+values can be added or changed.  Double clicking on a keyword will let you edit
+ that keyword without having to type it out.
 
-Close all spectra clears the stack.  This function is also "Stack clear" under the stack menu.
+Save new fits only works for one file at a time in single plot mode, the same
+goes for save headerless text spectrum.
+
+Close all spectra clears the stack.  This function is also "Stack clear" under
+ the stack menu.
 
 Exit, stage left.
 
 The view menu.
-These modes can be changed from the view menu, and their keyboard shortcuts.  Reset replots the spectra, and clears any regions and measurements.
+These modes can be changed from the view menu, and their keyboard shortcuts.
+Reset replots the spectra, and clears any regions and measurements.
 
 Modify Menu
 Generally these functions change the spectrum in someway.
 
-The functions above the first horizonal line are all tied to continuum normalization.
+The functions above the first horizonal line are all tied to continuum
+normalization.
 
 Set Continuum regions must be done before trying to run Normalize.
 
@@ -53,49 +92,85 @@ Normalize will try to fit a polynomial of the order in the input box.
 
 Reset the normalization parameters clears the regions and the polynomial power.
 
-You can save and load the normalization parameters, which consists of the regions and the power used.
+You can save and load the normalization parameters, which consists of the
+regions and the power used.
 
-Boxcar smooth, at present each click is set to a box width of 3.  This may be changed in the future, as well as adding other smoothing functions, say convolutions.
+Boxcar smooth, at present each click is set to a box width of 3.  This may be
+changed in the future, as well as adding other smoothing functions, say
+convolutions.
 
-Crop spectra appears in the region menu too, because it uses the region, but will automatically run the region function if no region is present.  A click on the left and right ends of the spectrum where you would like to make a new fits.  Only the horizontal cursor value matters Once trimmed you can't undo at present.  At this point if you save new spectrum from the file menu you'll have a smaller spectrum.
+Crop spectra appears in the region menu too, because it uses the region, but
+will automatically run the region function if no region is present.  A click on
+ the left and right ends of the spectrum where you would like to make a new
+ fits.  Only the horizontal cursor value matters Once trimmed you can't undo at
+  present.  At this point if you save new spectrum from the file menu you'll
+  have a smaller spectrum.
 
-Convert Wavelength to velocity and back doesn't permanently change the spectrum, only the display.  The horizontal location of the cursor is used as the zero for the velocity, you must click where you want zero to be.
+Convert Wavelength to velocity and back doesn't permanently change the spectrum,
+ only the display.  The horizontal location of the cursor is used as the zero
+ for the velocity, you must click where you want zero to be.
 
 
 Region Menu
 
-There are two main region types here.  The functions are separated by a horizontal line were the type of region differs.  Equivalent width, Gaussian, Voigt, Lorentzian, and Crop will all launch the "Define Region (x)".  This is generally a click to the left and right of what you want to measure.  For the equivalent width measurement you'll want to click as close as possible to the parts of the spectrum you want to use.  However, the software will find the closest datum to your click in the data and not use the actual x and y of your click.  For the line fits it only cares about the horizontal location of your click.  Once a region is created, any of the functions that use it can be run on that same selection.  When you are done with the selected region, you can use "Clear Region (r)", which is the same as reset.
+There are two main region types here.  The functions are separated by a
+horizontal line were the type of region differs.  Equivalent width, Gaussian,
+Voigt, Lorentzian, and Crop will all launch the "Define Region (x)".  This is
+generally a click to the left and right of what you want to measure.  For the
+equivalent width measurement you'll want to click as close as possible to the
+parts of the spectrum you want to use.  However, the software will find the
+closest datum to your click in the data and not use the actual x and y of your
+click.  For the line fits it only cares about the horizontal location of your
+click.  Once a region is created, any of the functions that use it can be run
+on that same selection.  When you are done with the selected region, you can
+use "Clear Region (r)", which is the same as reset.
 
-For any measurement made the results are displayed in the prompt, printed to the terminal, and saved to a logfile in the working directory.
+For any measurement made the results are displayed in the prompt, printed to
+the terminal, and saved to a logfile in the working directory.
 
-Regions can be saved/loaded.  Once saved, you can edit them in a text editor if you require specific points.
+Regions can be saved/loaded.  Once saved, you can edit them in a text editor
+if you require specific points.
 
-The other type of region is the bisect region, which consists of 4 total clicks.  a pair on the left and a pair on the right edges of the feature you are trying to bisect.  The range of points on the left, and the range of points on the right are averaged to find the average bisector of the feature.  Again the closest data are chosen to the clicks.
+The other type of region is the bisect region, which consists of 4 total clicks.
+  A pair on the left and a pair on the right edges of the feature you are trying
+   to bisect.  The range of points on the left, and the range of points on the
+   right are averaged to find the average bisector of the feature.  Again the
+   closest data are chosen to the clicks.
 
 The bisect regions can be saved/loaded.
 
 
 Stack Menu
 
-The stack menu allows some degree of automation.  Many of the functions in this list have the same names as functions in the other menus.  However, these "duplicate" functions do not have the same shortcuts because there is a helper function in the program that will run the function on each spectrum in the list.
+The stack menu allows some degree of automation.  Many of the functions in this
+list have the same names as functions in the other menus.  However, these
+"duplicate" functions do not have the same shortcuts because there is a helper
+function in the program that will run the function on each spectrum in the list.
 
 Stack plot mode can be toggled here.
 
 Showing the stack pane can be toggled.
 
-Remove Selected From Stack will only work once you've selected a single spectrum from the sidepane, and is the same function as the button on the sidepane.
+Remove Selected From Stack will only work once you've selected a single
+spectrum from the sidepane, and is the same function as the button on the
+sidepane.
 
-Detailed Database Entry is a testing function to see what data are stored with each spectrum.
+Detailed Database Entry is a testing function to see what data are stored
+with each spectrum.
 
 Print stack list prints the spectra in the stack to the
 
-Save Stack List allows you to save a list of spectra you are happy with and load it later from the file menu.
+Save Stack List allows you to save a list of spectra you are happy with and
+load it later from the file menu.
 
 Stack Clear does the same thing as "Close All Spectra" in the file menu.
 
-Normalize requires that you have already defined or loaded normalization regions and powers.  It will apply that to the entire stack, save new files, and prompt you to save a list of the normalized spectra in a new list.
+Normalize requires that you have already defined or loaded normalization
+regions and powers.  It will apply that to the entire stack, save new files,
+and prompt you to save a list of the normalized spectra in a new list.
 
-Equivalent Width, Gaussian, Voigt, Lorentzian, Crop all require you to have created a region from the region menu.
+Equivalent Width, Gaussian, Voigt, Lorentzian, Crop all require you to have
+created a region from the region menu.
 
 Crop will save new files and prompt you to save a new list of the cropped files.
 
@@ -103,6 +178,5 @@ Bisect will require that you have defined or loaded a bisect region.
 
 
 Help Menu
-About, launches a new window with the version, contact info, etc.  And a link to GitHub to check for updates (you check, not automatic).
-
-Opening fits or headerless text spectra is done from the File>open menu.
+About, launches a new window with the version, contact info, etc.  And a link
+ to GitHub to check for updates (you check, not automatic).
