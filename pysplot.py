@@ -1539,3 +1539,5 @@ root.mainloop() #lets the GUI run
 #this will be nice for stack plots, but will also allow dynamical spectra.
 
 #implement mouse scroll wheel.
+
+#right now heliocentric correction is done when the file is read, which doesn't allow for updating if the keyword is changed in the new header editing mode.

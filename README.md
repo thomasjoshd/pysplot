@@ -6,13 +6,13 @@ Just download pysplot.py and run from the python3 commandline: pysplot3 pysplot.
 Requires the following libararies:
 functools, numpy >= numpy-1.17.4, os, tkinter, matplotlib, astropy >= astropy-3.2.3 , datetime, platform,sys,webbrowser.
 
-shortcut keys in the menus are denoted with ().
+Shortcut keys in the menus are denoted with ().
 
 Features:
 
 Open fit, fits, and headerless text spectra
 
-Save modifed spectra as fit, fits, headerless txt.
+Save modified spectra as fit, fits, headerless txt.
 
 Display image header, add and edit existing header keywords.
 
