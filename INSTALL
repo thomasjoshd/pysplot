@@ -12,7 +12,7 @@ On Linux/Mac:
 
 You could put pysplot.py in your home directory, and add an alias to your commandline shell environment.
 
-In bash you could use:  alias pysplot="python3 ~username/pysplot.py"
+In bash you could use:  alias pysplot="python3 ~username/pathtowhereyouputit/pysplot.py"
 
 
 On windows I've just doen the commandline way from the anaconda prompt.
