@@ -5,7 +5,7 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
-version="0.6.1"
+version="0.6.2"
 
 import sys
 if sys.version_info < (3, 5):
@@ -87,7 +87,6 @@ class App:
     def __init__(self,master):
         self.master=master
         master.title("PySplot, Version %s"%str(version))
-        # master.geometry('800x600')
 
         self.promptframe=tk.Frame()
         self.promptframe.pack(side="top")
@@ -303,7 +302,6 @@ class App:
                     else:
                         self.database[item]={}
 
-                # self.database[file]={}
                 self.norm_clear()
                 self.loadSpectra()
                 self.plotSpectra()
@@ -457,8 +455,6 @@ class App:
             self.figframe.pack(side="left")
         else:
             print("Halp!")
-        # self.figframe=tk.Frame()
-        # self.figframe.pack(side=tk.LEFT, fill="y")
         self.fig=plt.figure()
         self.ax = self.fig.add_subplot(111)
         self.ax.tick_params(right= True,top= True,which="both")
@@ -553,8 +549,6 @@ class App:
         self.stackpane()
         self.plotRegions()
 
-        # self.toolbar.update()
-        # self.canvas.draw()
 
     def stackplottoggle(self,event=None):
         """Switches to stackplot mode and replots the stack."""
@@ -568,8 +562,6 @@ class App:
         self.stackpane()
         self.plotRegions()
 
-        # self.toolbar.update()
-        # self.canvas.draw()
 
     def singleplottoggle(self,event=None):
         """Single spectrum display mode, replots the last active spectrum."""
@@ -587,8 +579,6 @@ class App:
             pass
         self.plotRegions()
         self.stackpane()
-        # self.toolbar.update()
-        # self.canvas.draw()
 
     def dynamical(self,event=None):
         self.output.delete(0,tk.END)
@@ -606,8 +596,6 @@ class App:
             self.toolbar = NavigationToolbar2TkAgg(canvas, dynamicalframe )
         except:
             self.toolbar = NavigationToolbar2Tk(canvas, dynamicalframe )
-
-
 
         jd=[]
         for i,row in enumerate(self.database):
@@ -801,7 +789,6 @@ class App:
         y=[]
         for i,j in enumerate(clicks):
             x.append(clicks[i][0])
-        #Bisect a Wolf Rayet line and find the center
             y.append(clicks[i][1])
         self.pltregion(x,y,sym='s',c='red')
         self.output.delete(0,tk.END)
@@ -835,13 +822,20 @@ class App:
 
         center=(np.average(lxg)+np.average(rxg))/2.
         stderror=np.sqrt( (np.std(lxg)/np.sqrt(len(lxg)))**2 + (np.std(rxg)/np.sqrt(len(rxg)))**2 )
-        print("Bisected Center: %s , standard error: %s" %(center,stderror  ))
-        self.output.delete(0,tk.END)
+        # print("Bisected Center: %s , standard error: %s" %(center,stderror  ))
+
         outstring="Bisected Click Center: "+"{0.value:0.03f} {0.unit:FITS}".format(center)+\
                    ", Stnd Error: "+"{0.value:0.03f} {0.unit:FITS}".format(stderror)
+        self.output.delete(0,tk.END)
         self.output.insert(tk.END,outstring)
+        print(outstring)
+        self.checklog()
+        self.starlog.write(outstring)
+        self.starlog.write('\n')
         self.ax.vlines(center.value,min(self.flux.value),max(self.flux.value))
         self.canvas.draw()
+
+
 
     def regionload(self,message=None):
         """Loads saved regions and gets the cloest values in the data"""
