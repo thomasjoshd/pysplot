@@ -20,8 +20,6 @@ import numpy as np #arrays and math
 import csv
 import os
 import tkinter as tk
-import tkinter.messagebox
-from tkinter.filedialog import askopenfilename,askopenfilenames,asksaveasfilename
 #clean up the messy calls!!
 import matplotlib.pyplot as plt #basic plotting
 # from matplotlib import cm #colormap for dynamical spectra
@@ -284,14 +282,14 @@ class App:
         """Open up spectrum or lists of spectra"""
         if self.overplot == False and self.stackplot == False:
             if 'Darwin' not in OperatingSys:
-                filez=askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
+                filez=tk.filedialog.askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Spectra List", "*.list"),
                                                             ("Spectra List", "*.lst"),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
             else:
-                filez=askopenfilenames(title='Choose a single spectrum')
+                filez=tk.filedialog.askopenfilenames(title='Choose a single spectrum')
             if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
@@ -317,14 +315,14 @@ class App:
                     self.stackpane()
         else:
             if 'Darwin' not in OperatingSys:
-                filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
+                filez = tk.filedialog.askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
                                                             ("Spectra List", "*.lst"),
                                                             ("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
             else:
-                filez=askopenfilenames(title='Choose a single spectrum')
+                filez=tk.filedialog.askopenfilenames(title='Choose a single spectrum')
             if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
@@ -412,7 +410,7 @@ class App:
             self.database[self.fname]['header']=header
             self.sp.close()
         else:
-            tkinter.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
+            tk.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
 
 
 
@@ -502,7 +500,7 @@ class App:
             self.output.delete(0,tk.END)
             self.overplot=False
             self.stackplot=False
-            tkinter.messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
+            tk.messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
             self.restore()
 
         self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
@@ -594,30 +592,47 @@ class App:
 
     def dynamical(self,event=None):
         self.output.delete(0,tk.END)
-        self.jd=[]
+
+        t=tk.Toplevel(self.master,height=600,width=600)
+        t.wm_title("Dynamical Spectrum")
+        dynamicalframe=tk.Frame(t)
+        dynamicalframe.pack(side="top", fill="both",expand=1)
+        dynamical=plt.figure()
+        ax = dynamical.add_subplot(111)
+        ax.tick_params(right= True,top= True,which="both")
+        canvas = FigureCanvasTkAgg(dynamical, master=dynamicalframe)
+        canvas.get_tk_widget().pack(side="top", fill="both")
+        try:
+            self.toolbar = NavigationToolbar2TkAgg(canvas, dynamicalframe )
+        except:
+            self.toolbar = NavigationToolbar2Tk(canvas, dynamicalframe )
+
+
+
+        jd=[]
         for i,row in enumerate(self.database):
             self.header=self.database[row]['header']
             try:
-                self.jd.append(self.header['JD'])
+                jd.append(self.header['JD'])
             except:
-                self.jd.append(i)
-        self.wavelength=self.database[self.stack[0]]['wavelength']
-        x=len(self.wavelength)
+                jd.append(i)
+        wavelengthbase=self.database[self.stack[0]]['wavelength']
+        x=len(wavelengthbase)
 
-        self.ax.clear()
-        self.ax.set_ylabel("JD-%s"%str(min(self.jd)))
-        self.xaxislabel()
-        tt=np.arange(0, max(self.jd)-min(self.jd),.5) #phase steps
+        dynamical.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
+        ax.set_ylabel("JD-%f3"%float(min(jd)))
+        # self.xaxislabel()
+        tt=np.arange(0, max(jd)-min(jd),.5) #phase steps
 
-        data=np.empty([len(tt),len(self.wavelength)],dtype=float)
+        data=np.empty([len(tt),x],dtype=float)
         data.fill(np.nan)
-        self.jd=np.array(self.jd)-min(self.jd)
+        jd=np.array(jd)-min(jd)
         for i,row in enumerate(self.database):
-            self.flux=self.database[row]['flux']
-            self.wavelength=self.database[row]['wavelength']
+            flux=self.database[row]['flux']
+            wavelength=self.database[row]['wavelength']
             temp_spec=np.empty(x,dtype=float)
-            for j,val in enumerate(self.wavelength):
-              temp_spec[j]=np.interp(val,self.wavelength,self.flux)
+            for j,val in enumerate(wavelength):
+              temp_spec[j]=np.interp(val,x,flux)
             try:
                 data[find_nearest_index(tt,self.jd[i])-1,:]=temp_spec
             except:
@@ -627,21 +642,21 @@ class App:
                 data[find_nearest_index(tt,self.jd[i])+1,:]=temp_spec
             except:
                 pass
-
+        # data needs to be resampled so all is on same sampling.
         # interpolate, but only along the time axis
-        for i,junk in enumerate(data[0,:]):
-            data[:,i]=fill_nan(data[:,i])
+        # for i,junk in enumerate(data[0,:]):
+        #     data[:,i]=fill_nan(data[:,i])
 
         cmap=plt.get_cmap('Spectral')
         # cmap.set_under(color='white')
         # cbaxes = self.fig.add_axes([.88, .32, 0.03, .58])
-        #colorbar(cax = cbaxes).ax.tick_params(axis='y', direction='out')  #not sure where defined.
+        # ax.colorbar(cax = cbaxes).ax.tick_params(axis='y', direction='out')  #not sure where defined.
 
-        self.ax.imshow(data,cmap=cmap,interpolation='nearest', origin='lower',aspect='auto',alpha=1)
-        # extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1]),
+        ax.imshow(data,cmap=cmap, origin='lower',aspect='auto',alpha=1)#, extent=(self.wavelength[1]/u.Angstrom,self.wavelength[-1]/u.Angstrom,tt[0],tt[-1])),interpolation='nearest'
+
 
         self.toolbar.update()
-        self.canvas.draw()
+        canvas.draw()
 
 
     def stackreset(self):
@@ -681,7 +696,7 @@ class App:
             stack=self.stack
         path=os.path.dirname(self.fname)
         basename=os.path.basename(name)
-        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".list")
+        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".list")
         dataout=open(savename,'w')
         for row in stack:
             dataout.write('%s\n'%(row))
@@ -1032,7 +1047,7 @@ class App:
         """Save the regions used for equivalent width measurements and for fitting line profiles."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("region.par")
-        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         for row in self.saveregions_x:
@@ -1066,10 +1081,10 @@ class App:
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
         self.norm_clear()
         if 'Darwin' not in OperatingSys:
-            file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
+            file=tk.filedialog.askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         else:
-            file=askopenfilename(title='Choose a region parameter file (.par)')
+            file=tk.filedialog.askopenfilename(title='Choose a region parameter file (.par)')
         dataout=open(file)
         for i,line in enumerate(dataout):
             if i == 0 :
@@ -1089,7 +1104,7 @@ class App:
         """Save the regions for bisection"""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("bisect.par")
-        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         for row in self.x_norm:
@@ -1106,10 +1121,10 @@ class App:
         """Load the regions bisection."""
         self.norm_clear()
         if 'Darwin' not in OperatingSys:
-            file=askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
+            file=tk.filedialog.askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         else:
-            file=askopenfilename(title='Choose a bisection parameter file (.par)')
+            file=tk.filedialog.askopenfilename(title='Choose a bisection parameter file (.par)')
         dataout=open(file)
 
         for i,line in enumerate(dataout):
@@ -1150,7 +1165,7 @@ class App:
         """Save the regions and powerlaw for the normalization."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("norm.par")
-        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         dataout.write('%s\n'%(self.order))
@@ -1168,10 +1183,10 @@ class App:
         """Load the regions and powerlaw for the normalization."""
         self.norm_clear()
         if 'Darwin' not in OperatingSys:
-            file=askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
+            file=tk.filedialog.askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         else:
-            file=askopenfilename(title='Choose a normalization parameter file (.par)')
+            file=tk.filedialog.askopenfilename(title='Choose a normalization parameter file (.par)')
         dataout=open(file)
 
         for i,line in enumerate(dataout):
@@ -1222,7 +1237,7 @@ class App:
                 self.ax.set_ylim([max(0,min(nflux.value)),min(100,max(nflux.value))])
                 self.canvas.draw()
                 if script == None:
-                    answer=tkinter.messagebox.askyesno("Question","Proceed with the fit?")
+                    answer=tk.messagebox.askyesno("Question","Proceed with the fit?")
                     if answer == True:
                        self.goodfit = True
                        self.ax.lines.remove(self.normtest)
@@ -1334,12 +1349,7 @@ class App:
         self.canvasframe.destroy()
         self.stackcanvas.destroy()
         self.buttonframe.destroy()
-        # try:
-        #     self.canvas.destory()
-        # except:
-        #     pass
-        # self.figframe.destroy()
-        # self.generate_plot()
+
         if self.stackplot == True or self.overplot == True:
             self.plotSpectra()
         else:
@@ -1409,7 +1419,7 @@ class App:
             basename=os.path.basename(self.fname)
             path_wo_ext=os.path.splitext(self.fname)[0]
             if extend == None:
-                savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
+                savename=tk.filedialog.asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
                 hdu.writeto(savename)
             else:
                 savename=os.path.join(path_wo_ext,basename,extend)
@@ -1423,7 +1433,7 @@ class App:
     def save1DText(self):
         """Save a headerless text spectrum."""
         try:
-            savename=asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
+            savename=tk.filedialog.asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
             dataout=open(savename,'w')
             for i,val in enumerate(self.flux):
                 dataout.write('%s %s\n'%(self.wavelength[i].value,self.flux[i]))
