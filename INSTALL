@@ -1,0 +1,20 @@
+Installation Instructions for PySplot.
+
+PySplot can be run from the commandline by typing the following if python points to python3:
+
+python pysplot.py
+
+If you have both python2.7 and python3 on your system you'll need to type:
+
+python3 pysplot.py
+
+On Linux/Mac:
+
+You could put pysplot.py in your home directory, and add an alias to your commandline shell environment.
+
+In bash you could use:  alias pysplot="python3 ~username/pysplot.py"
+
+
+On windows I've just doen the commandline way from the anaconda prompt.
+
+I have plans on building a Linux/Mac launcher.
