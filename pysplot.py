@@ -22,7 +22,6 @@ import os
 import tkinter as tk
 #clean up the messy calls!!
 import matplotlib.pyplot as plt #basic plotting
-# from matplotlib import cm #colormap for dynamical spectra
 
 try:
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
