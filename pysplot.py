@@ -20,6 +20,8 @@ import numpy as np #arrays and math
 import csv
 import os
 import tkinter as tk
+from tkinter.filedialog import askopenfilenames,asksaveasfilename
+import tkinter.messagebox as messagebox
 #clean up the messy calls!!
 import matplotlib.pyplot as plt #basic plotting
 
@@ -281,14 +283,14 @@ class App:
         """Open up spectrum or lists of spectra"""
         if self.overplot == False and self.stackplot == False:
             if 'Darwin' not in OperatingSys:
-                filez=tk.filedialog.askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
+                filez=askopenfilenames(title='Choose a single spectrum',filetypes=(("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Spectra List", "*.list"),
                                                             ("Spectra List", "*.lst"),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
             else:
-                filez=tk.filedialog.askopenfilenames(title='Choose a single spectrum')
+                filez=askopenfilenames(title='Choose a single spectrum')
             if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
@@ -313,14 +315,14 @@ class App:
                     self.stackpane()
         else:
             if 'Darwin' not in OperatingSys:
-                filez = tk.filedialog.askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
+                filez = askopenfilenames(title='Choose a list of spectra',filetypes=(("Spectra List", "*.list"),
                                                             ("Spectra List", "*.lst"),
                                                             ("Fits Files", "*.fit*"),
                                                             ("Fits Files", "*.FIT* "),
                                                             ("Text Files", "*.txt*"),
                                                             ("All files", "*.*") )) #file dialog
             else:
-                filez=tk.filedialog.askopenfilenames(title='Choose a single spectrum')
+                filez=askopenfilenames(title='Choose a single spectrum')
             if len(filez) > 0:
                 lst=list(filez)
                 for item in lst:
@@ -408,7 +410,7 @@ class App:
             self.database[self.fname]['header']=header
             self.sp.close()
         else:
-            tk.messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
+            messagebox.showerror(title="Dimension Error",message="PySplot was only designed to work with 1D extracted spectra.")
 
 
 
@@ -496,7 +498,7 @@ class App:
             self.output.delete(0,tk.END)
             self.overplot=False
             self.stackplot=False
-            tk.messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
+            messagebox.showerror(title="Display Conflict",message="Overplot and stackplot can't be used at the same time, program reverting to single spectra mode.")
             self.restore()
 
         self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
@@ -684,7 +686,7 @@ class App:
             stack=self.stack
         path=os.path.dirname(self.fname)
         basename=os.path.basename(name)
-        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".list")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".list")
         dataout=open(savename,'w')
         for row in stack:
             dataout.write('%s\n'%(row))
@@ -1041,7 +1043,7 @@ class App:
         """Save the regions used for equivalent width measurements and for fitting line profiles."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("region.par")
-        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         for row in self.saveregions_x:
@@ -1075,10 +1077,10 @@ class App:
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
         self.norm_clear()
         if 'Darwin' not in OperatingSys:
-            file=tk.filedialog.askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
+            file=askopenfilename(title='Choose a region parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         else:
-            file=tk.filedialog.askopenfilename(title='Choose a region parameter file (.par)')
+            file=askopenfilename(title='Choose a region parameter file (.par)')
         dataout=open(file)
         for i,line in enumerate(dataout):
             if i == 0 :
@@ -1098,7 +1100,7 @@ class App:
         """Save the regions for bisection"""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("bisect.par")
-        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         for row in self.x_norm:
@@ -1115,10 +1117,10 @@ class App:
         """Load the regions bisection."""
         self.norm_clear()
         if 'Darwin' not in OperatingSys:
-            file=tk.filedialog.askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
+            file=askopenfilename(title='Choose a bisection parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         else:
-            file=tk.filedialog.askopenfilename(title='Choose a bisection parameter file (.par)')
+            file=askopenfilename(title='Choose a bisection parameter file (.par)')
         dataout=open(file)
 
         for i,line in enumerate(dataout):
@@ -1159,7 +1161,7 @@ class App:
         """Save the regions and powerlaw for the normalization."""
         path=os.path.dirname(self.fname)
         basename=os.path.basename("norm.par")
-        savename=tk.filedialog.asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
+        savename=asksaveasfilename(initialdir=path,initialfile=basename, defaultextension=".par")
         dataout=open(savename,'w')
         dataout.write('%s\n'%(self.fname))
         dataout.write('%s\n'%(self.order))
@@ -1177,10 +1179,10 @@ class App:
         """Load the regions and powerlaw for the normalization."""
         self.norm_clear()
         if 'Darwin' not in OperatingSys:
-            file=tk.filedialog.askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
+            file=askopenfilename(title='Choose a normalization parameter file (.par)',filetypes=(("Parameter", "*.par"),
                                                         ("All files", "*.*") ))
         else:
-            file=tk.filedialog.askopenfilename(title='Choose a normalization parameter file (.par)')
+            file=askopenfilename(title='Choose a normalization parameter file (.par)')
         dataout=open(file)
 
         for i,line in enumerate(dataout):
@@ -1231,7 +1233,7 @@ class App:
                 self.ax.set_ylim([max(0,min(nflux.value)),min(100,max(nflux.value))])
                 self.canvas.draw()
                 if script == None:
-                    answer=tk.messagebox.askyesno("Question","Proceed with the fit?")
+                    answer=messagebox.askyesno("Question","Proceed with the fit?")
                     if answer == True:
                        self.goodfit = True
                        self.ax.lines.remove(self.normtest)
@@ -1413,7 +1415,7 @@ class App:
             basename=os.path.basename(self.fname)
             path_wo_ext=os.path.splitext(self.fname)[0]
             if extend == None:
-                savename=tk.filedialog.asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
+                savename=asksaveasfilename(initialdir='./',initialfile=basename, defaultextension=".fits")
                 hdu.writeto(savename)
             else:
                 savename=os.path.join(path_wo_ext,basename,extend)
@@ -1427,7 +1429,7 @@ class App:
     def save1DText(self):
         """Save a headerless text spectrum."""
         try:
-            savename=tk.filedialog.asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
+            savename=asksaveasfilename(initialfile=self.fname,defaultextension=".txt")
             dataout=open(savename,'w')
             for i,val in enumerate(self.flux):
                 dataout.write('%s %s\n'%(self.wavelength[i].value,self.flux[i]))
