@@ -9,7 +9,7 @@ version="0.6.4"
 
 import sys
 if sys.version_info < (3, 5):
-    raise "must use python 3.6 or greater"
+    raise "Must use python 3.6 or greater"
 else:
     pass
 import platform
@@ -896,8 +896,8 @@ class App:
             hjd=str(d['header']['HJD'])
         except:
             hjd=''
+        print("basename type:  ",type(basename))
         return "%s,JD, %s, HJD, %s,"%(basename,jd,hjd)
-
 
 
     def find_nearest_index(self,array,value):
