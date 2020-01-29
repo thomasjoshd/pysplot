@@ -5,7 +5,7 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
-version="0.6.3"
+version="0.6.4"
 
 import sys
 if sys.version_info < (3, 5):
@@ -147,7 +147,7 @@ class App:
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
         regionmenu.add_command(label="Define Region (x)", command=self.regionload)
-        regionmenu.add_command(label="Clear Region (r)", command=self.reset)
+        regionmenu.add_command(label="Clear Region (z)", command=self.region_clear)
         regionmenu.add_command(label="Equivalent Width (e)", command=self.eqw)
         regionmenu.add_command(label="Gaussian (g)", command=partial(self.fit,func="gauss"))
         regionmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
@@ -233,7 +233,7 @@ class App:
         self.master.bind('v', partial(self.fit,"voigt"))
         self.master.bind('w', self.BisectLine)
         self.master.bind('x', self.regionload)
-        self.master.bind('X', self.region_clear)
+        self.master.bind('z', self.region_clear)
 
 
 
@@ -697,10 +697,11 @@ class App:
     def smooth(self,event=None):
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Enter an integer for the boxcar smoothing:")
-        self.boxwidth=3
+        self.boxwidth=int(self.w1.get())
         self.flux=convolve(self.flux,Box1DKernel(self.boxwidth))
-        self.output.delete(0,tk.END)
-        self.splot()
+        xlim=self.ax.get_xlim()
+        ylim=self.ax.get_ylim()
+        self.splot(xlim=xlim,ylim=ylim)
 
     def measuremode(self,event=None):
         self.stackplot=False
@@ -863,7 +864,7 @@ class App:
         """Measure equivalent width between two points IRAF style"""
         self.measuremode()
         xg,yg=self.regionload()
-        continuum=(yg[0]+yg[-1])/2 #sets the continuum to the average of the left and right click.
+        continuum=(yg[0]+yg[-1])/2 #linearly normalize the feature from the horizontal click locations.
         dwidth=[]
         for i,f in enumerate(yg):
           if i ==0:
