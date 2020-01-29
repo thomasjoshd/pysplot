@@ -147,7 +147,7 @@ class App:
         regionmenu = tk.Menu(menu)
         menu.add_cascade(label="Region", menu=regionmenu)
         regionmenu.add_command(label="Define Region (x)", command=self.regionload)
-        regionmenu.add_command(label="Clear Region (X)", command=self.region_clear)
+        regionmenu.add_command(label="Clear Region (z)", command=self.region_clear)
         regionmenu.add_command(label="Equivalent Width (e)", command=self.eqw)
         regionmenu.add_command(label="Gaussian (g)", command=partial(self.fit,func="gauss"))
         regionmenu.add_command(label="Voigt (v)", command=partial(self.fit,func="voigt"))
@@ -233,7 +233,7 @@ class App:
         self.master.bind('v', partial(self.fit,"voigt"))
         self.master.bind('w', self.BisectLine)
         self.master.bind('x', self.regionload)
-        self.master.bind('X', self.region_clear)
+        self.master.bind('z', self.region_clear)
 
 
 
