@@ -697,10 +697,11 @@ class App:
     def smooth(self,event=None):
         self.output.delete(0,tk.END)
         self.output.insert(tk.END,"Enter an integer for the boxcar smoothing:")
-        self.boxwidth=3
+        self.boxwidth=int(self.w1.get())
         self.flux=convolve(self.flux,Box1DKernel(self.boxwidth))
-        self.output.delete(0,tk.END)
-        self.splot()
+        xlim=self.ax.get_xlim()
+        ylim=self.ax.get_ylim()
+        self.splot(xlim=xlim,ylim=ylim)
 
     def measuremode(self,event=None):
         self.stackplot=False

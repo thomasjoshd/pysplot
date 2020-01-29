@@ -95,9 +95,10 @@ Reset the normalization parameters clears the regions and the polynomial power.
 You can save and load the normalization parameters, which consists of the
 regions and the power used.
 
-Boxcar smooth, at present each click is set to a box width of 3.  This may be
-changed in the future, as well as adding other smoothing functions, say
-convolutions.
+Boxcar smooth, the integer needs to be changed.  If the default is 1 it doesn't
+smooth and leaves the prompt.  Changing the value you can re-run smooth and it
+will update the plot.  The keep current zoom level has been added to this
+feature as well.
 
 Crop spectra appears in the region menu too, because it uses the region, but
 will automatically run the region function if no region is present.  A click on
