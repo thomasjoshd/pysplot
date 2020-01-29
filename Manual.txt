@@ -116,14 +116,15 @@ Region Menu
 There are two main region types here.  The functions are separated by a
 horizontal line were the type of region differs.  Equivalent width, Gaussian,
 Voigt, Lorentzian, and Crop will all launch the "Define Region (x)".  This is
-generally a click to the left and right of what you want to measure.  For the
-equivalent width measurement you'll want to click as close as possible to the
-parts of the spectrum you want to use.  However, the software will find the
-closest datum to your click in the data and not use the actual x and y of your
-click.  For the line fits it only cares about the horizontal location of your
-click.  Once a region is created, any of the functions that use it can be run
-on that same selection.  When you are done with the selected region, you can
-use "Clear Region (r)", which is the same as reset.
+generally a click to the left and right of what you want to measure.  However,
+the software will find the closest datum to your horizonal click in the data
+and not use the actual x and y of your click.  For the line fits it only cares
+about the horizontal location of your click.  Once a region is created, any of
+the functions that use it can be run on that same selection.  When you are done
+ with the selected region, you can use "Clear Region (z)", which is clears the
+ region from the display (but doesn't change your view of the spectrum).  You
+ can also use reset (r), but that will change the view of your spectrum back to
+ when it was loaded.
 
 For any measurement made the results are displayed in the prompt, printed to
 the terminal, and saved to a logfile in the working directory.

@@ -863,7 +863,7 @@ class App:
         """Measure equivalent width between two points IRAF style"""
         self.measuremode()
         xg,yg=self.regionload()
-        continuum=(yg[0]+yg[-1])/2 #sets the continuum to the average of the left and right click.
+        continuum=(yg[0]+yg[-1])/2 #linearly normalize the feature from the horizontal click locations.
         dwidth=[]
         for i,f in enumerate(yg):
           if i ==0:
