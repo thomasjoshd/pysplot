@@ -5,7 +5,7 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
-version="0.6.41"
+version="0.6.5"
 
 import sys
 if sys.version_info < (3, 5):
