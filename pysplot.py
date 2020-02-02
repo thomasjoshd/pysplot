@@ -5,11 +5,11 @@ Tested on Python 3.6.5 and 3.6.7, Linux Mint 19.1 and Windows 10.
 Uses Astropy library, and some parts are directly modified from the UVES tutorial.
 Tested using astropy-3.2.3 numpy-1.17.4"""
 
-version="0.6.4"
+version="0.6.5"
 
 import sys
 if sys.version_info < (3, 5):
-    raise "must use python 3.6 or greater"
+    raise "Must use python 3.6 or greater"
 else:
     pass
 import platform
@@ -765,7 +765,7 @@ class App:
     def region(self,message=None):
         """uses two clicks to define a region for fitting or measuring."""
         if message == None:
-            regionmessage="Left Click (x) on a point to the left and to the right of what you wish to select. Right Click (backspace) to remove a point."
+            regionmessage="Left Click (x) on the range of points. Right Click (backspace) to remove a point. Use Clear Reion (z) when finished."
         else:
             regionmessage=message
         self.output.delete(0,tk.END)
@@ -778,7 +778,7 @@ class App:
             x.append(clicks[i][0])
             y.append(clicks[i][1])
         self.pltregion(x,y,sym='s',c='black')
-        self.output.delete(0,tk.END)
+        # self.output.delete(0,tk.END)
         return x,y
 
     def points2fit(self):
@@ -843,7 +843,7 @@ class App:
     def regionload(self,message=None):
         """Loads saved regions and gets the cloest values in the data"""
         if self.loadedregions == False :
-            x,y=self.region(message) #click points to slice data
+            x,y=self.region() #click points to slice data
             self.saveregions_x=x
             self.saveregions_y=y
             self.loadedregions=True
@@ -896,8 +896,8 @@ class App:
             hjd=str(d['header']['HJD'])
         except:
             hjd=''
+        print("basename type:  ",type(basename))
         return "%s,JD, %s, HJD, %s,"%(basename,jd,hjd)
-
 
 
     def find_nearest_index(self,array,value):
@@ -1058,7 +1058,7 @@ class App:
         self.norm_clear()
 
     def plotRegions(self):
-        message="Using a loaded region, when finished use View>Reset or press r."
+        message="Using a loaded region, when finished use Region>Clear Region (z) or View>Reset (r)."
         if self.loadednorm == True:
             self.ax.plot(self.x_norm,self.y_norm,'s',color='black')
             self.output.delete(0,tk.END)
