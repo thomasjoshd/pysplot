@@ -1,5 +1,12 @@
 Installation Instructions for PySplot.
 
+1. Running the python script, pysplot.py. Requires python and supporting libraries.
+2. Standalone compiled version, contains python and all the libraries needed.
+
+1. Running pysplot as a python script.
+
+You just need the pysplot.py script.
+
 PySplot can be run from the commandline by typing the following if python points to python3:
 
 python pysplot.py
@@ -15,6 +22,15 @@ You could put pysplot.py in your home directory, and add an alias to your comman
 In bash you could use:  alias pysplot="python3 ~username/pathtowhereyouputit/pysplot.py"
 
 
-On windows I've just doen the commandline way from the anaconda prompt.
+On windows I've just donr the commandline way from the anaconda prompt.
 
-I have plans on building a Linux/Mac launcher.
+2. Standalone Compiled version.
+Download just the compressed file for your system type (currently windows and linux only).  Mac version coming soon.
+
+Windows:
+Extract the files from the compressed archive.
+This will create a pysplot folder.  Inside the folder are all the required libraries, and the executable file "pysplot.exe".
+You can run the pysplot.exe from this folder or make a shortcut.  The first time you run it, it might download a missing library or two to itself (so may take a while to launch).  All launches after the first should be fairly quick on a modern computer.  The windows version has been tested on wine under linux and works.
+
+Linux:
+The compiled version is picky about the c-library your computer has.  I don't recommend this approach.
