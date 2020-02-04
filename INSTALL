@@ -3,6 +3,8 @@ Installation Instructions for PySplot.
 1. Running the python script, pysplot.py. Requires python and supporting libraries.
 2. Standalone compiled version, contains python and all the libraries needed.
 
+Standalone "compiled" versions can be downloaded here:  https://www.dropbox.com/sh/typny1czo7jrh8o/AACNHse9cJYSQ0-y5FOI963oa?dl=0
+
 1. Running pysplot as a python script.
 
 You just need the pysplot.py script.
