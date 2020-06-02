@@ -1,6 +1,8 @@
 # pysplot
 An IRAF-like tool for manipulating, and measuring 1-D FITS spectra.
 
+[![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+
 Just download pysplot.py and run from the python3 commandline: pysplot3 pysplot.py
 
 Requires the following libararies:
