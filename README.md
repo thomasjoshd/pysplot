@@ -10,3 +10,11 @@ This program is very much still under development, feature requests are welcome,
 
 # Download
 Now hosting complied version via <a href="https://www.dropbox.com/sh/typny1czo7jrh8o/AACNHse9cJYSQ0-y5FOI963oa?dl=0">dropbox</a>.
+
+# Tutorials
+
+More on the way!
+
+<a href="https://youtu.be/KVL70Wp-aKg">Bisect a feature</a>
+
+<a href="PySplot_Normalization_Tutorial.pdf">Normalization</a>
