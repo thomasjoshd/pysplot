@@ -1,4 +1,4 @@
-<img src="icon.png" width="100">
+<img src="icon.png" width="200">
 # pysplot
 An IRAF-like tool for manipulating, and measuring 1-D FITS spectra.
 
