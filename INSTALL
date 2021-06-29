@@ -1,5 +1,13 @@
 Installation Instructions for PySplot.
 
-Download and unzip the program to a location of your choice on your computer.
+To run PySplot you can use:
 
-First time run may be slow if the internal python has to grab any packages it needs.
+python PySplot.py
+
+or
+
+python PySplot.py spectrum.fits
+
+or you can use the helper script 
+
+Files can be dragged and dropoped into the window as well.
