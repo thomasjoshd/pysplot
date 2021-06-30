@@ -2,9 +2,11 @@
 # pysplot
 An IRAF-like tool for manipulating, and measuring 1-D FITS spectra.
 
-PySplot is an interactive GUI program to plot and measure 1-D spectra in fits or text form. At this time fits tables are not supported well. The GUI makes use of several python libraries. I ran into distribution issues using a stand alone python script, so I have switched to provding compiled versions that are self contained. My main focus at present is the MacOS version, so the windows version tends to lag behind.
+PySplot is an interactive GUI program to plot and measure 1-D spectra in fits or text form. At this time fits tables are not supported well. The GUI makes use of several python libraries.
 
-This program is very much still under development, feature requests are welcome, but understand I teach full time. This is my passion project and I hope for everyone to find it useful. 
+There are compiled versions linked below, but I have run into problems with pyinstaller and have returned to just offering the pysplot code.  The code can be run from python3 by running the PySplot.py.
+
+This program is very much still under development, feature requests are welcome, but understand I teach full time. This is my passion project and I hope for everyone to find it useful.
 
 [![astropy](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
