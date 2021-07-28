@@ -122,16 +122,16 @@ class Spectra(QtWidgets.QMainWindow):
 
 
     def read_1Dfits(self):
-        print(self.parent().fname)
+        # print(self.parent().fname)
         sp = fits.open(self.parent().fname)
-        print(len(sp))
+        # print(len(sp))
         i=0
         self.parent().database[self.parent().fname]['header']=sp[i].header
         try:
             try:
-                print(self.parent().fname)
+                # print(self.parent().fname)
                 s=Spectrum1D.read(self.parent().fname)
-                print(s)
+                # print(s)
             except:
                 print('Exception at Spectra.read_1Dfits, specutils not able to open spectrum.')
 

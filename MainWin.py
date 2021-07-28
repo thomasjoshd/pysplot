@@ -993,7 +993,7 @@ class MainWin(QtWidgets.QMainWindow):
     def region(self):
         """uses two clicks to define a region for fitting or measuring."""
         try:
-            # self.measuremode()
+            #self.measuremode()
             # if message == ' ':
             regionmessage="Define region first: Click on left and right edges of your region.  Then run your function."
             # else:
@@ -1180,16 +1180,21 @@ class MainWin(QtWidgets.QMainWindow):
         """Align a spectrum to a feature. Based off sodium_shifted_norm_v3.py
         Fits a gaussian to a feature, then alignes to reference wavelength."""
         try:
-            self.measuremode()
-            xg,yg=self.regionload()
+            #self.measuremode()
+            self.regionload()
+            xg,yg=self.chopclick()
             if self.loadedalign == False:
                 if self.script == False:
                     self.getalign()
                 elif self.script == True and self.stacknum == 0:
                     self.getalign()
+            print('before')
+
             min_peakind=find_nearest_index(xg,min(xg))
             lines=[]
+            print('after')
             g_init = models.Gaussian1D(amplitude=1./min(yg), mean=xg[min_peakind], stddev=(xg[1]-xg[0])*4) #fits the peak
+
             # print(1/min(yg),xg[min_peakind])
             fit_g = fitting.LevMarLSQFitter()
             # fit_g = fitting.SLSQPLSQFitter()
@@ -1245,16 +1250,17 @@ class MainWin(QtWidgets.QMainWindow):
     def scopy(self,script=False):
         """Copy out a section of a spectrum to a new spectrum"""
         try:
-            self.measuremode()
-            xg,yg=self.regionload()
+            #self.measuremode()
+            self.regionload()
+            xg,yg=self.chopclick()
             self.wavelength=xg
             self.flux=yg
-            self.xlim=(0,1)
-            self.ylim=(0,1)
+            # self.xlim=(0,1)
+            # self.ylim=(0,1)
             self.Spectra.updatespectrum()
-            self.plotSpectra()
+            self.plotSpectra(spec=self.fname)
         except:
-            print('Exception occured in scopy')
+            print('Exception occured in scopy (crop)')
 
     def invert_check(self,xg,yg):
         try:
@@ -1836,6 +1842,8 @@ class MainWin(QtWidgets.QMainWindow):
                     self.smooth(func="boxcar")
                 elif func == "gsmooth":
                     self.smooth(func="gaussian")
+                elif func == "savepng":
+                    self.savepng()
                 else:
                     print("Stacker cannot handle a function.")
                 self.stacknum=self.stacknum+1
@@ -1857,6 +1865,7 @@ class MainWin(QtWidgets.QMainWindow):
         except:
             print('Exception occured in stacksave')
 
+
     def stacksave_txt(self):
         try:
             self.stackforsaving=[]
@@ -1867,6 +1876,20 @@ class MainWin(QtWidgets.QMainWindow):
                 self.Spectra.save1DText(extend=suffix+'.txt')
         except:
             print('Exception occured in stacksave_txt')
+
+    def savepng(self):
+        try:
+            self.stackforsaving=[]
+            suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
+            if '.' not in suffix:
+                suffix='.'+suffix
+            for f in self.database:
+                self.fname=f
+                self.ax.clear()
+                self.plotSpectra(spec=self.fname)
+                plt.savefig(self.fname[:-5]+suffix)
+        except:
+            print('Exception occured in savepng')
 
 
     def stackwindowplot(self,spec):

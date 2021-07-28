@@ -8,6 +8,16 @@ class HeaderWin(QtWidgets.QMainWindow):
         super(HeaderWin, self).__init__(parent)
         self.setupUI()
 
+        bar = self.menuBar()
+        filemenu = bar.addMenu('File')
+        exit=QtWidgets.QAction("Close Header Window", self)
+        exit.setShortcut('Esc')
+        exit.triggered.connect(self.quit)
+        filemenu.addAction(exit)
+
+
+    def quit(self):
+        self.close()
 
 
     def setupUI(self):

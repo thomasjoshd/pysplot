@@ -67,7 +67,7 @@ class Menu(QtWidgets.QMainWindow):
 
         viewmenu = bar.addMenu('View')
         reset=QtWidgets.QAction("Reset View",self.parent())
-        reset.setShortcut('Ctrl+r')
+        reset.setShortcut('r')
         reset.setStatusTip('Resets the spectrum view.  Removing any fit, or measurement marks.')
         reset.triggered.connect(self.parent().reset)
 
@@ -392,6 +392,9 @@ class Menu(QtWidgets.QMainWindow):
         gaussstack.setShortcut('Alt+Ctrl+g')
         gaussstack.triggered.connect(partial(self.parent().stacker,func="gsmooth"))
 
+        savepng=QtWidgets.QAction("Save Stack to Images",self.parent())
+        savepng.triggered.connect(partial(self.parent().stacker,func="savepng"))
+
         stackview = bar.addMenu('Stack')
         stackview.addAction(stackplottoggle)
         stackview.addAction(downstack)
@@ -403,6 +406,7 @@ class Menu(QtWidgets.QMainWindow):
         stackview.addSeparator()
         stackview.addAction(stacksave)
         stackview.addAction(stacksave_txt)
+        stackview.addAction(savepng)
         stackview.addSeparator()
         stackview.addAction(stackrestore)
 
