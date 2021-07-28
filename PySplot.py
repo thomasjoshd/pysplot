@@ -15,6 +15,8 @@ if __name__ == '__main__':
 
 
 #ToDoList
+# package:
+#https://gist.github.com/xypnox/35935d5de8a2e8574e60167bb8fdee56
     #add in the telluric-new.py functionality
     #add convoluion by given profile. put this as a function in the sarith window?
     #cross correction
@@ -25,7 +27,8 @@ if __name__ == '__main__':
     #set custom titles, labels
     #insert label text annotations
     #sort stack by julian date
-    #phase fold data for dynamical?
+    #phase fold data for dynamical. and animation, needs a child window with:
+        #Period, and T0
     #Stack Modify add:
         #linearize
         #linear shift

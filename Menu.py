@@ -111,6 +111,8 @@ class Menu(QtWidgets.QMainWindow):
         style_step.setShortcut('p')
         style_step.triggered.connect(self.parent().set_style_step)
 
+        colortoggle=QtWidgets.QAction("Toggle Color Plots",self.parent())
+        colortoggle.triggered.connect(self.parent().colortoggle)
 
         # viewmenu.addAction(QtWidgets.QAction("Dynamical--WIP (|)",self.parent()))
 
@@ -127,6 +129,8 @@ class Menu(QtWidgets.QMainWindow):
         viewmenu.addAction(style_line)
         viewmenu.addAction(style_point)
         viewmenu.addAction(style_step)
+        viewmenu.addSeparator()
+        viewmenu.addAction(colortoggle)
 
         #viewmenu.addAction(dynamical) #likely to break uses a new window, need to replace tkinter
 
@@ -326,7 +330,7 @@ class Menu(QtWidgets.QMainWindow):
 
         stacksave=QtWidgets.QAction("Save Stack as New Fits Files",self.parent())
         stacksave.setShortcut('Alt+s')
-        stacksave.triggered.connect(self.parent().stacksave)
+        stacksave.triggered.connect(partial(self.parent().stacker,func="savefits"))
 
         stacksave_txt=QtWidgets.QAction("Save Stack as New text Files",self.parent())
         #stacksave_txt.setShortcut('Alt+s')

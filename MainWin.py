@@ -16,6 +16,8 @@ import matplotlib.image as img
 import matplotlib.cm as cm
 import matplotlib.patches as patches
 import matplotlib.colors as colors
+from matplotlib import animation
+
 import numpy as np
 import csv
 
@@ -105,6 +107,7 @@ class MainWin(QtWidgets.QMainWindow):
         self.heightcheck=False
         self.boxwidth=False
         self.suffix=False
+        self.color=True
 
     def dragEnterEvent(self, event):
         # print('drag-enter')
@@ -396,16 +399,24 @@ class MainWin(QtWidgets.QMainWindow):
     def plotting_guts(self,sym='-',basename=''):
         if self.plotstyle == 'step':
             if self.stackplot == True:
-                spec,=self.ax.step(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                self.spec,=self.ax.step(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
             else:
-                spec,=self.ax.step(self.wavelength,self.flux,color=self.database[self.fname]['plotcolor'],\
-                label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                if self.color == True:
+                    self.spec,=self.ax.step(self.wavelength,self.flux,color=self.database[self.fname]['plotcolor'],\
+                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                else:
+                    spec,=self.ax.step(self.wavelength,self.flux,color="black",\
+                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
         else:
             if self.stackplot == True:
-                spec,=self.ax.plot(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                self.spec,=self.ax.plot(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
             else:
-                spec,=self.ax.plot(self.wavelength,self.flux,sym,color=self.database[self.fname]['plotcolor'],\
-                label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                if self.color == True:
+                    self.spec,=self.ax.plot(self.wavelength,self.flux,sym,color=self.database[self.fname]['plotcolor'],\
+                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                else:
+                    self.spec,=self.ax.plot(self.wavelength,self.flux,sym,color="black",\
+                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
 
 
 
@@ -460,6 +471,11 @@ class MainWin(QtWidgets.QMainWindow):
                     self.ax.set_xlabel("Heliocentric Wavelength (%s)"%self.wavelength.unit)
             else:
                 self.ax.set_xlabel("Wavelength (%s)"%self.wavelength.unit)
+
+    def animated(self):
+        anim = animation.FuncAnimation(self.fig, self.plotSpectra(), init_func=self.plotSpectra(),frames=100,interval=20, blit=True)
+
+
 
     def grabSpectra(self,spec):
         """Grab spectra from database, separate from plotting"""
@@ -572,6 +588,26 @@ class MainWin(QtWidgets.QMainWindow):
                 pass
         except:
             print('Exception occured in legendtoggle')
+
+    def colortoggle(self):
+        """Toggles the plot colors on and off."""
+        try:
+            if self.color == False:
+                self.color=True
+                self.plotSpectra()
+            elif self.color == True:
+                self.color=False
+                self.getlims()
+                self.ax.clear()
+                if self.overplot == False and self.stackplot == False:
+                    self.plotSpectra(spec=self.fname)
+                else:
+                    self.plotSpectra()
+            else:
+                pass
+        except:
+            print('Exception occured in colortoggle')
+
 
 
     def set_style_line(self):
@@ -1858,6 +1894,8 @@ class MainWin(QtWidgets.QMainWindow):
                     self.smooth(func="gaussian")
                 elif func == "savepng":
                     self.saveImage()
+                elif func == "savefits":
+                    self.savefits()
                 else:
                     print("Stacker cannot handle a function.")
                 self.stacknum=self.stacknum+1
@@ -1868,24 +1906,24 @@ class MainWin(QtWidgets.QMainWindow):
         self.outputupdate()
         self.script=False
 
-    def stacksave(self):
-        try:
-            # self.stackforsaving=[]
-            if self.suffix == False:
-                self.suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
-            # for f in self.database:
-            # self.fname=f
-            self.plotSpectra(spec=self.fname)
-            self.Spectra.saveFits(extend=self.suffix+'.fits')
-        except:
-            print('Exception occured in stacksave')
+    # def stacksave(self):
+    #     try:
+    #         # self.stackforsaving=[]
+    #         if self.suffix == False:
+    #             self.suffix, okPressed = QInputDialog.getText(self, "Save Stack Spectra","File Suffix", QLineEdit.Normal, "")
+    #         # for f in self.database:
+    #         # self.fname=f
+    #         self.plotSpectra(spec=self.fname)
+    #         self.Spectra.saveFits(extend=self.suffix+'.fits')
+    #     except:
+    #         print('Exception occured in stacksave')
 
 
     def stacksave_txt(self):
         try:
             # self.stackforsaving=[]
             if self.suffix == False:
-                self.suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
+                self.suffix, okPressed = QInputDialog.getText(self, "Save Text Spectra","File Suffix", QLineEdit.Normal, "")
             # for f in self.database:
             # self.fname=f
             self.plotSpectra(spec=self.fname)
@@ -1897,7 +1935,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             # self.stackforsaving=[]
             if self.suffix == False:
-                self.suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
+                self.suffix, okPressed = QInputDialog.getText(self, "Save Image","File format, any matplotlib accepted filetype.", QLineEdit.Normal, "")
             if '.' not in self.suffix:
                 self.suffix='.'+self.suffix
             # for f in self.database:
@@ -1908,6 +1946,23 @@ class MainWin(QtWidgets.QMainWindow):
 
         except:
             print('Exception occured in savepng')
+
+    def savefits(self):
+        try:
+            # self.stackforsaving=[]
+            if self.suffix == False:
+                self.suffix, okPressed = QInputDialog.getText(self, "Save Stack Spectra","File suffix.", QLineEdit.Normal, "")
+            # if '.' not in self.suffix:
+            #     self.suffix='.'+self.suffix
+            # for f in self.database:
+            self.overplot=False
+            self.stackplot=False
+            self.plotSpectra(spec=self.fname)
+            self.Spectra.saveFits(extend=self.suffix+'.fits')
+
+        except:
+            print('Exception occured in MainWin.savefits')
+
 
 
     def stackwindowplot(self,spec):

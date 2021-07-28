@@ -383,12 +383,15 @@ class Spectra(QtWidgets.QMainWindow):
             basename=os.path.basename(self.parent().fname)
             path_wo_ext=os.path.splitext(self.parent().fname)[0]
             if extend == False:
+
                 savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save fits spectra",os.path.join(path_wo_ext,basename,".fits"))
                 hdu.writeto(savename)
             else:
+
                 savename=path_wo_ext+extend #this still has .fits then /""-extend.fits"
                 # savename=path_wo_ext+extend #probably need to use an os.join here
-                self.parent().stackforsaving.append(savename)
+                # self.parent().stackforsaving.append(savename)
+                # print('test')
                 # hdu.writeto('new.fits')
                 hdu.writeto(savename,overwrite=True)
                 self.parent().message.append("Saved to: %s"%savename)
