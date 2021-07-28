@@ -43,7 +43,7 @@ class Menu(QtWidgets.QMainWindow):
         # writelog.setShortcut('')
         writelog.triggered.connect(self.parent().log.endoflog)
 
-        savetxt=QtWidgets.QAction("Save Headerless Text Spectrum",self.parent())
+        savetxt=QtWidgets.QAction("Save Text Spectrum",self.parent())
         savetxt.setShortcut('Shift+Ctrl+s')
         savetxt.triggered.connect(self.parent().Spectra.save1DText)
 
@@ -334,7 +334,7 @@ class Menu(QtWidgets.QMainWindow):
 
         stacksave_txt=QtWidgets.QAction("Save Stack as New text Files",self.parent())
         #stacksave_txt.setShortcut('Alt+s')
-        stacksave_txt.triggered.connect(self.parent().stacksave_txt)
+        stacksave_txt.triggered.connect(partial(self.parent().stacker,func="savetext"))
 
         stacknorm=QtWidgets.QAction("Normalize",self.parent())
         stacknorm.setShortcut('Alt+t')

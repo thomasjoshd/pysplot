@@ -538,7 +538,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.canvas.draw()
             self.stackpane()
         except:
-            print('Exception occurec in plotSpectra')
+            print('Exception occured in plotSpectra')
 
     def gridtoggle(self):
         """Toggles the plot grid on and off."""
@@ -1236,11 +1236,9 @@ class MainWin(QtWidgets.QMainWindow):
                     self.getalign()
                 elif self.script == True and self.stacknum == 0:
                     self.getalign()
-            print('before')
 
-            min_peakind=find_nearest_index(xg,min(xg))
+            min_peakind=find_nearest_index(xg.value,min(xg.value))
             lines=[]
-            print('after')
             g_init = models.Gaussian1D(amplitude=1./min(yg), mean=xg[min_peakind], stddev=(xg[1]-xg[0])*4) #fits the peak
 
             # print(1/min(yg),xg[min_peakind])
@@ -1317,7 +1315,6 @@ class MainWin(QtWidgets.QMainWindow):
             xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
             ygf=np.interp(xgf,xg,yg)#*u.flx
             # mid=len(yg)//2 #get guess for line peak by taking center of clicks
-
             xa=np.array([xgf[0].value,xgf[-1].value])
             try:
                 ya=np.array([ygf[0].value,ygf[-1].value])
@@ -1328,9 +1325,10 @@ class MainWin(QtWidgets.QMainWindow):
             ygn=yg/np.polyval(linecoeff,xg/xg[0])*u.flx #xg/xg[0] to remove the unit
             invert=False
             reflevel=yg[0]
-            if yg[len(yg)//2] < reflevel:
-                ygf=reflevel-ygf
+            if yg[int(len(yg)//2)] < reflevel:
+                ygf=reflevel.value-ygf
                 invert=True
+
             return (reflevel,invert)
         except:
             print('Exception occured in invert_check')
@@ -1896,6 +1894,8 @@ class MainWin(QtWidgets.QMainWindow):
                     self.saveImage()
                 elif func == "savefits":
                     self.savefits()
+                elif func == "savetext":
+                    self.savetext()
                 else:
                     print("Stacker cannot handle a function.")
                 self.stacknum=self.stacknum+1
@@ -1918,18 +1918,18 @@ class MainWin(QtWidgets.QMainWindow):
     #     except:
     #         print('Exception occured in stacksave')
 
-
-    def stacksave_txt(self):
-        try:
-            # self.stackforsaving=[]
-            if self.suffix == False:
-                self.suffix, okPressed = QInputDialog.getText(self, "Save Text Spectra","File Suffix", QLineEdit.Normal, "")
-            # for f in self.database:
-            # self.fname=f
-            self.plotSpectra(spec=self.fname)
-            self.Spectra.save1DText(extend=self.suffix+'.txt')
-        except:
-            print('Exception occured in stacksave_txt')
+    #
+    # def stacksave_txt(self):
+    #     try:
+    #         # self.stackforsaving=[]
+    #         if self.suffix == False:
+    #             self.suffix, okPressed = QInputDialog.getText(self, "Save Text Spectra","File Suffix", QLineEdit.Normal, "")
+    #         # for f in self.database:
+    #         # self.fname=f
+    #         self.plotSpectra(spec=self.fname)
+    #         self.Spectra.save1DText(extend=self.suffix+'.txt')
+    #     except:
+    #         print('Exception occured in stacksave_txt')
 
     def saveImage(self):
         try:
@@ -1952,9 +1952,7 @@ class MainWin(QtWidgets.QMainWindow):
             # self.stackforsaving=[]
             if self.suffix == False:
                 self.suffix, okPressed = QInputDialog.getText(self, "Save Stack Spectra","File suffix.", QLineEdit.Normal, "")
-            # if '.' not in self.suffix:
-            #     self.suffix='.'+self.suffix
-            # for f in self.database:
+
             self.overplot=False
             self.stackplot=False
             self.plotSpectra(spec=self.fname)
@@ -1964,6 +1962,18 @@ class MainWin(QtWidgets.QMainWindow):
             print('Exception occured in MainWin.savefits')
 
 
+    def savetext(self):
+        try:
+            # self.stackforsaving=[]
+            if self.suffix == False:
+                self.suffix, okPressed = QInputDialog.getText(self, "Save Stack Spectra","File suffix.", QLineEdit.Normal, "")
+            self.overplot=False
+            self.stackplot=False
+            self.plotSpectra(spec=self.fname)
+            self.Spectra.save1DText(extend=self.suffix+'.txt')
+
+        except:
+            print('Exception occured in MainWin.savetext')
 
     def stackwindowplot(self,spec):
         self.singleplottoggle()

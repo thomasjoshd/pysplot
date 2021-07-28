@@ -398,30 +398,33 @@ class Spectra(QtWidgets.QMainWindow):
                 self.parent().outputupdate()
         except:
             self.message.append("Nothing to save.")
-            self.outputupdate()
+            self.parent().outputupdate()
 
 
-    def save1DText(self,extend=False):
+    def save1DText(self,extend=False,header=True):
         """Save a headerless text spectrum."""
         try:
             path=os.path.dirname(self.parent().fname)
             basename=os.path.basename(self.parent().fname)
             path_wo_ext=os.path.splitext(self.parent().fname)[0]
-
             if extend == False:
                 savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Headerless Text Spectra",os.path.join(path_wo_ext,basename,".txt"))
             else:
                 savename=path_wo_ext+extend
             # print(savename)
             dataout=open(savename,'w')
+            if header==True:
+                dataout.write('Wavelength %s, Flux %s\n'%(self.parent().wavelength[0].unit,self.parent().flux[0].unit))
+            #add a header line
+
             for i,val in enumerate(self.parent().flux):
                 dataout.write('%s,%s\n'%(self.parent().wavelength[i].value,self.parent().flux[i].value))
             dataout.close()
             self.parent().message.append("Saved to: %s"%savename)
-            self.outputupdate()
+            self.parent().utputupdate()
         except:
             self.parent().message.append("Nothing to save.")
-            self.outputupdate()
+            self.parent().outputupdate()
 
 
     def restore(self):

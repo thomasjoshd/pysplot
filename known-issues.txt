@@ -1,2 +1,1 @@
-fitting inverted gaussians is broken at the moment.
-scopy/crop not working on stacks
+saving fits not working, saves unreadable files
