@@ -1,2 +1,1 @@
-Align with Gaussian not working
-crop doesn't work in stack mode, or single mode
+fitting inverted gaussians is broken at the moment.

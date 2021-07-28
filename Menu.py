@@ -225,7 +225,7 @@ class Menu(QtWidgets.QMainWindow):
         defregion.triggered.connect(self.parent().regionload)
 
         regionclear=QtWidgets.QAction("Clear Region", self.parent())
-        regionclear.setShortcut('ctrl+z')
+        regionclear.setShortcut('z')
         regionclear.setStatusTip('Clears the region, without resizing the view.')
         regionclear.triggered.connect(self.parent().region_clear)
 

@@ -104,6 +104,7 @@ class MainWin(QtWidgets.QMainWindow):
         self.firstclick=False
         self.heightcheck=False
         self.boxwidth=False
+        self.suffix=False
 
     def dragEnterEvent(self, event):
         # print('drag-enter')
@@ -394,11 +395,20 @@ class MainWin(QtWidgets.QMainWindow):
 
     def plotting_guts(self,sym='-',basename=''):
         if self.plotstyle == 'step':
-            spec,=self.ax.step(self.wavelength,self.flux,color=self.database[self.fname]['plotcolor'],\
-            label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+            if self.stackplot == True:
+                spec,=self.ax.step(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+            else:
+                spec,=self.ax.step(self.wavelength,self.flux,color=self.database[self.fname]['plotcolor'],\
+                label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
         else:
-            spec,=self.ax.plot(self.wavelength,self.flux,sym,color=self.database[self.fname]['plotcolor'],\
-            label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+            if self.stackplot == True:
+                spec,=self.ax.plot(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+            else:
+                spec,=self.ax.plot(self.wavelength,self.flux,sym,color=self.database[self.fname]['plotcolor'],\
+                label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+
+
+
 
     def splot(self):
         """Sets up the plot"""
@@ -425,14 +435,13 @@ class MainWin(QtWidgets.QMainWindow):
 
         #Stackplot Mode
         elif self.overplot == False and self.stackplot == True:
-            if self.plotstyle == 'step':
-                spec,=self.ax.step(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,\
-                color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
-            else:
-                spec,=self.ax.plot(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,sym,\
-                color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
-
+            # if self.plotstyle == 'step':
+            #     spec,=self.ax.step(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,\
+            #     color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+            # else:
             self.titlevalue="Stack Plot Mode, Display For Qualitative Comparison Only"
+            self.plotting_guts(sym,basename)
+            # spec,=self.ax.plot(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
             self.ax.set_ylabel("Stack Plot Flux")
 
         if self.titletog == True:
@@ -465,7 +474,7 @@ class MainWin(QtWidgets.QMainWindow):
 
 
 
-    def plotSpectra(self,spec=None):
+    def plotSpectra(self,spec=None,savename=False):
         """Plot a spectrum or spectra."""
         self.frontispiece_clear()
         try:
@@ -499,6 +508,8 @@ class MainWin(QtWidgets.QMainWindow):
 
             self.ax.grid(self.gridvalue)
             self.xaxislabel()
+            if savename != False:
+                self.canvas.print_figure(savename)
             if self.xlim[0] == 0:
                 # valmax=max(self.flux)
                 # if valmax > 2*average(self.flux):
@@ -507,10 +518,11 @@ class MainWin(QtWidgets.QMainWindow):
                 self.toolbar.update()
             if self.legend == True:
                 self.ax.legend()
+
             self.canvas.draw()
             self.stackpane()
         except:
-            pass
+            print('Exception occurec in plotSpectra')
 
     def gridtoggle(self):
         """Toggles the plot grid on and off."""
@@ -788,7 +800,7 @@ class MainWin(QtWidgets.QMainWindow):
     def vel_plot(self):
         """uses one click to convert wavelength to velocity and vice versa"""
         try:
-            self.measuremode()
+            # self.measuremode()
             if self.wavelength.unit == u.AA:
                 # self.message.append("Left Click on where you want zero to be.")
                 # self.outputupdate()
@@ -1128,7 +1140,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def clickalign(self):
         try:
-            self.measuremode()
+            # self.measuremode()
             self.message.append("Click on a point to select reference piont.")
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_align)
@@ -1264,7 +1276,8 @@ class MainWin(QtWidgets.QMainWindow):
 
     def invert_check(self,xg,yg):
         try:
-            # xg,yg=self.regionload() #get regions
+            # self.regionload()
+            # xg,yg=self.chopclick()
             xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
             ygf=np.interp(xgf,xg,yg)#*u.flx
             # mid=len(yg)//2 #get guess for line peak by taking center of clicks
@@ -1704,7 +1717,7 @@ class MainWin(QtWidgets.QMainWindow):
     def normalize(self):
         """Continuum normalize by using selected points as continuum."""
         try:
-            self.measuremode()
+            # self.measuremode()
             self.goodfit=False
 
             try:
@@ -1801,15 +1814,16 @@ class MainWin(QtWidgets.QMainWindow):
         # self.message="Stack Operation in Progress"
         # self.outputupdate()
         # # self.canvas.draw()
-        self.stackforsaving=[]
+        # self.stackforsaving=[]
         self.stacknum=0
         self.script=True
+        self.suffix=False
         if func == False:
             print("No function selected for stacker.")
         else:
             for f in self.database:
                 self.fname=f
-                self.measuremode()
+                # self.measuremode()
                 # self.ax.clear()
                 # self.selectSpectra(spec=self.fname)
                 self.grabSpectra(self.fname)
@@ -1843,7 +1857,7 @@ class MainWin(QtWidgets.QMainWindow):
                 elif func == "gsmooth":
                     self.smooth(func="gaussian")
                 elif func == "savepng":
-                    self.savepng()
+                    self.saveImage()
                 else:
                     print("Stacker cannot handle a function.")
                 self.stacknum=self.stacknum+1
@@ -1856,38 +1870,42 @@ class MainWin(QtWidgets.QMainWindow):
 
     def stacksave(self):
         try:
-            self.stackforsaving=[]
-            suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
-            for f in self.database:
-                self.fname=f
-                self.plotSpectra(spec=self.fname)
-                self.Spectra.saveFits(extend=suffix+'.fits')
+            # self.stackforsaving=[]
+            if self.suffix == False:
+                self.suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
+            # for f in self.database:
+            # self.fname=f
+            self.plotSpectra(spec=self.fname)
+            self.Spectra.saveFits(extend=self.suffix+'.fits')
         except:
             print('Exception occured in stacksave')
 
 
     def stacksave_txt(self):
         try:
-            self.stackforsaving=[]
-            suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
-            for f in self.database:
-                self.fname=f
-                self.plotSpectra(spec=self.fname)
-                self.Spectra.save1DText(extend=suffix+'.txt')
+            # self.stackforsaving=[]
+            if self.suffix == False:
+                self.suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
+            # for f in self.database:
+            # self.fname=f
+            self.plotSpectra(spec=self.fname)
+            self.Spectra.save1DText(extend=self.suffix+'.txt')
         except:
             print('Exception occured in stacksave_txt')
 
-    def savepng(self):
+    def saveImage(self):
         try:
-            self.stackforsaving=[]
-            suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
-            if '.' not in suffix:
-                suffix='.'+suffix
-            for f in self.database:
-                self.fname=f
-                self.ax.clear()
-                self.plotSpectra(spec=self.fname)
-                plt.savefig(self.fname[:-5]+suffix)
+            # self.stackforsaving=[]
+            if self.suffix == False:
+                self.suffix, okPressed = QInputDialog.getText(self, "File Suffix","File Suffix", QLineEdit.Normal, "")
+            if '.' not in self.suffix:
+                self.suffix='.'+self.suffix
+            # for f in self.database:
+            self.overplot=False
+            self.stackplot=False
+            # self.ax.clear()
+            self.plotSpectra(spec=self.fname,savename=self.fname[:-5]+self.suffix)
+
         except:
             print('Exception occured in savepng')
 
@@ -1895,7 +1913,7 @@ class MainWin(QtWidgets.QMainWindow):
     def stackwindowplot(self,spec):
         self.singleplottoggle()
         self.ax.clear()
-        self.measuremode()
+        # self.measuremode()
         self.plotSpectra(spec=spec)
 
 
@@ -1903,7 +1921,7 @@ class MainWin(QtWidgets.QMainWindow):
         '''Move the display down one spectrum in the stack.'''
         self.singleplottoggle()
         self.ax.clear()
-        self.measuremode()
+        # self.measuremode()
         spec=self.stack[self.stack.index(self.fname)-1]
         # print('test ',self.database(0))
         self.plotSpectra(spec=spec)
@@ -1913,7 +1931,7 @@ class MainWin(QtWidgets.QMainWindow):
         '''Move the display up one spectrum in the stack.'''
         self.singleplottoggle()
         self.ax.clear()
-        self.measuremode()
+        # self.measuremode()
         try:
             spec=self.stack[self.stack.index(self.fname)+1]
         except:
@@ -1924,7 +1942,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def gotostack(self):
         # self.singleplottoggle()
-        self.measuremode()
+        # self.measuremode()
         self.ax.clear()
         # self.slist=[]
         selected, okPressed = QInputDialog.getText(self, "Plot Selected Spectra","Spectrum Number(s) (1,4), Ranges (3-4)", QLineEdit.Normal, "")
@@ -2314,7 +2332,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.stackrebuild()
                 self.ax.clear()
                 self.singleplottoggle()
-                self.measuremode()
+                # self.measuremode()
                 self.canvas.draw()
                 self.stackpane()
         except:

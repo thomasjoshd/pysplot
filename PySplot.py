@@ -19,6 +19,13 @@ if __name__ == '__main__':
     #add convoluion by given profile. put this as a function in the sarith window?
     #cross correction
     #open echelle format spectra: hopeless?
+    #save images
+    #save animated gif
+        #https://stackoverflow.com/questions/45852424/how-to-animate-a-function-in-matplotlib
+    #set custom titles, labels
+    #insert label text annotations
+    #sort stack by julian date
+    #phase fold data for dynamical?
     #Stack Modify add:
         #linearize
         #linear shift
