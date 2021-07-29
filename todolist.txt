@@ -1,0 +1,35 @@
+
+#ToDoList
+
+#finish splitting off the stack functions into the stack.py class.
+
+# package:
+#https://gist.github.com/xypnox/35935d5de8a2e8574e60167bb8fdee56
+    #add in the telluric-new.py functionality
+    #add convolution by given profile. put this as a function in the sarith window?
+    #cross correction
+    #open echelle format spectra: hopeless?
+    #open multispec/multiextension spectra.
+    #create multiple lists?  list manager, as separate child window?
+
+    #save animated gif
+        #https://stackoverflow.com/questions/45852424/how-to-animate-a-function-in-matplotlib
+    #set custom titles, labels
+    #insert label text annotations
+    #develop a way to sort the list on header keywords.
+    #phase fold data for dynamical. and animation, needs a child window with:
+        #Period, and T0
+    #Stack Modify add:
+        #linearize
+        #linear shift
+        #convert wavelength
+    #add dropdown list of spectra to headerwin.
+    #arith window * for all spectra in stack, also use in minilist delete and plot spectra.
+
+#Stuff for big rewrite
+    #can't open fits files saved from pysplot
+    #finish adding status tips (though these don't seem to show on a mac, or linux.)
+    #split fit function into separate functions. (save for big rewrite)
+    #better display of line fitting. (longer term)
+    #fit double gaussians (longer term, not for this release)
+    #dynamical spectra, child window

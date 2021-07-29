@@ -1,1 +1,3 @@
-saving fits not working, saves unreadable files
+saving fits not working, saves unreadable files, not sure what's going on
+    Files read ok in ds9 now.  I can get pysplot to open headers with old method.
+    can't figure out how to use the specutils metadata as astropy headers.

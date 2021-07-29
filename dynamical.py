@@ -1,4 +1,4 @@
-
+#currently an archive of an early attempt, not in use.
     def dynamical(self):
         """Dynamical spectra, not implemented"""
         t=tk.Toplevel(self.master,height=600,width=600)
