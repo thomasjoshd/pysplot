@@ -1326,7 +1326,7 @@ class MainWin(QtWidgets.QMainWindow):
             invert=False
             reflevel=yg[0]
             if yg[int(len(yg)//2)] < reflevel:
-                ygf=reflevel.value-ygf
+                ygf=reflevel.value-ygf.value
                 invert=True
 
             return (reflevel,invert)
