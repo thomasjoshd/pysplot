@@ -268,7 +268,7 @@ class ArithWin(QtWidgets.QMainWindow):
                 self.slist1.append(self.parent().stack[int(s)-1])
     #
     def minilist2(self):
-        print("minilist2")
+        # print("minilist2")
         for s in self.sel2:
             if '-' in s:
                 x,y=s.split("-")

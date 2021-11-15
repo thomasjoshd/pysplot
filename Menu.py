@@ -13,6 +13,15 @@ class Menu(QtWidgets.QMainWindow):
         # filling up a menu bar
         bar = self.parent().menuBar()
         filemenu = bar.addMenu('File')
+        viewmenu = bar.addMenu('View')
+        modmenu = bar.addMenu('Modify')
+        regionmenu = bar.addMenu('Measure')
+        stackview = bar.addMenu('Stack')
+        stackmod = bar.addMenu('Stack Modify')
+        stackmeas = bar.addMenu('Stack Measure')
+        aboutmenu = bar.addMenu('About')
+
+#--------------------------------
 
         fileopen = QtWidgets.QAction('Open 1-D Spectra (.fit(s), .txt, .s, .list)', self.parent())
         fileopen.setShortcut('Ctrl+o')
@@ -51,21 +60,8 @@ class Menu(QtWidgets.QMainWindow):
         savefits.setShortcut('Ctrl+s')
         savefits.triggered.connect(self.parent().Spectra.saveFits)
 
-        #list the actions in the menu
-        filemenu.addAction(fileopen)
-        filemenu.addAction(restore)
-        filemenu.addAction(header)
-        filemenu.addAction(rname)
-        filemenu.addSeparator()
-        filemenu.addAction(savefits)
-        filemenu.addAction(savetxt)
-        filemenu.addSeparator()
-        filemenu.addAction(closeall)
-        filemenu.addAction(writelog)
-        filemenu.addAction(exit)
-        # filemenu.addAction(QtWidgets.QAction("Image Header (h)",self.parent())) #needs popup window
 
-        viewmenu = bar.addMenu('View')
+        # viewmenu = bar.addMenu('View')
         reset=QtWidgets.QAction("Reset View",self.parent())
         reset.setShortcut('r')
         reset.setStatusTip('Resets the spectrum view.  Removing any fit, or measurement marks.')
@@ -114,27 +110,8 @@ class Menu(QtWidgets.QMainWindow):
         colortoggle=QtWidgets.QAction("Toggle Color Plots",self.parent())
         colortoggle.triggered.connect(self.parent().colortoggle)
 
-        # viewmenu.addAction(QtWidgets.QAction("Dynamical--WIP (|)",self.parent()))
 
-        viewmenu.addAction(reset)
-        viewmenu.addSeparator()
-        viewmenu.addAction(gridtoggle)
-        viewmenu.addAction(legtog)
-        viewmenu.addAction(titletog)
-        viewmenu.addSeparator()
-        viewmenu.addAction(overplottoggle)
-        viewmenu.addAction(stackplottoggle)
-        viewmenu.addAction(singleplottoggle)
-        viewmenu.addSeparator()
-        viewmenu.addAction(style_line)
-        viewmenu.addAction(style_point)
-        viewmenu.addAction(style_step)
-        viewmenu.addSeparator()
-        viewmenu.addAction(colortoggle)
-
-        #viewmenu.addAction(dynamical) #likely to break uses a new window, need to replace tkinter
-
-        modmenu = bar.addMenu('Modify')
+        # modmenu = bar.addMenu('Modify')
         setcontinuum=QtWidgets.QAction("Set Continuum Range", self.parent())
         setcontinuum.setShortcut('c')
         setcontinuum.setStatusTip('Set a range of points to be teated as continuum.')
@@ -200,29 +177,7 @@ class Menu(QtWidgets.QMainWindow):
         dop.triggered.connect(self.parent().Spectra.doppler)
 
 
-        modmenu.addAction(setcontinuum)
-        modmenu.addAction(normalize)
-        modmenu.addAction(normsave)
-        modmenu.addAction(normload)
-        modmenu.addSeparator()
-        modmenu.addAction(smooth)
-        modmenu.addAction(gsmooth)
-        modmenu.addSeparator()
-        modmenu.addAction(align)
-        modmenu.addAction(calign)
-        modmenu.addSeparator()
-        modmenu.addAction(crop)
-        modmenu.addSeparator()
-        modmenu.addAction(lin)
-        modmenu.addAction(shift)
-        modmenu.addSeparator()
-        modmenu.addAction(velocity)
-        modmenu.addAction(dop)
-        modmenu.addSeparator()
-        modmenu.addAction(arith)
-
-        regionmenu = bar.addMenu('Measure')
-
+        # regionmenu = bar.addMenu('Measure')
         defregion=QtWidgets.QAction("Define Region", self.parent())
         defregion.setShortcut('x')
         defregion.setStatusTip('Define a measurement region.')
@@ -292,25 +247,6 @@ class Menu(QtWidgets.QMainWindow):
         vert.setShortcut('1')
         vert.triggered.connect(self.parent().click_height)
 
-        regionmenu.addAction(defregion)
-        regionmenu.addAction(regionclear)
-        regionmenu.addSeparator()
-        regionmenu.addAction(equivalent)
-        regionmenu.addAction(snr)
-        regionmenu.addAction(fitgaus)
-        regionmenu.addAction(fitvoigt)
-        regionmenu.addAction(fitlorentz)
-        regionmenu.addAction(fitmoffat)
-        regionmenu.addAction(crop)
-        regionmenu.addAction(saveregion)
-        regionmenu.addAction(loadregion)
-        regionmenu.addSeparator()
-        regionmenu.addAction(bisect)
-        regionmenu.addAction(bisectsave)
-        regionmenu.addAction(bisectload)
-        regionmenu.addSeparator()
-        regionmenu.addAction(coords)
-        regionmenu.addAction(vert)
 
 
         downstack=QtWidgets.QAction("Display Next in Stack Down",self.parent())
@@ -399,7 +335,107 @@ class Menu(QtWidgets.QMainWindow):
         savepng=QtWidgets.QAction("Save Stack to Images",self.parent())
         savepng.triggered.connect(partial(self.parent().stacker,func="savepng"))
 
-        stackview = bar.addMenu('Stack')
+
+        # aboutmenu = bar.addMenu('About')
+        about=QtWidgets.QAction('About', self.parent())
+        about.setShortcut('Ctrl+i')
+        about.setStatusTip('Click this to find out about PySplot, Nya')
+        about.triggered.connect(self.parent().About)
+
+
+
+#----------------------
+
+
+        #list the actions in the menu
+        filemenu.addAction(fileopen)
+        filemenu.addAction(restore)
+        filemenu.addAction(header)
+        filemenu.addAction(rname)
+        filemenu.addSeparator()
+        filemenu.addAction(savefits)
+        filemenu.addAction(savetxt)
+
+        # filemenu.addAction(QtWidgets.QAction("Image Header (h)",self.parent())) #needs popup window
+        filemenu.addSeparator()
+        filemenu.addAction(normsave)
+        filemenu.addAction(normload)
+        filemenu.addSeparator()
+        filemenu.addAction(saveregion)
+        filemenu.addAction(loadregion)
+        filemenu.addSeparator()
+        filemenu.addAction(bisectsave)
+        filemenu.addAction(bisectload)
+        filemenu.addSeparator()
+        filemenu.addAction(closeall)
+        filemenu.addAction(writelog)
+        filemenu.addAction(exit)
+
+         # viewmenu.addAction(QtWidgets.QAction("Dynamical--WIP (|)",self.parent()))
+
+
+        viewmenu.addAction(reset)
+        viewmenu.addSeparator()
+        viewmenu.addAction(gridtoggle)
+        viewmenu.addAction(legtog)
+        viewmenu.addAction(titletog)
+        viewmenu.addSeparator()
+        viewmenu.addAction(overplottoggle)
+        viewmenu.addAction(stackplottoggle)
+        viewmenu.addAction(singleplottoggle)
+        viewmenu.addSeparator()
+        viewmenu.addAction(style_line)
+        viewmenu.addAction(style_point)
+        viewmenu.addAction(style_step)
+        viewmenu.addSeparator()
+        viewmenu.addAction(colortoggle)
+
+        #viewmenu.addAction(dynamical) #likely to break uses a new window, need to replace tkinter
+
+        modmenu.addAction(setcontinuum)
+        modmenu.addAction(normalize)
+        modmenu.addAction(normsave)
+        modmenu.addAction(normload)
+        modmenu.addSeparator()
+        modmenu.addAction(smooth)
+        modmenu.addAction(gsmooth)
+        modmenu.addSeparator()
+        modmenu.addAction(align)
+        modmenu.addAction(calign)
+        modmenu.addSeparator()
+        modmenu.addAction(crop)
+        modmenu.addSeparator()
+        modmenu.addAction(lin)
+        modmenu.addAction(shift)
+        modmenu.addSeparator()
+        modmenu.addAction(velocity)
+        modmenu.addAction(dop)
+        modmenu.addSeparator()
+        modmenu.addAction(arith)
+
+
+        regionmenu.addAction(defregion)
+        regionmenu.addAction(regionclear)
+        regionmenu.addSeparator()
+        regionmenu.addAction(equivalent)
+        regionmenu.addAction(snr)
+        regionmenu.addAction(fitgaus)
+        regionmenu.addAction(fitvoigt)
+        regionmenu.addAction(fitlorentz)
+        regionmenu.addAction(fitmoffat)
+        regionmenu.addAction(crop)
+        regionmenu.addAction(saveregion)
+        regionmenu.addAction(loadregion)
+        regionmenu.addSeparator()
+        regionmenu.addAction(bisect)
+        regionmenu.addAction(bisectsave)
+        regionmenu.addAction(bisectload)
+        regionmenu.addSeparator()
+        regionmenu.addAction(coords)
+        regionmenu.addAction(vert)
+
+
+        # stackview = bar.addMenu('Stack')
         stackview.addAction(stackplottoggle)
         stackview.addAction(downstack)
         stackview.addAction(upstack)
@@ -414,7 +450,7 @@ class Menu(QtWidgets.QMainWindow):
         stackview.addSeparator()
         stackview.addAction(stackrestore)
 
-        stackmod = bar.addMenu('Stack Modify')
+        # stackmod = bar.addMenu('Stack Modify')
         stackmod.addAction(stacknorm)
         stackmod.addAction(stackalign)
         stackmod.addAction(stackcrop)
@@ -424,8 +460,7 @@ class Menu(QtWidgets.QMainWindow):
         stackmod.addSeparator()
         stackmod.addAction(arith)
 
-
-        stackmeas = bar.addMenu('Stack Measure')
+        # stackmeas = bar.addMenu('Stack Measure')
         stackmeas.addAction(defregion)
         stackmeas.addAction(regionclear)
         stackmeas.addSeparator()
@@ -439,9 +474,4 @@ class Menu(QtWidgets.QMainWindow):
         stackmeas.addSeparator()
         stackmeas.addAction(coordstack)
 
-        aboutmenu = bar.addMenu('About')
-        about=QtWidgets.QAction('About', self.parent())
-        about.setShortcut('Ctrl+i')
-        about.setStatusTip('Click this to find out about PySplot, Nya')
-        about.triggered.connect(self.parent().About)
         aboutmenu.addAction(about)

@@ -1922,6 +1922,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
+            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
@@ -1986,6 +1987,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
+            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
@@ -2032,6 +2034,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
+            self.database[outname]['header']=self.header
 
             self.Spectra.updatespectrum()
             self.stackrebuild()
@@ -2132,6 +2135,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=divflux*u.flx
             self.database[outname]['flux_orig']=divflux*u.flx
+            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
@@ -2172,6 +2176,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=divflux*u.flx
             self.database[outname]['flux_orig']=divflux*u.flx
+            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
