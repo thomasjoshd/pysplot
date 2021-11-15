@@ -248,7 +248,7 @@ class ArithWin(QtWidgets.QMainWindow):
 
 
     def minilist1(self):
-        print("minilist1")
+        # print("minilist1")
         for s in self.sel1:
             if '-' in s:
                 x,y=s.split("-")
@@ -260,7 +260,7 @@ class ArithWin(QtWidgets.QMainWindow):
                 # print('hello')
                 # print(srange)
                 for k in srange:
-                    print(k)
+                    # print(k)
                     self.slist1.append(self.parent().stack[int(k)-1])
             elif s == '0':
                 pass
@@ -277,9 +277,9 @@ class ArithWin(QtWidgets.QMainWindow):
                 # print(type(x))
                 srange=np.arange(x,y+1,1,dtype=int)
                 # srange=np.arange(1,6)
-                print(srange)
+                # print(srange)
                 for k in srange:
-                    print(k)
+                    # print(k)
                     self.slist2.append(self.parent().stack[int(k)-1])
             elif s == '0':
                 pass

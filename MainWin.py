@@ -486,7 +486,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             self.header=self.database[self.fname]['header']
         except:
-            print('Exception occured in grabSpectra')
+            print('Exception occured getting header')
 
 
 
@@ -910,12 +910,17 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             self.measuremode()
             # xg,yg=self.regionload()
+            # print("0")
             self.regionload()
+            # print("0.5")
             xg,yg=self.chopclick()
+
             reflevel,invert=self.invert_check(xg,yg)
             stop = False
+            # print("1")
             while stop == False:
                 if self.loadedbisect == False and self.heightcheck == False:
+                    # print("2")
                     if self.script == False:
                         stop = self.bisectheight()
                         # print('no script')
@@ -923,9 +928,11 @@ class MainWin(QtWidgets.QMainWindow):
                         stop = self.bisectheight()
                         # print('script')
                 elif self.heightcheck == True:
+                    # print("2.5")
                     self.heightcheck = False
                     # print('setting check to false')
                 #find peak
+                # print("3")
                 if invert == False:
                     split=find_nearest_index(yg.value,np.max(yg.value))
                 elif invert == True:
@@ -1511,8 +1518,8 @@ class MainWin(QtWidgets.QMainWindow):
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
         try:
             self.region_clear()
-            file=self.openFileNameDialog()
-            dataout=open(file)
+            file, _=file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Region File.")
+            dataout=open(file[0])
             for i,line in enumerate(dataout):
                 if i == 0 :
                     pass
@@ -1540,14 +1547,14 @@ class MainWin(QtWidgets.QMainWindow):
             initialname=os.path.join(path_wo_ext,"bisect.par")
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Bisection Parameters",initialname)
             dataout=open(savename,'w')
-            dataout.write('%s\n'%(self.fname))
+            # dataout.write('%s\n'%(self.fname))
             for row in self.saveregions_x:
                 dataout.write('%s '%(row))
             dataout.write('\n')
-            for row in self.saveregions_y:
-                dataout.write('%s '%(row))
-            dataout.write('\n')
-            dataout.write(str(self.height))
+            # for row in self.saveregions_y:
+            #     dataout.write('%s '%(row))
+            # dataout.write('\n')
+            dataout.write(str(self.height)[1:-1])
             dataout.write('\n')
             dataout.close()
             self.message.append("Bisection Regions Saved to:  %s"%(savename))
@@ -1557,23 +1564,37 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append("Nothing to save.")
             self.outputupdate()
 
+
     def LoadBisect(self):
         """Load the regions bisection."""
         try:
             self.region_clear()
-            file=self.openFileNameDialog()
-            dataout=open(file)
+            file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Bisect File.")
+            dataout=open(file[0])
 
             for i,line in enumerate(dataout):
+                # if i == 0 :
+                #     pass
+                # print(i,line)
                 if i == 0 :
-                    pass
-                elif i == 1 :
                     self.saveregions_x=np.array(line.split(),dtype=float)
+                    self.saveregions_y=np.array([0,0],dtype=float)
                     # print(line.split()[0])
-                elif i == 2 :
-                    self.saveregions_y=np.array(line.split(),dtype=float)
-                elif i == 3 :
-                    self.height=float(line.split()[0])
+                # elif i == 2 :
+                #     self.saveregions_y=np.array(line.split(),dtype=float)
+                elif i == 1 :
+                    self.height=[]#float(height)
+                    try:
+                        hs=list(line.split(" "))
+                    except:
+                        pass
+                    try:
+                        hs=list(line.split(","))
+                    except:
+                        pass
+                    for h in hs:
+                        self.height.append(float(h))
+                    # print(self.height)
                 else:
                     pass
             dataout.close()
@@ -1594,7 +1615,7 @@ class MainWin(QtWidgets.QMainWindow):
             initialname=os.path.join(path_wo_ext,"align.par")
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Alignment Parameters",initialname)
             dataout=open(savename,'w')
-            dataout.write('%s\n'%(self.fname))
+            # dataout.write('%s\n'%(self.fname))
             for row in self.x_norm:
                 dataout.write('%s '%(row))
             dataout.write('\n')
@@ -1615,18 +1636,16 @@ class MainWin(QtWidgets.QMainWindow):
         """Load the regions alignment."""
         try:
             self.region_clear()
-            file=self.openFileNameDialog()
-            dataout=open(file)
+            file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Align File.")
+            dataout=open(file[0])
 
             for i,line in enumerate(dataout):
                 if i == 0 :
-                    pass
-                elif i == 1 :
                     self.x_norm=np.array(line.split(),dtype=float)
                     # print(line.split()[0])
-                elif i == 2 :
+                elif i == 1 :
                     self.y_norm=np.array(line.split(),dtype=float)
-                elif i == 3 :
+                elif i == 2 :
                     self.ref_wave=float(line.split()[0])
                 else:
                     pass
@@ -1648,7 +1667,7 @@ class MainWin(QtWidgets.QMainWindow):
             initialname=os.path.join(path_wo_ext,"norm.par")
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Normalization Parameters",initialname)
             dataout=open(savename,'w')
-            dataout.write('%s\n'%(self.fname))
+            # dataout.write('%s\n'%(self.fname))
             dataout.write('%s\n'%(self.order))
             for row in self.x_norm:
                 dataout.write('%s '%(row))
@@ -1668,15 +1687,13 @@ class MainWin(QtWidgets.QMainWindow):
         """Load the regions and powerlaw for the normalization."""
         try:
             self.region_clear()
-            file=self.openFileNameDialog()
-            dataout=open(file)
+            file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Normalization File.")
+            dataout=open(file[0])
 
             for i,line in enumerate(dataout):
                 if i == 0 :
-                    pass
-                elif i == 1 :
                     self.order=int(line)
-                elif i == 2 :
+                elif i == 1 :
                     self.x_norm=np.array(line.split(),dtype=float)
                     # print(line.split()[0])
                 # elif i == 3 :
