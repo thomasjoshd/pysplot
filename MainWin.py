@@ -891,8 +891,11 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             stop=False
             # self.height, okPressed = QInputDialog.getDouble(self, "Float","Height To Measure Bisection: (Note, can use shortcut '1' (see region menu) to select a height before running task.", self.height, -10000, 10000, 30)
-            height, okPressed = QInputDialog.getText(self, "Set Bisect Height","Height To Measure Bisection: (Note, can use shortcut '1' (see measure menu) to select a height before running task.", QLineEdit.Normal, "%s"%str(self.height))
-            self.height=float(height)
+            height, okPressed = QInputDialog.getText(self, "Set Bisect Height(s)","Height(s) To Measure Bisection comma separated.", QLineEdit.Normal, "%s"%str(self.height))
+            self.height=[]#float(height)
+            hs=list(height.split(","))
+            for h in hs:
+                self.height.append(float(h))
             if okPressed:
                 pass
             else:
@@ -938,73 +941,74 @@ class MainWin(QtWidgets.QMainWindow):
                 c1=0
                 c2=0
                 # print(self.height,type(self.height))
-                if invert == False:
-                    for i,val in enumerate(yg_left):
-                        if yg_left[i].value < self.height and yg_left[i+1].value > self.height:
-                            idx=i
-                    x1=xg_left[idx:idx+2].value
-                    y1=yg_left[idx:idx+2].value
+                for h in self.height:
+                    if invert == False:
+                        for i,val in enumerate(yg_left):
+                            if yg_left[i].value < h and yg_left[i+1].value > h:
+                                idx=i
+                        x1=xg_left[idx:idx+2].value
+                        y1=yg_left[idx:idx+2].value
 
-                    for i,val in enumerate(yg_right):
-                        if yg_right[i].value > self.height and yg_right[i+1].value < self.height:
-                            idx=i
-                    x2=xg_right[idx:idx+2].value
-                    y2=yg_right[idx:idx+2].value
+                        for i,val in enumerate(yg_right):
+                            if yg_right[i].value > h and yg_right[i+1].value < h:
+                                idx=i
+                        x2=xg_right[idx:idx+2].value
+                        y2=yg_right[idx:idx+2].value
 
 
-                elif invert == True:
-                    for i,val in enumerate(yg_left):
-                        if yg_left[i].value > self.height and yg_left[i+1].value < self.height:
-                            idx=i
-                    x=xg_left[idx:idx+2].value
-                    y=yg_left[idx:idx+2].value
+                    elif invert == True:
+                        for i,val in enumerate(yg_left):
+                            if yg_left[i].value > h and yg_left[i+1].value < h:
+                                idx=i
+                        x=xg_left[idx:idx+2].value
+                        y=yg_left[idx:idx+2].value
 
-                    linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
-                    c1=(self.height-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
-                    self.ax.plot(x,y,'s')
-                    self.ax.plot(c1,self.height,'^')
+                        linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
+                        c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                        self.ax.plot(x,y,'s')
+                        self.ax.plot(c1,h,'^')
 
-                    for i,val in enumerate(yg_right):
-                        if yg_right[i].value < self.height and yg_right[i+1].value > self.height:
-                            idx=i
-                    x=xg_right[idx:idx+2].value
-                    y=yg_right[idx:idx+2].value
-                    linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
-                    c2=(self.height-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
-                    self.ax.plot(x,y,'s')
-                    self.ax.plot(c2,self.height,'^')
-                else:
-                    print('Invert Problem in Bisects')
+                        for i,val in enumerate(yg_right):
+                            if yg_right[i].value < h and yg_right[i+1].value > h:
+                                idx=i
+                        x=xg_right[idx:idx+2].value
+                        y=yg_right[idx:idx+2].value
+                        linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
+                        c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                        self.ax.plot(x,y,'s')
+                        self.ax.plot(c2,h,'^')
+                    else:
+                        print('Invert Problem in Bisects')
 
-                linecoeff = np.polyfit(x1,y1,1) #does a linear polynomail fit to the data.
-                c1=(self.height-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                    linecoeff = np.polyfit(x1,y1,1) #does a linear polynomail fit to the data.
+                    c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
 
-                linecoeff = np.polyfit(x2,y2,1) #does a linear polynomail fit to the data.
-                c2=(self.height-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                    linecoeff = np.polyfit(x2,y2,1) #does a linear polynomail fit to the data.
+                    c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
 
-                center=(c1+c2)/2.
+                    center=(c1+c2)/2.
 
-                if self.script == False:
-                    # self.ax.plot(xg_right,yg_right,'bo')
-                    # self.ax.plot(xg_left,yg_left,'r^')
-                    self.ax.plot(x1,y1,'s')
-                    self.ax.plot(c1,self.height,'^')
-                    self.ax.plot(x2,y2,'s')
-                    self.ax.plot(c2,self.height,'^')
-                    self.ax.hlines(self.height,min(self.wavelength.value),max(self.wavelength.value)) #plots the cross-cut height
-                    self.ax.vlines(center,min(self.flux.value),max(self.flux.value)) #plot line at bisect location
+                    if self.script == False:
+                        # self.ax.plot(xg_right,yg_right,'bo')
+                        # self.ax.plot(xg_left,yg_left,'r^')
+                        self.ax.plot(x1,y1,'s')
+                        self.ax.plot(c1,h,'^')
+                        self.ax.plot(x2,y2,'s')
+                        self.ax.plot(c2,h,'^')
+                        self.ax.hlines(h,min(self.wavelength.value),max(self.wavelength.value)) #plots the cross-cut height
+                        self.ax.vlines(center,min(self.flux.value),max(self.flux.value)) #plot line at bisect location
 
-                t=self.filedate()
-                self.message.append(t+"Bisected Center, %s"%(float(center))+", {0.unit:FITS}".format(self.wavelength)+\
-                           ", Height, %s"%(self.height)+", {0.unit:FITS}".format(self.flux))
+                    t=self.filedate()
+                    self.message.append(t+"Bisected Center, %s"%(float(center))+", {0.unit:FITS}".format(self.wavelength)+\
+                               ", Height, %s"%(h)+", {0.unit:FITS}".format(self.flux))
 
-                if self.script == False:
-                    self.outputupdate()
-                    self.canvas.draw()
-                self.log.checklog()
-                self.log.write(self.message[-1])
-                #self.log.write('\n')
-                stop=True
+                    if self.script == False:
+                        self.outputupdate()
+                        self.canvas.draw()
+                    self.log.checklog()
+                    self.log.write(self.message[-1])
+                    #self.log.write('\n')
+                    stop=True
         except:
             print('Exception occured in BisectLine')
 
