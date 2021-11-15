@@ -937,7 +937,7 @@ class MainWin(QtWidgets.QMainWindow):
                 xg_right=xg[split::]
                 c1=0
                 c2=0
-                print(self.height,type(self.height))
+                # print(self.height,type(self.height))
                 if invert == False:
                     for i,val in enumerate(yg_left):
                         if yg_left[i].value < self.height and yg_left[i+1].value > self.height:

@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox,QInputDialog, QLineEdit
 from PyQt5.QtCore import Qt, QSize
+import numpy as np
 
 
 class ArithWin(QtWidgets.QMainWindow):
@@ -247,12 +248,19 @@ class ArithWin(QtWidgets.QMainWindow):
 
 
     def minilist1(self):
+        print("minilist1")
         for s in self.sel1:
             if '-' in s:
                 x,y=s.split("-")
-                srange=np.arange(int(x),int(y)+1)
+                x=int(x)
+                y=int(y)
+                # print(type(x))
+                srange=np.arange(x,y+1,1,dtype=int)
+                # srange=np.arange(1,6)
+                # print('hello')
+                # print(srange)
                 for k in srange:
-                    # print(k)
+                    print(k)
                     self.slist1.append(self.parent().stack[int(k)-1])
             elif s == '0':
                 pass
@@ -260,12 +268,18 @@ class ArithWin(QtWidgets.QMainWindow):
                 self.slist1.append(self.parent().stack[int(s)-1])
     #
     def minilist2(self):
+        print("minilist2")
         for s in self.sel2:
             if '-' in s:
                 x,y=s.split("-")
-                srange=np.arange(int(x),int(y)+1)
+                x=int(x)
+                y=int(y)
+                # print(type(x))
+                srange=np.arange(x,y+1,1,dtype=int)
+                # srange=np.arange(1,6)
+                print(srange)
                 for k in srange:
-                    # print(k)
+                    print(k)
                     self.slist2.append(self.parent().stack[int(k)-1])
             elif s == '0':
                 pass
