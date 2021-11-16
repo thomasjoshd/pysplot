@@ -126,13 +126,13 @@ class Spectra(QtWidgets.QMainWindow):
         sp = fits.open(self.parent().fname)
         sp.info()
         i=0
-        self.parent().database[self.parent().fname]['header']=sp[i].header
+        self.setheader(sp[i].header)
         try:
             try:
                 # print(self.parent().fname)
                 s=Spectrum1D.read(self.parent().fname)
-                self.parent().wavelength = s.spectral_axis #specdata['loglam'] * u.AA
-                self.parent().flux = s.flux #specdata['flux'] *u.flx #* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
+                # self.parent().wavelength = s.spectral_axis #specdata['loglam'] * u.AA
+                # self.parent().flux = s.flux #specdata['flux'] *u.flx #* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
                 self.writespec(s.spectral_axis,s.flux)
             except:
                 print('Exception at Spectra.read_1Dfits, specutils not able to open spectrum.')
@@ -150,71 +150,91 @@ class Spectra(QtWidgets.QMainWindow):
             self.parent().poplast=True
 
     def old(self):
-        try:
-            sp = fits.open(self.parent().fname)
-            i=1
-            # for i,val in enumerate(sp):
-            header = sp[i].header
-            if header['NAXIS1'] > 1:  #header['NAXIS'] == 1
-                wcs = WCS(header)
-                index = np.arange(header['NAXIS1'])
-                wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
-                # wavelength = wcs.wcs_pix2world(wcs, sp[i].data,mode='wcs')
-                wavelength = wavelength.flatten()
-                #need to be checking wavelength uinits and type here.
-                if 'Wavelength units=angstroms' in header['WAT1_001']:
-                    wavelength = wavelength*u.AA
-                    self.doppler(wavelength,header)
+        sp = fits.open(self.parent().fname)
+        sp.info()
+        # layers=np.arange(len(sp))
+        layers=[0]
 
-                flux = sp[i].data*u.flx
-                self.writespec(wavelength,flux)
-                self.parent().database[self.parent().fname]['header']=header
-            elif header['NAXIS'] > 1:
-                wcs = WCS(header)
-                index = np.arange(header['NAXIS1'])
-                wavelength= index*u.pixel
-                flux = sp[i].data[0].flatten()*u.flx
-                self.writespec(wavelength,flux)
-                self.parent().database[self.parent().fname]['header']=header
-            else:
-                self.parent().poplast=True
-            sp.close()
-        except:
-            sp = fits.open(self.parent().fname)
-            i=0
-            # print('we have excepted')
-            # for i,val in enumerate(sp):
-            header = sp[i].header
-            if header['NAXIS'] == 1:
-                wcs = WCS(header)
-                index = np.arange(header['NAXIS1'])
-                wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
-                # wavelength = wcs.wcs_pix2world(wcs, sp[i].data,mode='wcs')
-                wavelength = wavelength.flatten()
-                #need to be checking wavelength uinits and type here.
-                if 'Wavelength units=angstroms' in header['WAT1_001']:
-                    wavelength = wavelength*u.AA
-                    self.doppler(wavelength,header)
-                # wavelength = wavelength*u.AA
+        #try looping over each "frame" of the spectra cube.
+        for i in layers:
+            print(i)
+            try:
+                header=sp[i].header
+                self.setheader(header)
+                # for i,val in enumerate(sp):
+                # header = sp[i].header
+                if header['CUNIT1'] == '0.1 nm':
+                    header['CUNIT1']='Angstrom'
+                if header['NAXIS1'] > 1 or header['NAXIS'] == 1:
+                    wcs = WCS(header)
+                    index = np.arange(header['NAXIS1'])
+                    wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
+                    # wavelength = wcs.wcs_pix2world(wcs, sp[i].data,mode='wcs')
+                    try:
+                        if header['CUNIT1'] == 'Angstrom':
+                            wavelength = wavelength.flatten()/1e-10
+                    except:
+                        pass
 
-                # self.doppler(wavelength,header)
-
-                flux = sp[i].data*u.flx
-                self.writespec(wavelength,flux)
-                self.parent().database[self.parent().fname]['header']=header
-                # sp.close()
-            # elif header['NAXIS'] > 1:
+                    wavelength = wavelength.flatten()*u.AA
+                    # print(wavelength)
+                    #need to be checking wavelength uinits and type here.
+                    try:
+                        if 'Wavelength units=angstroms' in header['WAT1_001']:
+                            self.doppler(wavelength,header)
+                    except:
+                        pass
+                    flux = sp[i].data*u.flx
+                    self.writespec(wavelength,flux)
+                elif header['NAXIS'] > 1:
+                    print('here')
+                    wcs = WCS(header)
+                    index = np.arange(header['NAXIS1'])
+                    wavelength= index*u.pixel
+                    flux = sp[i].data[0].flatten()*u.flx
+                    self.writespec(wavelength,flux)
+                    # self.parent().database[self.parent().fname]['header']=header
+                else:
+                    self.parent().poplast=True
+            # sp.close()
+            except:
+                print("excepted in Spectra.old %s"%str(i))
+            # # sp = fits.open(self.parent().fname)
+            # i=1
+            # self.setheader(sp[i].header)
+            # # print('we have excepted')
+            # # for i,val in enumerate(sp):
+            # # header = sp[i].header
+            # if header['NAXIS'] == 1:
             #     wcs = WCS(header)
             #     index = np.arange(header['NAXIS1'])
-            #     wavelength= index*u.pixel
-            #     flux = sp[i].data[0].flatten()*u.flx
+            #     wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
+            #     # wavelength = wcs.wcs_pix2world(wcs, sp[i].data,mode='wcs')
+            #     wavelength = wavelength.flatten()
+            #     #need to be checking wavelength uinits and type here.
+            #     if 'Wavelength units=angstroms' in header['WAT1_001']:
+            #         wavelength = wavelength*u.AA
+            #         self.doppler(wavelength,header)
+            #     # wavelength = wavelength*u.AA
+            #
+            #     # self.doppler(wavelength,header)
+            #
+            #     flux = sp[i].data*u.flx
             #     self.writespec(wavelength,flux)
-            #     self.parent().database[self.parent().fname]['header']=header
-                # sp.close()
-            else:
-                # sp.close()
-                self.parent().poplast=True
-            sp.close()
+            #     # self.parent().database[self.parent().fname]['header']=header
+            #     # sp.close()
+            # # elif header['NAXIS'] > 1:
+            # #     wcs = WCS(header)
+            # #     index = np.arange(header['NAXIS1'])
+            # #     wavelength= index*u.pixel
+            # #     flux = sp[i].data[0].flatten()*u.flx
+            # #     self.writespec(wavelength,flux)
+            # #     self.parent().database[self.parent().fname]['header']=header
+            #     # sp.close()
+            # else:
+            #     # sp.close()
+            #     self.parent().poplast=True
+        sp.close()
     #
     def doppler(self):
         try:
@@ -351,6 +371,11 @@ class Spectra(QtWidgets.QMainWindow):
             self.parent().database[self.parent().fname]['flux_orig']=f
         except:
             print('Exception occured in Spectra.writespec')
+    def setheader(self,header):
+        try:
+            self.parent().database[self.parent().fname]['header']=header
+        except:
+            print('Exception in Spectra.setheader')
 
 
     def updatespectrum(self):
