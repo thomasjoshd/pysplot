@@ -122,34 +122,37 @@ class Spectra(QtWidgets.QMainWindow):
 
 
     def read_1Dfits(self):
-        print(self.parent().fname)
+        # print(self.parent().fname)
         sp = fits.open(self.parent().fname)
         sp.info()
-        i=0
-        self.setheader(sp[i].header)
-        try:
+        # layers=np.arange(len(sp))
+        layers=[0]
+        for i in layers:
+            self.setheader(sp[i].header,i)
             try:
-                # print(self.parent().fname)
-                s=Spectrum1D.read(self.parent().fname)
-                # self.parent().wavelength = s.spectral_axis #specdata['loglam'] * u.AA
-                # self.parent().flux = s.flux #specdata['flux'] *u.flx #* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
-                self.writespec(s.spectral_axis,s.flux)
-            except:
-                print('Exception at Spectra.read_1Dfits, specutils not able to open spectrum.')
                 try:
-                    print('moving on to old method')
-                    self.old()
+                    # print(self.parent().fname)
+                    s=Spectrum1D.read(self.parent().fname)
+                    # self.parent().wavelength = s.spectral_axis #specdata['loglam'] * u.AA
+                    # self.parent().flux = s.flux #specdata['flux'] *u.flx #* 10**-17 * u.Unit('erg cm-2 s-1 AA-1')
+                    self.writespec(s.spectral_axis,s.flux,i)
                 except:
-                    print('still an issue')
+                    print('Exception at Spectra.read_1Dfits, specutils not able to open spectrum.')
+                    try:
+                        print('moving on to old method')
+                        self.old()
+                    except:
+                        print('still an issue')
 
 
 
-            # self.parent().database[self.parent().fname]['header']=s.meta
-        except:
-            print('specutils unable to read spectrum')
-            self.parent().poplast=True
+                # self.parent().database[self.parent().fname]['header']=s.meta
+            except:
+                print('specutils unable to read spectrum')
+                self.parent().poplast=True
 
     def old(self):
+        print('falling back to old method.')
         sp = fits.open(self.parent().fname)
         sp.info()
         # layers=np.arange(len(sp))
@@ -157,26 +160,31 @@ class Spectra(QtWidgets.QMainWindow):
 
         #try looping over each "frame" of the spectra cube.
         for i in layers:
-            print(i)
             try:
                 header=sp[i].header
-                self.setheader(header)
+                self.setheader(header,i)
                 # for i,val in enumerate(sp):
                 # header = sp[i].header
-                if header['CUNIT1'] == '0.1 nm':
+                elodie=False
+                if header['CUNIT1'] == '0.1 nm': #this weridness is to address ELODIE spectra
                     header['CUNIT1']='Angstrom'
+                    elodie=True
                 if header['NAXIS1'] > 1 or header['NAXIS'] == 1:
                     wcs = WCS(header)
                     index = np.arange(header['NAXIS1'])
                     wavelength = wcs.wcs_pix2world(index[:,np.newaxis], 0)
                     # wavelength = wcs.wcs_pix2world(wcs, sp[i].data,mode='wcs')
                     try:
-                        if header['CUNIT1'] == 'Angstrom':
+                        if elodie==True:#this weridness is to address ELODIE spectra
                             wavelength = wavelength.flatten()/1e-10
                     except:
                         pass
-
-                    wavelength = wavelength.flatten()*u.AA
+                    if header['CUNIT1'] == 'Angstrom':
+                        wavelength = wavelength.flatten()*u.AA
+                    elif header['CUNIT1'] == 'Pixel':
+                        wavelength = wavelength.flatten()*u.pix
+                    else:
+                        pass
                     # print(wavelength)
                     #need to be checking wavelength uinits and type here.
                     try:
@@ -185,20 +193,26 @@ class Spectra(QtWidgets.QMainWindow):
                     except:
                         pass
                     flux = sp[i].data*u.flx
-                    self.writespec(wavelength,flux)
+                    self.writespec(wavelength,flux,i)
                 elif header['NAXIS'] > 1:
                     print('here')
                     wcs = WCS(header)
                     index = np.arange(header['NAXIS1'])
                     wavelength= index*u.pixel
                     flux = sp[i].data[0].flatten()*u.flx
-                    self.writespec(wavelength,flux)
+                    self.writespec(wavelength,flux,i)
                     # self.parent().database[self.parent().fname]['header']=header
                 else:
                     self.parent().poplast=True
             # sp.close()
             except:
-                print("excepted in Spectra.old %s"%str(i))
+                # print("excepted in Spectra.old %s"%str(i))
+                header=sp[i].header
+                self.setheader(header,i)
+                # self.writespec([0],[0],i)
+                self.parent().message.append("2D Fits, opened for header viewing only.")
+                self.parent().outputupdate()
+
             # # sp = fits.open(self.parent().fname)
             # i=1
             # self.setheader(sp[i].header)
@@ -363,17 +377,19 @@ class Spectra(QtWidgets.QMainWindow):
         except:
             print('problem reading list')
 
-    def writespec(self,w,f):
+    def writespec(self,w,f,layer):
+        file=str(self.parent().fname)#+str(layer)
         try:
-            self.parent().database[self.parent().fname]['wavelength']=w
-            self.parent().database[self.parent().fname]['wavelength_orig']=w
-            self.parent().database[self.parent().fname]['flux']=f
-            self.parent().database[self.parent().fname]['flux_orig']=f
+            self.parent().database[file]['wavelength']=w
+            self.parent().database[file]['wavelength_orig']=w
+            self.parent().database[file]['flux']=f
+            self.parent().database[file]['flux_orig']=f
         except:
             print('Exception occured in Spectra.writespec')
-    def setheader(self,header):
+    def setheader(self,header,layer):
+        file=str(self.parent().fname)#+str(layer)
         try:
-            self.parent().database[self.parent().fname]['header']=header
+            self.parent().database[file]['header']=header
         except:
             print('Exception in Spectra.setheader')
 

@@ -121,13 +121,21 @@ class MainWin(QtWidgets.QMainWindow):
         files = []
         for url in event.mimeData().urls():
             files.append(url.toLocalFile())
+        # spec=['.fit','.fits','.FIT','.FITS','.txt','.TXT','.csv','.CSV','.dat','.DAT','.s']
+
+        if '.par' in files[0]:
+            self.paropen(files[0])
+        # except:
         self.Spectra.open(drop=files)
+
+
 
     def reset(self):
         """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
         self.ax.clear()
         self.limreset()
-        self.region_clear()
+        self.replot()
+        # self.region_clear()
 
     def region_clear(self):
         """clears region selection and associated overplots."""
@@ -161,6 +169,9 @@ class MainWin(QtWidgets.QMainWindow):
         self.firstclick=False
         self.heightcheck=False
         self.boxwidth=False
+        self.replot()
+
+    def replot(self):
         try:
             self.getlims()
             if self.overplot == False and self.stackplot == False:
@@ -903,24 +914,18 @@ class MainWin(QtWidgets.QMainWindow):
             return stop
         except:
             print('Exception occred in bisectheight')
-            return None
+            return True
 
     def BisectLine(self):
         """Designed for measuring the center of very broad Wolf-Rayet star emission lines, may work for other situtaitons."""
+        self.measuremode()
+        self.regionload()
+        xg,yg=self.chopclick()
+        reflevel,invert=self.invert_check(xg,yg)
+        stop = False
         try:
-            self.measuremode()
-            # xg,yg=self.regionload()
-            # print("0")
-            self.regionload()
-            # print("0.5")
-            xg,yg=self.chopclick()
-
-            reflevel,invert=self.invert_check(xg,yg)
-            stop = False
-            # print("1")
             while stop == False:
                 if self.loadedbisect == False and self.heightcheck == False:
-                    # print("2")
                     if self.script == False:
                         stop = self.bisectheight()
                         # print('no script')
@@ -928,19 +933,16 @@ class MainWin(QtWidgets.QMainWindow):
                         stop = self.bisectheight()
                         # print('script')
                 elif self.heightcheck == True:
-                    # print("2.5")
                     self.heightcheck = False
-                    # print('setting check to false')
-                #find peak
-                # print("3")
+
+                #split spectrum at peak
                 if invert == False:
                     split=find_nearest_index(yg.value,np.max(yg.value))
                 elif invert == True:
-                    split=ind_nearest_index(yg.value,np.min(yg.value))
+                    split=find_nearest_index(yg.value,np.min(yg.value))
                 else:
                     print('Invert Problem in Bisect')
-
-
+                    stop=True
                 yg_left=yg[0:split+1]
                 yg_right=yg[split::]
                 xg_left=xg[0:split+1]
@@ -962,28 +964,27 @@ class MainWin(QtWidgets.QMainWindow):
                         x2=xg_right[idx:idx+2].value
                         y2=yg_right[idx:idx+2].value
 
-
                     elif invert == True:
                         for i,val in enumerate(yg_left):
                             if yg_left[i].value > h and yg_left[i+1].value < h:
                                 idx=i
-                        x=xg_left[idx:idx+2].value
-                        y=yg_left[idx:idx+2].value
+                        x1=xg_left[idx:idx+2].value
+                        y1=yg_left[idx:idx+2].value
 
-                        linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
-                        c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
-                        self.ax.plot(x,y,'s')
-                        self.ax.plot(c1,h,'^')
+                        # linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
+                        # c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                        # # self.ax.plot(x,y,'s')
+                        # # self.ax.plot(c1,h,'^')
 
                         for i,val in enumerate(yg_right):
                             if yg_right[i].value < h and yg_right[i+1].value > h:
                                 idx=i
-                        x=xg_right[idx:idx+2].value
-                        y=yg_right[idx:idx+2].value
-                        linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
-                        c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
-                        self.ax.plot(x,y,'s')
-                        self.ax.plot(c2,h,'^')
+                        x2=xg_right[idx:idx+2].value
+                        y2=yg_right[idx:idx+2].value
+                        # linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
+                        # c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                        # self.ax.plot(x,y,'s')
+                        # self.ax.plot(c2,h,'^')
                     else:
                         print('Invert Problem in Bisects')
 
@@ -994,7 +995,6 @@ class MainWin(QtWidgets.QMainWindow):
                     c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
 
                     center=(c1+c2)/2.
-
                     if self.script == False:
                         # self.ax.plot(xg_right,yg_right,'bo')
                         # self.ax.plot(xg_left,yg_left,'r^')
@@ -1014,7 +1014,6 @@ class MainWin(QtWidgets.QMainWindow):
                         self.canvas.draw()
                     self.log.checklog()
                     self.log.write(self.message[-1])
-                    #self.log.write('\n')
                     stop=True
         except:
             print('Exception occured in BisectLine')
@@ -1487,8 +1486,36 @@ class MainWin(QtWidgets.QMainWindow):
             self.ax.add_patch(rect)
             self.canvas.draw()
         except:
-            pass #no regions to plot
-            # print('Exception occured in plotRegions')
+            pass
+            #print('Exception occured in plotRegions')
+
+
+    def paropen(self,file):
+        dataout=open(file)
+        for i,line in enumerate(dataout):
+            if i == 0 :
+                line=line.lower()
+                line=line.strip()
+                dataout.close()
+                # print(line)
+                if 'bisect' == line:
+                    self.LoadBisect(file=file)
+                    break
+                elif 'norm' == line:
+                    self.LoadNorm(file=file)
+                    break
+                elif 'region' == line:
+                    self.LoadRegion(file=file)
+                    break
+                elif 'align' == line:
+                    self.LoadAlign(file=file)
+                    break
+                else:
+                    pass
+            else:
+                pass
+
+
 
     def SaveRegion(self):
         """Save the regions used for equivalent width measurements and for fitting line profiles."""
@@ -1498,7 +1525,8 @@ class MainWin(QtWidgets.QMainWindow):
             initialname=os.path.join(path_wo_ext,"region.par")
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Normalization Parameters",initialname)
             dataout=open(savename,'w')
-            dataout.write('%s\n'%(self.fname))
+            # dataout.write('%s\n'%(self.fname))
+            dataout.write('region\n')
             for row in self.saveregions_x:
                 dataout.write('%s '%(row))
             dataout.write('\n')
@@ -1514,12 +1542,15 @@ class MainWin(QtWidgets.QMainWindow):
             self.outputupdate()
 
 
-    def LoadRegion(self):
+    def LoadRegion(self,file=False):
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
         try:
             self.region_clear()
-            file, _=file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Region File.")
-            dataout=open(file[0])
+            if file==False:
+                filename, _= QtWidgets.QFileDialog.getOpenFileNames(self,"Open Region File.")
+                dataout=open(filename[0])
+            else:
+                dataout=open(file)
             for i,line in enumerate(dataout):
                 if i == 0 :
                     pass
@@ -1530,11 +1561,12 @@ class MainWin(QtWidgets.QMainWindow):
                     self.saveregions_y=np.array(line.split(),dtype=float)
                 else:
                     pass
+            # print(self.saveregions_x,self.saveregions_y)
             dataout.close()
             self.loadedregions=True
-            self.plotRegions()
             self.message.append("Regions loaded from:  %s"%(file))
             self.outputupdate()
+            self.plotRegions()
         except:
             self.message.append("Not a properly formatted input file.")
             self.outputupdate()
@@ -1548,6 +1580,7 @@ class MainWin(QtWidgets.QMainWindow):
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Bisection Parameters",initialname)
             dataout=open(savename,'w')
             # dataout.write('%s\n'%(self.fname))
+            dataout.write('bisect\n')
             for row in self.saveregions_x:
                 dataout.write('%s '%(row))
             dataout.write('\n')
@@ -1565,24 +1598,26 @@ class MainWin(QtWidgets.QMainWindow):
             self.outputupdate()
 
 
-    def LoadBisect(self):
+    def LoadBisect(self,file=False):
         """Load the regions bisection."""
         try:
             self.region_clear()
-            file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Bisect File.")
-            dataout=open(file[0])
+            if file ==  False:
+                filename, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Bisect File.")
+                dataout=open(filename[0])
+            else:
+                dataout=open(file)
 
             for i,line in enumerate(dataout):
-                # if i == 0 :
-                #     pass
-                # print(i,line)
                 if i == 0 :
+                    pass
+                if i == 1 :
                     self.saveregions_x=np.array(line.split(),dtype=float)
                     self.saveregions_y=np.array([0,0],dtype=float)
                     # print(line.split()[0])
                 # elif i == 2 :
                 #     self.saveregions_y=np.array(line.split(),dtype=float)
-                elif i == 1 :
+                elif i == 2 :
                     self.height=[]#float(height)
                     try:
                         hs=list(line.split(" "))
@@ -1616,6 +1651,7 @@ class MainWin(QtWidgets.QMainWindow):
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Alignment Parameters",initialname)
             dataout=open(savename,'w')
             # dataout.write('%s\n'%(self.fname))
+            dataout.write('align\n')
             for row in self.x_norm:
                 dataout.write('%s '%(row))
             dataout.write('\n')
@@ -1632,20 +1668,25 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append("Nothing to save.")
             self.outputupdate()
 
-    def LoadAlign(self):
+    def LoadAlign(self,file=False):
         """Load the regions alignment."""
         try:
             self.region_clear()
-            file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Align File.")
-            dataout=open(file[0])
+            if file == False:
+                filename, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Align File.")
+                dataout=open(filename[0])
+            else:
+                dataout=open(file)
 
             for i,line in enumerate(dataout):
                 if i == 0 :
+                    pass
+                elif i == 1:
                     self.x_norm=np.array(line.split(),dtype=float)
                     # print(line.split()[0])
-                elif i == 1 :
-                    self.y_norm=np.array(line.split(),dtype=float)
                 elif i == 2 :
+                    self.y_norm=np.array(line.split(),dtype=float)
+                elif i == 3 :
                     self.ref_wave=float(line.split()[0])
                 else:
                     pass
@@ -1668,6 +1709,7 @@ class MainWin(QtWidgets.QMainWindow):
             savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save Normalization Parameters",initialname)
             dataout=open(savename,'w')
             # dataout.write('%s\n'%(self.fname))
+            dataout.write('norm\n')
             dataout.write('%s\n'%(self.order))
             for row in self.x_norm:
                 dataout.write('%s '%(row))
@@ -1683,17 +1725,22 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append("Nothing to save.")
             self.outputupdate()
 
-    def LoadNorm(self):
+    def LoadNorm(self,file=False):
         """Load the regions and powerlaw for the normalization."""
         try:
             self.region_clear()
-            file, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Normalization File.")
-            dataout=open(file[0])
+            if file == None:
+                filename, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Normalization File.")
+                dataout=open(filename[0])
+            else:
+                dataout=open(file)
 
             for i,line in enumerate(dataout):
                 if i == 0 :
+                    pass
+                if i == 1:
                     self.order=int(line)
-                elif i == 1 :
+                elif i == 2 :
                     self.x_norm=np.array(line.split(),dtype=float)
                     # print(line.split()[0])
                 # elif i == 3 :
