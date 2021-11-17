@@ -122,13 +122,12 @@ class MainWin(QtWidgets.QMainWindow):
         for url in event.mimeData().urls():
             files.append(url.toLocalFile())
         # spec=['.fit','.fits','.FIT','.FITS','.txt','.TXT','.csv','.CSV','.dat','.DAT','.s']
-
-        if '.par' in files[0]:
-            self.paropen(files[0])
-        # except:
         self.Spectra.open(drop=files)
-
-
+        try:
+            if '.par' in files[0]:
+                self.paropen(files[0])
+        except:
+            pass
 
     def reset(self):
         """Just replots and clears the norm parameters.  A handy way to clear the graph of clutter."""
@@ -1491,7 +1490,9 @@ class MainWin(QtWidgets.QMainWindow):
 
 
     def paropen(self,file):
+        # self.region_clear()
         dataout=open(file)
+        # func=False
         for i,line in enumerate(dataout):
             if i == 0 :
                 line=line.lower()
@@ -1508,14 +1509,13 @@ class MainWin(QtWidgets.QMainWindow):
                     self.LoadRegion(file=file)
                     break
                 elif 'align' == line:
-                    self.LoadAlign(file=file)
+                    func='align'
                     break
                 else:
-                    pass
+                    break
+                    # pass
             else:
-                pass
-
-
+                break
 
     def SaveRegion(self):
         """Save the regions used for equivalent width measurements and for fitting line profiles."""
@@ -1544,8 +1544,8 @@ class MainWin(QtWidgets.QMainWindow):
 
     def LoadRegion(self,file=False):
         """Load the regions used for equivalent width measurements and for fitting line profiles."""
+        self.region_clear()
         try:
-            self.region_clear()
             if file==False:
                 filename, _= QtWidgets.QFileDialog.getOpenFileNames(self,"Open Region File.")
                 dataout=open(filename[0])
@@ -1727,9 +1727,11 @@ class MainWin(QtWidgets.QMainWindow):
 
     def LoadNorm(self,file=False):
         """Load the regions and powerlaw for the normalization."""
+        self.message.append("Function Not working at this time.")
+        self.outputupdate()
         try:
             self.region_clear()
-            if file == None:
+            if file == False:
                 filename, _ = QtWidgets.QFileDialog.getOpenFileNames(self,"Open Normalization File.")
                 dataout=open(filename[0])
             else:
@@ -1740,17 +1742,19 @@ class MainWin(QtWidgets.QMainWindow):
                     pass
                 if i == 1:
                     self.order=int(line)
-                elif i == 2 :
+                elif i >= 2 :
                     self.x_norm=np.array(line.split(),dtype=float)
                     # print(line.split()[0])
                 # elif i == 3 :
                 #     self.y_norm=np.array(line.split(),dtype=float)
                 else:
                     pass
-
+            # print(self.x_norm)
             dataout.close()
             self.loadednorm=True
-            self.plotRegions()
+            # self.plotRegions()
+            self.plotcontinuum()
+
             self.message.append("Normalization Parameters Loaded From:  %s, \n Polynomial Order: %s"%(file,self.order))
             self.outputupdate()
         except:
@@ -1806,7 +1810,9 @@ class MainWin(QtWidgets.QMainWindow):
                 self.x_norm.append(xi.value)
             for yi in yg:
                 self.y_norm.append(yi.value)
+        self.plotcontinuum()
 
+    def plotcontinuum(self):
         self.ax.plot(self.x_norm,self.y_norm,'ks')
         self.canvas.draw()
 
