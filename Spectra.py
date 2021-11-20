@@ -280,7 +280,7 @@ class Spectra(QtWidgets.QMainWindow):
                 wavelength=10**tab['loglam']
             except:
                 pass
-            self.writespec(wavelength*u.Angstrom,tab['flux'].quantity*u.flx)
+            self.writespec(wavelength*u.Angstrom,tab['flux'].quantity*u.flx,0)
             self.parent().database[self.parent().fname]['header']=header
         except:
             print('Problem with Read Tables')
@@ -333,7 +333,7 @@ class Spectra(QtWidgets.QMainWindow):
             wave=np.array(w)
             f=np.array(fx)
             f=f*u.flx
-            self.writespec(wave*u.AA,f)
+            self.writespec(wave*u.AA,f,0)
             hdu=fits.PrimaryHDU()
             self.parent().database[self.parent().fname]['header']=hdu.header
         except:
@@ -357,7 +357,7 @@ class Spectra(QtWidgets.QMainWindow):
             idx=np.argsort(W)
             F=np.array(f)
 
-            self.writespec(W[idx]*10*u.AA,F[idx]*u.flx)
+            self.writespec(W[idx]*10*u.AA,F[idx]*u.flx,0)
             f1.close()
         except:
             print('problem with opening espadons data')
