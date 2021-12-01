@@ -18,7 +18,9 @@ For some stand-alone versions you can check out the dropbox link that I will lea
 Now hosting complied version via <a href="https://www.dropbox.com/sh/typny1czo7jrh8o/AACNHse9cJYSQ0-y5FOI963oa?dl=0">dropbox</a>.
 
 # Screenshots
+<img src="screenshot1.png" width="500">
 
+<img src="screenshot2.png" width="500"> 
 
 # Tutorials
 
