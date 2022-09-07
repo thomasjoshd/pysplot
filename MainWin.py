@@ -53,20 +53,22 @@ class MainWin(QtWidgets.QMainWindow):
         super(MainWin, self).__init__(parent)
         self.setAcceptDrops(True)
         self.setWindowTitle("PySplot, Version %s"%str(VERSION))
+        self.resize(1200,800)
         self.initparams()
         self.message.append("Welcome to PySplot! Get started by opening a 1-D Spectrum or List of 1-D Spectra File>open or by drag and drop!")
         self.create_mainwidget()
         # MainWidget(self).create_mainwidget()
-        self.resize(1200,800)
         self.log=LogFiles(self)
         self.Spectra=Spectra(self)
         Menu(self).menu()
         self.cmd()
 
 
+
     def cmd(self):
         try:
-            self.Spectra.open(drop=sys.argv[1:])
+            if len(sys.argv[1:]) > 0:
+                self.Spectra.open(drop=sys.argv[1:])
         except:
             print("Command Line Argument Not Understood.")
 
@@ -171,19 +173,10 @@ class MainWin(QtWidgets.QMainWindow):
         self.replot()
 
     def replot(self):
-        try:
-            self.getlims()
-            if self.overplot == False and self.stackplot == False:
-                self.plotSpectra(spec=self.fname)
-            else:
-                # self.ax.clear()
-                try:
-                    self.plotSpectra(spec=self.slist)
-                except:
-                    self.plotSpectra()
-        except:
-            pass
-
+        print('replotting')
+        self.getlims()
+        self.ax.clear()
+        self.plotSpectra()
 
     def create_mainwidget(self):
         self.create_pysplot()
@@ -222,9 +215,6 @@ class MainWin(QtWidgets.QMainWindow):
         # self.grid_layout.setRowStretch(1, 100)
 
         self.mainwidget.setLayout(self.grid_layout)
-
-
-
 
     def stackpane(self):
         self.sidepanebox.close()
@@ -651,10 +641,12 @@ class MainWin(QtWidgets.QMainWindow):
 
     def singleplottoggle(self):
         """Single spectrum display mode, replots the last active spectrum."""
+        if self.stackplot == True:
+            self.stackplot=False
+            self.reset()
         self.getlims()
         self.ax.clear()
         self.overplot=False
-        self.stackplot=False
         try:
             self.plotSpectra(spec=self.fname)
         except:
@@ -662,9 +654,11 @@ class MainWin(QtWidgets.QMainWindow):
 
     def overplottoggle(self):
         """Switches to overplot mode and replots the stack."""
+        if self.stackplot == True:
+            self.stackplot=False
+            self.reset()
         try:
             self.overplot=True
-            self.stackplot=False
             self.getlims()
             self.ax.clear()
             self.plotSpectra()
@@ -678,6 +672,8 @@ class MainWin(QtWidgets.QMainWindow):
             self.stackplot=True
             self.overplot=False
             self.reset()
+            # self.getlims()
+            # self.ax.clear()
             self.plotSpectra()
         except:
             pass
@@ -1118,17 +1114,54 @@ class MainWin(QtWidgets.QMainWindow):
                 dwidth.append((1-f/continuum)*abs(xg[i]-xg[i-1]))
             width=sum(dwidth)
             bisect=(xg[0].value+xg[-1].value)/2.*xg[0].unit
-            self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
-            self.canvas.draw()
+            # self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
+            # self.canvas.draw()
             t=self.filedate()
             self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width)+\
                        ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect))
+
             self.outputupdate()
             self.log.checklog()
             self.log.write(self.message[-1])
             # self.log.write('\n')
         except:
-            print('Exception Occured in EQW')
+            print('Exception Occured in MainWin.eqw')
+
+    def eqw_err(self):
+        """Measure equivalent width, 4 clicks x_contiuum_x_feature_x_continuum_x"""
+        try:
+            # self.log.checklog()
+            self.measuremode()
+            # xg,yg=self.regionload()
+            self.regionload()
+            xg,yg=self.chopclick()
+
+            continuum=(yg[0]+yg[-1])/2. #linearly normalize the feature from the horizontal click locations.
+            dwidth=[]
+            for i,f in enumerate(yg):
+              if i ==0:
+                pass
+              else:
+                dwidth.append((1-f/continuum)*abs(xg[i]-xg[i-1]))
+            width=sum(dwidth)
+            bisect=(xg[0].value+xg[-1].value)/2.*xg[0].unit
+            # self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
+            # self.canvas.draw()
+            t=self.filedate()
+            # print("DLambda, "+"{0.value:0.03f}, {0.unit:FITS}".format(np.abs(xg[0].value-xg[-1].value)))
+            self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width)+\
+                       ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect)+\
+                       ", DLambda, "+"{0.value:0.03f}, {0.unit:FITS}".format(np.abs(xg[0].value-xg[-1].value))+\
+                       ", Fcontuum, "+"{0.value:0.03f}, {0.unit:FITS}".format(continuum)+\
+                       ", Faverage, "+"{0.value:0.03f}, {0.unit:FITS}".format(np.average(yg[0].value-yg[-1].value)))
+
+            self.outputupdate()
+            self.log.checklog()
+            self.log.write(self.message[-1])
+            # self.log.write('\n')
+        except:
+            print('Exception Occured in MainWin.eqw_err')
+
 
     def filedate(self):
         basename=os.path.basename(self.fname)
@@ -1180,7 +1213,7 @@ class MainWin(QtWidgets.QMainWindow):
             c2=array2[startidx:stopidx]
             return c1,c2
         except:
-            print('Exception occred in chop')
+            print('Exception occred in MainWin.chop')
             return None,None
 
     def clickalign(self):
@@ -1190,7 +1223,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_align)
         except:
-            print('Exception occured in clickalign')
+            print('Exception occured in MainWin.clickalign')
 
     def mouseclick_align(self,event):
         try:
@@ -1198,7 +1231,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.align_1()
             self.fig.canvas.mpl_disconnect(self.click)
         except:
-            print('Exception occured in mouseclick_align')
+            print('Exception occured in MainWin.mouseclick_align')
 
     def align_1(self):
         """Align a spectrum to a feature.
@@ -1220,7 +1253,7 @@ class MainWin(QtWidgets.QMainWindow):
                     self.plotSpectra()
                     self.reset()
         except:
-            print('Exception occured in align_1')
+            print('Exception occured in MainWin.align_1')
 
     def getalign(self):
         try:
@@ -1231,7 +1264,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.fig.canvas.mpl_disconnect(self.click)
                 return False
         except:
-            print('Exception occured in getalign')
+            print('Exception occured in MainWin.getalign')
 
     def align(self):
         """Align a spectrum to a feature. Based off sodium_shifted_norm_v3.py
@@ -1274,7 +1307,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.plotSpectra()
                 self.reset()
         except:
-            print('Exception occured in align')
+            print('Exception occured in MainWin.align')
 
     def linrescale(self):
         """Strech the wavelength scale with a lienear function"""
@@ -1300,7 +1333,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.plotSpectra(spec=self.fname)
                 stop=True
         except:
-            print('Exception occured in linrescale')
+            print('Exception occured in MainWin.linrescale')
 
     def scopy(self,script=False):
         """Copy out a section of a spectrum to a new spectrum"""
@@ -1315,7 +1348,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.Spectra.updatespectrum()
             self.plotSpectra(spec=self.fname)
         except:
-            print('Exception occured in scopy (crop)')
+            print('Exception occured in MainWin.scopy (crop)')
 
     def invert_check(self,xg,yg):
         try:
@@ -1340,7 +1373,7 @@ class MainWin(QtWidgets.QMainWindow):
 
             return (reflevel,invert)
         except:
-            print('Exception occured in invert_check')
+            print('Exception occured in MainWin.invert_check')
             return (None,None)
 
 
@@ -1477,7 +1510,7 @@ class MainWin(QtWidgets.QMainWindow):
 
             self.canvas.draw()
         except:
-            print('Exception occured in fit')
+            print('Exception occured in MainWin.fit')
 
     def plotRegions(self):
         try:
@@ -2362,7 +2395,8 @@ class MainWin(QtWidgets.QMainWindow):
 
     def stackwindowplot(self,spec):
         self.singleplottoggle()
-        self.ax.clear()
+        # self.ax.clear()
+        # self.reset()
         # self.measuremode()
         self.plotSpectra(spec=spec)
 
@@ -2370,7 +2404,7 @@ class MainWin(QtWidgets.QMainWindow):
     def stackdown(self):
         '''Move the display down one spectrum in the stack.'''
         self.singleplottoggle()
-        self.ax.clear()
+        # self.ax.clear()
         # self.measuremode()
         spec=self.stack[self.stack.index(self.fname)-1]
         # print('test ',self.database(0))
