@@ -1865,7 +1865,8 @@ class MainWin(QtWidgets.QMainWindow):
             width=sum(dwidth)#equivalent width
             # print(self.wavelength.unit)
             error=np.sqrt(1+Fcont_ave/Fline_ave)*(deltalambda-width)/snr#*self.wavelength.unit
-            # print(width,error)
+            #error is calculated using equation 7 of "Remarks on statistical errors in equivalent widths"
+            #K. Vollmann and T. Eversberg Astron. Nachr. AN 327, No. 9, 789-792,  DOI 10.1002/asna.2006
 
             t=self.filedate()
             self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width*self.wavelength.unit)+\
