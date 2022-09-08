@@ -190,8 +190,13 @@ class Menu(QtWidgets.QMainWindow):
 
         equivalent=QtWidgets.QAction("Equivalent Width", self.parent())
         equivalent.setShortcut('e')
-        equivalent.setStatusTip('Measure equivalent width, using two points on either side of spectrum.')
-        equivalent.triggered.connect(self.parent().eqw)
+        equivalent.setStatusTip('Measure equivalent width, using 4 points. Def contiuum and line region.')
+        equivalent.triggered.connect(self.parent().eqw_err)
+        #
+        # equivalenterr=QtWidgets.QAction("Equivalent Width", self.parent())
+        # equivalenterr.setShortcut('e')
+        # equivalenterr.setStatusTip('Measure equivalent width, using 4 points. Def contiuum and line region.')
+        # equivalenterr.triggered.connect(self.parent().eqw_err)
 
         snr=QtWidgets.QAction("Signal To Noise", self.parent())
         snr.setShortcut('n')
@@ -418,6 +423,7 @@ class Menu(QtWidgets.QMainWindow):
         regionmenu.addAction(regionclear)
         regionmenu.addSeparator()
         regionmenu.addAction(equivalent)
+        # regionmenu.addAction(equivalenterr)
         regionmenu.addAction(snr)
         regionmenu.addAction(fitgaus)
         regionmenu.addAction(fitvoigt)
