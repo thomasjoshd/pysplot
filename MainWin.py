@@ -173,7 +173,7 @@ class MainWin(QtWidgets.QMainWindow):
         self.replot()
 
     def replot(self):
-        print('replotting')
+        # print('replotting')
         self.getlims()
         self.ax.clear()
         self.plotSpectra()
@@ -1024,6 +1024,29 @@ class MainWin(QtWidgets.QMainWindow):
         except:
             print('Exception occred in mouseclick_height')
 
+    def mouseclick_eqw(self,event):
+        # print('mainloop',self.firstclick)
+        try:
+            if self.firstclick is False:
+                self.x.append(event.xdata)
+                self.y.append(event.ydata)
+                self.firstclick=1
+                # print('firstclick')
+            elif self.firstclick <=2:
+                # print('elif',self.firstclick)
+                self.x.append(event.xdata)
+                self.y.append(event.ydata)
+                self.firstclick=self.firstclick+1
+                # print('elif2',self.firstclick)
+            elif self.firstclick == 3:
+                # print('else',self.firstclick)
+                self.x.append(event.xdata)
+                self.y.append(event.ydata)
+                self.fig.canvas.mpl_disconnect(self.click) #stops at second click
+                self.firstclick=False
+                self.eqw_region()
+        except:
+            print('Exception occred in mouseclick_eqw')
 
 
     def mouseclick_region(self,event):
@@ -1035,7 +1058,7 @@ class MainWin(QtWidgets.QMainWindow):
             else:
                 self.x.append(event.xdata)
                 self.y.append(event.ydata)
-                self.fig.canvas.mpl_disconnect(self.click)
+                self.fig.canvas.mpl_disconnect(self.click) #stops at second click
                 self.plotRegions()
                 self.loadedregions=True
                 self.firstclick=False
@@ -1046,11 +1069,7 @@ class MainWin(QtWidgets.QMainWindow):
     def region(self):
         """uses two clicks to define a region for fitting or measuring."""
         try:
-            #self.measuremode()
-            # if message == ' ':
             regionmessage="Define region first: Click on left and right edges of your region.  Then run your function."
-            # else:
-            #     regionmessage=message
             self.message.append(regionmessage)
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_region)
@@ -1126,41 +1145,6 @@ class MainWin(QtWidgets.QMainWindow):
             # self.log.write('\n')
         except:
             print('Exception Occured in MainWin.eqw')
-
-    def eqw_err(self):
-        """Measure equivalent width, 4 clicks x_contiuum_x_feature_x_continuum_x"""
-        try:
-            # self.log.checklog()
-            self.measuremode()
-            # xg,yg=self.regionload()
-            self.regionload()
-            xg,yg=self.chopclick()
-
-            continuum=(yg[0]+yg[-1])/2. #linearly normalize the feature from the horizontal click locations.
-            dwidth=[]
-            for i,f in enumerate(yg):
-              if i ==0:
-                pass
-              else:
-                dwidth.append((1-f/continuum)*abs(xg[i]-xg[i-1]))
-            width=sum(dwidth)
-            bisect=(xg[0].value+xg[-1].value)/2.*xg[0].unit
-            # self.ax.vlines(bisect.value,min(yg.value),max(yg.value))
-            # self.canvas.draw()
-            t=self.filedate()
-            # print("DLambda, "+"{0.value:0.03f}, {0.unit:FITS}".format(np.abs(xg[0].value-xg[-1].value)))
-            self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width)+\
-                       ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect)+\
-                       ", DLambda, "+"{0.value:0.03f}, {0.unit:FITS}".format(np.abs(xg[0].value-xg[-1].value))+\
-                       ", Fcontuum, "+"{0.value:0.03f}, {0.unit:FITS}".format(continuum)+\
-                       ", Faverage, "+"{0.value:0.03f}, {0.unit:FITS}".format(np.average(yg[0].value-yg[-1].value)))
-
-            self.outputupdate()
-            self.log.checklog()
-            self.log.write(self.message[-1])
-            # self.log.write('\n')
-        except:
-            print('Exception Occured in MainWin.eqw_err')
 
 
     def filedate(self):
@@ -1806,7 +1790,7 @@ class MainWin(QtWidgets.QMainWindow):
         try: #if it doesn't exist, create it.
             self.x_norm
         except:
-            self.x_norm=[]
+            self.x_norm=[] #create them since they didn't exist.
             self.y_norm=[]
         try:
             if (len(self.x) % 2) != 0: #if not even, pop last value.  must have matched pairs of points.
@@ -1844,6 +1828,87 @@ class MainWin(QtWidgets.QMainWindow):
             for yi in yg:
                 self.y_norm.append(yi.value)
         self.plotcontinuum()
+
+    def eqw_region(self):
+        try:
+            xsort=np.sort(self.x)
+            if len(xsort) != 4:
+                print('wrong number of points')
+            xc1,yc1=self.chop(self.wavelength,self.flux,xsort[0],xsort[1])#continuum left
+            xc2,yc2=self.chop(self.wavelength,self.flux,xsort[2],xsort[3])#continuum right
+            x,y=self.chop(self.wavelength,self.flux,xsort[1],xsort[2]) # spectral feature
+            self.getlims()
+            self.ax.plot(xc1,yc1,'ks')
+            self.ax.plot(xc2,yc2,'ks')
+            self.ax.plot(x,y,'rs')
+            self.ax.set_xlim(self.xlim)
+            self.ax.set_ylim(self.ylim)
+            self.canvas.draw()
+
+
+            Fcont1_ave=np.average(yc1)
+            Fcont2_ave=np.average(yc2)
+            Fcont_ave=(Fcont1_ave+Fcont2_ave)/2.
+            Fline_ave=np.average(y)
+            deltalambda=xsort[2]-xsort[1]
+            sigma1=np.std(yc1)
+            sigma2=np.std(yc2)
+            sigma=(sigma1+sigma2)/2.
+            snr=Fcont_ave/sigma #signal to noise
+
+            dwidth=[]
+            for i,f in enumerate(y):
+              if i ==0:
+                  pass
+              else:
+                  dwidth.append((1.-f.value/Fcont_ave)*np.abs(x[i].value-x[i-1].value))
+            width=sum(dwidth)#equivalent width
+            # print(self.wavelength.unit)
+            error=np.sqrt(1+Fcont_ave/Fline_ave)*(deltalambda-width)/snr#*self.wavelength.unit
+            # print(width,error)
+
+            t=self.filedate()
+            self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width*self.wavelength.unit)+\
+                       ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(error*self.wavelength.unit))
+
+            self.outputupdate()
+            self.log.checklog()
+            self.log.write(self.message[-1])
+
+
+        except:
+            print('Exception occured in eqw_region')
+
+    def eqw_err(self,message=None):
+        """uses 4 clicks to define a region for fitting or measuring."""
+        try: #if it doesn't exist, create it.
+            self.x_norm
+        except:
+            self.x_norm=[] #create them since they didn't exist.
+            self.y_norm=[]
+        try:
+            if (len(self.x) % 2) != 0: #if not even, pop last value.  must have matched pairs of points.
+                self.x.pop()
+                self.y.pop()
+        except:
+            print('Exception occured in eqw_err_region')
+
+        try:
+            if self.firstclick == False:
+                if message == None or message == False:
+                    regionmessage="Use 2 click to define continuum region on left, and 2 clicks to define continuum region on right.  With the middle bit being the feature you want eqw for."
+                else:
+                    regionmessage=message
+                self.message.append(regionmessage)
+                self.outputupdate()
+                self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_eqw)
+                # self.firstclick=True
+            # else:
+            #     self.fig.canvas.mpl_disconnect(self.click)
+            #     self.firstclick=False
+            # self.eqw_region()
+        except:
+            print('Exception occured in eqw_err')
 
     def plotcontinuum(self):
         self.ax.plot(self.x_norm,self.y_norm,'ks')
