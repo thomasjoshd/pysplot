@@ -1025,26 +1025,28 @@ class MainWin(QtWidgets.QMainWindow):
             print('Exception occred in mouseclick_height')
 
     def mouseclick_eqw(self,event):
-        # print('mainloop',self.firstclick)
         try:
-            if self.firstclick is False:
-                self.x.append(event.xdata)
-                self.y.append(event.ydata)
-                self.firstclick=1
-                # print('firstclick')
-            elif self.firstclick <=2:
-                # print('elif',self.firstclick)
-                self.x.append(event.xdata)
-                self.y.append(event.ydata)
-                self.firstclick=self.firstclick+1
-                # print('elif2',self.firstclick)
-            elif self.firstclick == 3:
-                # print('else',self.firstclick)
-                self.x.append(event.xdata)
-                self.y.append(event.ydata)
-                self.fig.canvas.mpl_disconnect(self.click) #stops at second click
-                self.firstclick=False
+            if len(self.x) == 4:
                 self.eqw_region()
+            else:
+                if self.firstclick is False:
+                    self.x.append(event.xdata)
+                    self.y.append(event.ydata)
+                    self.firstclick=1
+                    # print('firstclick')
+                elif self.firstclick <=2:
+                    # print('elif',self.firstclick)
+                    self.x.append(event.xdata)
+                    self.y.append(event.ydata)
+                    self.firstclick=self.firstclick+1
+                    # print('elif2',self.firstclick)
+                elif self.firstclick == 3:
+                    # print('else',self.firstclick)
+                    self.x.append(event.xdata)
+                    self.y.append(event.ydata)
+                    self.fig.canvas.mpl_disconnect(self.click) #stops at second click
+                    self.firstclick=False
+                    self.eqw_region()
         except:
             print('Exception occred in mouseclick_eqw')
 
@@ -1882,32 +1884,19 @@ class MainWin(QtWidgets.QMainWindow):
 
     def eqw_err(self,message=None):
         """uses 4 clicks to define a region for fitting or measuring."""
-        try: #if it doesn't exist, create it.
-            self.x_norm
-        except:
-            self.x_norm=[] #create them since they didn't exist.
-            self.y_norm=[]
         try:
-            if (len(self.x) % 2) != 0: #if not even, pop last value.  must have matched pairs of points.
-                self.x.pop()
-                self.y.pop()
-        except:
-            print('Exception occured in eqw_err_region')
-
-        try:
-            if self.firstclick == False:
-                if message == None or message == False:
-                    regionmessage="Use 2 click to define continuum region on left, and 2 clicks to define continuum region on right.  With the middle bit being the feature you want eqw for."
-                else:
-                    regionmessage=message
-                self.message.append(regionmessage)
-                self.outputupdate()
-                self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_eqw)
-                # self.firstclick=True
-            # else:
-            #     self.fig.canvas.mpl_disconnect(self.click)
-            #     self.firstclick=False
-            # self.eqw_region()
+            if len(self.x) < 4:
+                if self.firstclick == False:
+                    if message == None or message == False:
+                        regionmessage="Use 2 click to define continuum region on left, and 2 clicks to define continuum region on right.  With the middle bit being the feature you want eqw for."
+                    else:
+                        regionmessage=message
+                    self.message.append(regionmessage)
+                    self.outputupdate()
+                    self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_eqw)
+            #         self.eqw_region()
+            elif len(self.x) == 4:
+                self.eqw_region()
         except:
             print('Exception occured in eqw_err')
 
@@ -2418,7 +2407,7 @@ class MainWin(QtWidgets.QMainWindow):
                 elif func == "scopy":
                     self.scopy()
                 elif func == "eqw":
-                    self.eqw()
+                    self.eqw_err()
                 elif func == "gauss":
                     self.fit(func="gauss")
                 elif func == "voigt":
