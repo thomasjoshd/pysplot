@@ -1096,10 +1096,6 @@ class MainWin(QtWidgets.QMainWindow):
                 self.x,self.y=(self.saveregions_x,self.saveregions_y)
         except:
             pass
-        # return self.chopclick()
-        # except:
-        #     # print('Exception occred in regionload')
-        #     return None,None
 
     def signal2noise(self):
         """Measure the Signal To Noise in a region."""
@@ -1123,10 +1119,9 @@ class MainWin(QtWidgets.QMainWindow):
 
     def eqw(self):
         """Measure equivalent width between two points IRAF style"""
+        '''this function is now depreciated and not used, see eqw_err'''
         try:
-            # self.log.checklog()
             self.measuremode()
-            # xg,yg=self.regionload()
             self.regionload()
             xg,yg=self.chopclick()
 
