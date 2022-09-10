@@ -136,7 +136,6 @@ class MainWin(QtWidgets.QMainWindow):
         self.ax.clear()
         self.limreset()
         self.replot()
-        # self.region_clear()
 
     def region_clear(self):
         """clears region selection and associated overplots."""
@@ -170,13 +169,18 @@ class MainWin(QtWidgets.QMainWindow):
         self.firstclick=False
         self.heightcheck=False
         self.boxwidth=False
+        self.getlims()
+        self.ax.clear()
         self.replot()
 
     def replot(self):
-        # print('replotting')
-        self.getlims()
-        self.ax.clear()
-        self.plotSpectra()
+        try:
+            if self.overplot == True or self.stackplot == True:
+                self.plotSpectra()
+            else:
+                self.plotSpectra(spec=self.fname)
+        except:
+            print('Exception in replot')
 
     def create_mainwidget(self):
         self.create_pysplot()
@@ -637,13 +641,11 @@ class MainWin(QtWidgets.QMainWindow):
         except:
             print("Failed to change line style.")
 
-
-
     def singleplottoggle(self):
         """Single spectrum display mode, replots the last active spectrum."""
         if self.stackplot == True:
             self.stackplot=False
-            self.reset()
+            # self.reset()
         self.getlims()
         self.ax.clear()
         self.overplot=False
@@ -656,7 +658,7 @@ class MainWin(QtWidgets.QMainWindow):
         """Switches to overplot mode and replots the stack."""
         if self.stackplot == True:
             self.stackplot=False
-            self.reset()
+            # self.reset()
         try:
             self.overplot=True
             self.getlims()
@@ -825,7 +827,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def velocity(self):
         try:
-            self.message.append("Click on where you want zero to be.")
+            self.message.append("Click to set 0 velocity, or anywere to return to wavelength")
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_vel)
         except:

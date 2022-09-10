@@ -190,6 +190,7 @@ class Spectra(QtWidgets.QMainWindow):
                     try:
                         if 'Wavelength units=angstroms' in header['WAT1_001']:
                             self.doppler(wavelength,header)
+                            print('Doppler applied')
                     except:
                         pass
                     flux = sp[i].data*u.flx
@@ -386,6 +387,7 @@ class Spectra(QtWidgets.QMainWindow):
             self.parent().database[file]['flux_orig']=f
         except:
             print('Exception occured in Spectra.writespec')
+            
     def setheader(self,header,layer):
         file=str(self.parent().fname)#+str(layer)
         try:
