@@ -913,105 +913,108 @@ class MainWin(QtWidgets.QMainWindow):
 
     def BisectLine(self):
         """Designed for measuring the center of very broad Wolf-Rayet star emission lines, may work for other situtaitons."""
-        self.measuremode()
-        self.regionload()
-        xg,yg=self.chopclick()
-        reflevel,invert=self.invert_check(xg,yg)
-        stop = False
         try:
-            while stop == False:
-                if self.loadedbisect == False and self.heightcheck == False:
-                    if self.script == False:
-                        stop = self.bisectheight()
-                        # print('no script')
-                    elif self.script == True and self.stacknum == 0:
-                        stop = self.bisectheight()
-                        # print('script')
-                elif self.heightcheck == True:
-                    self.heightcheck = False
+            self.measuremode()
+            self.regionload()
+            xg,yg=self.chopclick()
+            reflevel,invert=self.invert_check(xg,yg)
+            stop = False
+            try:
+                while stop == False:
+                    if self.loadedbisect == False and self.heightcheck == False:
+                        if self.script == False:
+                            stop = self.bisectheight()
+                            # print('no script')
+                        elif self.script == True and self.stacknum == 0:
+                            stop = self.bisectheight()
+                            # print('script')
+                    elif self.heightcheck == True:
+                        self.heightcheck = False
 
-                #split spectrum at peak
-                if invert == False:
-                    split=find_nearest_index(yg.value,np.max(yg.value))
-                elif invert == True:
-                    split=find_nearest_index(yg.value,np.min(yg.value))
-                else:
-                    print('Invert Problem in Bisect')
-                    stop=True
-                yg_left=yg[0:split+1]
-                yg_right=yg[split::]
-                xg_left=xg[0:split+1]
-                xg_right=xg[split::]
-                c1=0
-                c2=0
-                # print(self.height,type(self.height))
-                for h in self.height:
+                    #split spectrum at peak
                     if invert == False:
-                        for i,val in enumerate(yg_left):
-                            if yg_left[i].value < h and yg_left[i+1].value > h:
-                                idx=i
-                        x1=xg_left[idx:idx+2].value
-                        y1=yg_left[idx:idx+2].value
-
-                        for i,val in enumerate(yg_right):
-                            if yg_right[i].value > h and yg_right[i+1].value < h:
-                                idx=i
-                        x2=xg_right[idx:idx+2].value
-                        y2=yg_right[idx:idx+2].value
-
+                        split=find_nearest_index(yg.value,np.max(yg.value))
                     elif invert == True:
-                        for i,val in enumerate(yg_left):
-                            if yg_left[i].value > h and yg_left[i+1].value < h:
-                                idx=i
-                        x1=xg_left[idx:idx+2].value
-                        y1=yg_left[idx:idx+2].value
-
-                        # linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
-                        # c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
-                        # # self.ax.plot(x,y,'s')
-                        # # self.ax.plot(c1,h,'^')
-
-                        for i,val in enumerate(yg_right):
-                            if yg_right[i].value < h and yg_right[i+1].value > h:
-                                idx=i
-                        x2=xg_right[idx:idx+2].value
-                        y2=yg_right[idx:idx+2].value
-                        # linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
-                        # c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
-                        # self.ax.plot(x,y,'s')
-                        # self.ax.plot(c2,h,'^')
+                        split=find_nearest_index(yg.value,np.min(yg.value))
                     else:
-                        print('Invert Problem in Bisects')
+                        print('Invert Problem in Bisect')
+                        stop=True
+                    yg_left=yg[0:split+1]
+                    yg_right=yg[split::]
+                    xg_left=xg[0:split+1]
+                    xg_right=xg[split::]
+                    c1=0
+                    c2=0
+                    # print(self.height,type(self.height))
+                    for h in self.height:
+                        if invert == False:
+                            for i,val in enumerate(yg_left):
+                                if yg_left[i].value < h and yg_left[i+1].value > h:
+                                    idx=i
+                            x1=xg_left[idx:idx+2].value
+                            y1=yg_left[idx:idx+2].value
 
-                    linecoeff = np.polyfit(x1,y1,1) #does a linear polynomail fit to the data.
-                    c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                            for i,val in enumerate(yg_right):
+                                if yg_right[i].value > h and yg_right[i+1].value < h:
+                                    idx=i
+                            x2=xg_right[idx:idx+2].value
+                            y2=yg_right[idx:idx+2].value
 
-                    linecoeff = np.polyfit(x2,y2,1) #does a linear polynomail fit to the data.
-                    c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                        elif invert == True:
+                            for i,val in enumerate(yg_left):
+                                if yg_left[i].value > h and yg_left[i+1].value < h:
+                                    idx=i
+                            x1=xg_left[idx:idx+2].value
+                            y1=yg_left[idx:idx+2].value
 
-                    center=(c1+c2)/2.
-                    if self.script == False:
-                        # self.ax.plot(xg_right,yg_right,'bo')
-                        # self.ax.plot(xg_left,yg_left,'r^')
-                        self.ax.plot(x1,y1,'s')
-                        self.ax.plot(c1,h,'^')
-                        self.ax.plot(x2,y2,'s')
-                        self.ax.plot(c2,h,'^')
-                        self.ax.hlines(h,min(self.wavelength.value),max(self.wavelength.value)) #plots the cross-cut height
-                        self.ax.vlines(center,min(self.flux.value),max(self.flux.value)) #plot line at bisect location
+                            # linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
+                            # c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                            # # self.ax.plot(x,y,'s')
+                            # # self.ax.plot(c1,h,'^')
 
-                    t=self.filedate()
-                    self.message.append(t+"Bisected Center, %s"%(float(center))+", {0.unit:FITS}".format(self.wavelength)+\
-                               ", Height, %s"%(h)+", {0.unit:FITS}".format(self.flux))
+                            for i,val in enumerate(yg_right):
+                                if yg_right[i].value < h and yg_right[i+1].value > h:
+                                    idx=i
+                            x2=xg_right[idx:idx+2].value
+                            y2=yg_right[idx:idx+2].value
+                            # linecoeff = np.polyfit(x,y,1) #does a linear polynomail fit to the data.
+                            # c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+                            # self.ax.plot(x,y,'s')
+                            # self.ax.plot(c2,h,'^')
+                        else:
+                            print('Invert Problem in Bisects')
 
-                    if self.script == False:
-                        self.outputupdate()
-                        self.canvas.draw()
-                    self.log.checklog()
-                    self.log.write(self.message[-1])
-                    stop=True
+                        linecoeff = np.polyfit(x1,y1,1) #does a linear polynomail fit to the data.
+                        c1=(h-linecoeff[1])/linecoeff[0] #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+
+                        linecoeff = np.polyfit(x2,y2,1) #does a linear polynomail fit to the data.
+                        c2=(h-linecoeff[1])/linecoeff[0]  #x=slope*y+intercept, swap x,y becauase here we want y to be the indep. variable.
+
+                        center=(c1+c2)/2.
+                        if self.script == False:
+                            # self.ax.plot(xg_right,yg_right,'bo')
+                            # self.ax.plot(xg_left,yg_left,'r^')
+                            self.ax.plot(x1,y1,'s')
+                            self.ax.plot(c1,h,'^')
+                            self.ax.plot(x2,y2,'s')
+                            self.ax.plot(c2,h,'^')
+                            self.ax.hlines(h,min(self.wavelength.value),max(self.wavelength.value)) #plots the cross-cut height
+                            self.ax.vlines(center,min(self.flux.value),max(self.flux.value)) #plot line at bisect location
+
+                        t=self.filedate()
+                        self.message.append(t+"Bisected Center, %s"%(float(center))+", {0.unit:FITS}".format(self.wavelength)+\
+                                   ", Height, %s"%(h)+", {0.unit:FITS}".format(self.flux))
+
+                        if self.script == False:
+                            self.outputupdate()
+                            self.canvas.draw()
+                        self.log.checklog()
+                        self.log.write(self.message[-1])
+                        stop=True
+            except:
+                print('Exception occured in BisectLine')
         except:
-            print('Exception occured in BisectLine')
+            self.regionload()
 
     def mouseclick_height(self,event):
         try:
@@ -1083,14 +1086,16 @@ class MainWin(QtWidgets.QMainWindow):
 
     def regionload(self):
         """Loads saved regions and gets the cloest values in the data"""
-
-        if self.loadedregions == False :
-            self.region() #click points to slice data
-            self.saveregions_x=self.x
-            self.saveregions_y=self.y
-            self.loadedregions=True
-        else:
-            self.x,self.y=(self.saveregions_x,self.saveregions_y)
+        try:
+            if self.loadedregions == False :
+                self.region() #click points to slice data
+                self.saveregions_x=self.x
+                self.saveregions_y=self.y
+                self.loadedregions=True
+            else:
+                self.x,self.y=(self.saveregions_x,self.saveregions_y)
+        except:
+            pass
         # return self.chopclick()
         # except:
         #     # print('Exception occred in regionload')
@@ -1100,7 +1105,6 @@ class MainWin(QtWidgets.QMainWindow):
         """Measure the Signal To Noise in a region."""
         try:
             self.measuremode()
-            # xg,yg=self.regionload()
             self.regionload()
             xg,yg=self.chopclick()
             mu=np.average(yg)
