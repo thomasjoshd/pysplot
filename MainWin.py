@@ -19,15 +19,15 @@ import matplotlib.colors as colors
 from matplotlib import animation
 
 import numpy as np
-import csv
+# import csv
 
 
-from astropy.wcs import WCS
-from astropy.io import fits
-from astropy.table import Table
+# from astropy.wcs import WCS
+# from astropy.io import fits
+# from astropy.table import Table
 
 import astropy.units as u
-from astropy.constants import c
+# from astropy.constants import c
 
 from astropy.modeling import models, fitting
 from astropy.convolution import convolve, Box1DKernel, Gaussian1DKernel
@@ -39,7 +39,7 @@ from ArithWin import ArithWin
 from HeaderWin import HeaderWin
 from version import VERSION,UPDATED
 from plotdefaults import plotdefaults
-from helperfunctions import find_nearest_index,julian
+from helperfunctions import find_nearest_index,julian,snr
 from Menu import Menu
 from LogFiles import LogFiles
 from Spectra import Spectra
@@ -1105,11 +1105,9 @@ class MainWin(QtWidgets.QMainWindow):
             self.measuremode()
             self.regionload()
             xg,yg=self.chopclick()
-            mu=np.average(yg)
-            sigma=np.std(yg)
-            snr=mu/sigma
+            s=snr(yg)
             t=self.filedate()
-            self.message.append(t+"Signal to Noise Ratio, "+"{0.value:0.03f}".format(snr)+\
+            self.message.append(t+"Signal to Noise Ratio, "+"{0.value:0.03f}".format(s)+\
             ",Average, {0.value:0.03f}".format(mu)+",STD, {0.value:0.03f}".format(sigma))
 
             self.outputupdate()
@@ -1393,9 +1391,13 @@ class MainWin(QtWidgets.QMainWindow):
                 amp=reflevel-g.amplitude
                 # self.ax.plot(xgf,-ygfn)
                 # self.ax.plot(xgf,-g(xgf))
+              s=0.412*np.sqrt(g.fwhm.value,amp)
               t=self.filedate()
               self.message.append(t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
-                               "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
+                               "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+ \
+                               ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp) + \
+                               ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(s)
+                               )
               # print(self.message)
               self.log.checklog()
               self.log.write(self.message[-1])
@@ -1854,10 +1856,13 @@ class MainWin(QtWidgets.QMainWindow):
             Fcont_ave=(Fcont1_ave+Fcont2_ave)/2.
             Fline_ave=np.average(y)
             deltalambda=xsort[2]-xsort[1]
-            sigma1=np.std(yc1)
-            sigma2=np.std(yc2)
-            sigma=(sigma1+sigma2)/2.
-            snr=Fcont_ave/sigma #signal to noise
+            # sigma1=np.std(yc1)
+            # sigma2=np.std(yc2)
+            # sigma=(sigma1+sigma2)/2.
+            # snr=Fcont_ave/sigma #signal to noise
+            s1=snr(yc1)
+            s2=snr(yc2)
+            s=(s1+s2)/2.
 
             dwidth=[]
             for i,f in enumerate(y):
@@ -1867,7 +1872,7 @@ class MainWin(QtWidgets.QMainWindow):
                   dwidth.append((1.-f.value/Fcont_ave)*np.abs(x[i].value-x[i-1].value))
             width=sum(dwidth)#equivalent width
             # print(self.wavelength.unit)
-            error=np.sqrt(1+Fcont_ave/Fline_ave)*(deltalambda-width)/snr#*self.wavelength.unit
+            error=np.sqrt(1+Fcont_ave/Fline_ave)*(deltalambda-width)/s#*self.wavelength.unit
             #error is calculated using equation 7 of "Remarks on statistical errors in equivalent widths"
             #K. Vollmann and T. Eversberg Astron. Nachr. AN 327, No. 9, 789-792,  DOI 10.1002/asna.2006
 
