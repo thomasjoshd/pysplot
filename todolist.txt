@@ -1,6 +1,19 @@
 
 #ToDoList
 
+#have all measurement functions launch region selection instead of manually rerunning
+#Try to rewrite all mouseclick_ functions so that it takes the number of clicks desired.
+  #however there is an inconsistent used of mouseclick to not just get clicks but also launch
+  #next steps, see about fixing this.
+  #maybe have new replot function be called from plotSpectra (or wherever relevant)
+
+#normalize during the eqw fitting, so spectra doesn't have to be normalized
+
+#apply dopplershift (spectra.py), currently doesn't seem to work
+  #are spectra being doppler shifted when opened?
+
+
+
 #finish splitting off the stack functions into the stack.py class.
 
 # package:

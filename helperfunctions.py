@@ -19,3 +19,8 @@ def julian(date):
     #     return np.interp(x,self.xm2,self.diff2)
     # def hf(self):
     #     return self.height
+
+def snr(flux):
+    mu=np.average(flux)
+    sigma=np.std(flux)
+    return mu/sigma
