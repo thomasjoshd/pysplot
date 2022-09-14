@@ -1842,6 +1842,7 @@ class MainWin(QtWidgets.QMainWindow):
             xc1,yc1=self.chop(self.wavelength,self.flux,xsort[0],xsort[1])#continuum left
             xc2,yc2=self.chop(self.wavelength,self.flux,xsort[2],xsort[3])#continuum right
             x,y=self.chop(self.wavelength,self.flux,xsort[1],xsort[2]) # spectral feature
+
             self.getlims()
             self.ax.plot(xc1,yc1,'ks')
             self.ax.plot(xc2,yc2,'ks')
@@ -1850,11 +1851,31 @@ class MainWin(QtWidgets.QMainWindow):
             self.ax.set_ylim(self.ylim)
             self.canvas.draw()
 
+            continuumx=np.concatenate((xc1,xc2))
+            continuumy=np.concatenate((yc1,yc2))
 
             Fcont1_ave=np.average(yc1)
             Fcont2_ave=np.average(yc2)
+            x1_ave=np.average(xc1)
+            x2_ave=np.average(xc2)
             Fcont_ave=(Fcont1_ave+Fcont2_ave)/2.
+            # Fcont_ave=np.average(continuumy)
             Fline_ave=np.average(y)
+            aa=[x1_ave.value,x2_ave.value]
+            bb=[Fcont1_ave.value,Fcont2_ave.value]
+
+            # plt.figure()
+            # plt.plot(continuumx,continuumy,'s')
+            # plt.plot(aa,bb,'rx')
+
+            #normalize spectrum
+            linecoeff = np.polyfit(aa,bb,1)#linear fit
+            # print('coeff',linecoeff)
+            y_norm=y/np.polyval(linecoeff,x.value)
+            # plt.plot(x.value,np.polyval(linecoeff,x.value),'b-')
+            # plt.plot(continuumx,continuumy/np.polyval(linecoeff,continuumx.value),'r-')
+            # plt.show()
+
             deltalambda=xsort[2]-xsort[1]
             # sigma1=np.std(yc1)
             # sigma2=np.std(yc2)
@@ -1865,7 +1886,7 @@ class MainWin(QtWidgets.QMainWindow):
             s=(s1+s2)/2.
 
             dwidth=[]
-            for i,f in enumerate(y):
+            for i,f in enumerate(y_norm):
               if i ==0:
                   pass
               else:

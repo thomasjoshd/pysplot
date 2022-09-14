@@ -1,4 +1,3 @@
-
 #ToDoList
 
 #have all measurement functions launch region selection instead of manually rerunning
@@ -11,8 +10,6 @@
 
 #apply dopplershift (spectra.py), currently doesn't seem to work
   #are spectra being doppler shifted when opened?
-
-
 
 #finish splitting off the stack functions into the stack.py class.
 
