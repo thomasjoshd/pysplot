@@ -63,15 +63,12 @@ class MainWin(QtWidgets.QMainWindow):
         Menu(self).menu()
         self.cmd()
 
-
-
     def cmd(self):
         try:
             if len(sys.argv[1:]) > 0:
                 self.Spectra.open(drop=sys.argv[1:])
         except:
             print("Command Line Argument Not Understood.")
-
 
     def initparams(self):
         self.listedfiles=[] #used for lists files
@@ -807,6 +804,7 @@ class MainWin(QtWidgets.QMainWindow):
     def coord_plot(self):
         """uses one click to print mouse position in the text box, and log.  Only
         cares about the x-coordinate"""
+        self.log.checklog()
         try:
             idx=find_nearest_index(self.wavelength,self.clickx)
             xg=self.wavelength[idx]
@@ -818,7 +816,6 @@ class MainWin(QtWidgets.QMainWindow):
             ", Flux, "+"{0.value:0.03f}, {0.unit:FITS}".format(yg))
             self.outputupdate()
             # print(self.message)
-            self.log.checklog()
             self.log.write(self.message[-1])
             #self.log.write('\n')
             self.canvas.draw()
@@ -915,6 +912,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def BisectLine(self):
         """Designed for measuring the center of very broad Wolf-Rayet star emission lines, may work for other situtaitons."""
+        self.log.checklog()
         try:
             self.measuremode()
             self.regionload()
@@ -1010,7 +1008,6 @@ class MainWin(QtWidgets.QMainWindow):
                         if self.script == False:
                             self.outputupdate()
                             self.canvas.draw()
-                        self.log.checklog()
                         self.log.write(self.message[-1])
                         stop=True
             except:
@@ -1101,6 +1098,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def signal2noise(self):
         """Measure the Signal To Noise in a region."""
+        self.log.checklog()
         try:
             self.measuremode()
             self.regionload()
@@ -1111,7 +1109,6 @@ class MainWin(QtWidgets.QMainWindow):
             ",Average, {0.value:0.03f}".format(mu)+",STD, {0.value:0.03f}".format(sigma))
 
             self.outputupdate()
-            self.log.checklog()
             self.log.write(self.message[-1])
             #self.log.write('\n')
         except:
@@ -1120,6 +1117,7 @@ class MainWin(QtWidgets.QMainWindow):
     def eqw(self):
         """Measure equivalent width between two points IRAF style"""
         '''this function is now depreciated and not used, see eqw_err'''
+        self.log.checklog()
         try:
             self.measuremode()
             self.regionload()
@@ -1141,7 +1139,6 @@ class MainWin(QtWidgets.QMainWindow):
                        ", Bisected Click Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(bisect))
 
             self.outputupdate()
-            self.log.checklog()
             self.log.write(self.message[-1])
             # self.log.write('\n')
         except:
@@ -1365,6 +1362,7 @@ class MainWin(QtWidgets.QMainWindow):
     def fit(self,func="gauss"):
         """wrapper function for fitting line profiles"""
         # Fit the data using a Gaussian, Voigt, or Lorentzian profile
+        self.log.checklog()
         try:
             self.measuremode()
             self.regionload()
@@ -1398,11 +1396,8 @@ class MainWin(QtWidgets.QMainWindow):
                                ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp) + \
                                ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(s)
                                )
-              # print(self.message)
-              self.log.checklog()
+
               self.log.write(self.message[-1])
-              #self.log.write('\n')
-              #
               self.outputupdate()
 
 
@@ -1428,10 +1423,8 @@ class MainWin(QtWidgets.QMainWindow):
                       "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_L)+\
                       ", Gaussian_FWHM, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_G)+\
                       ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
-              # print(self.message)
-              self.log.checklog()
+
               self.log.write(self.message[-1])
-              #self.log.write('\n')
               self.outputupdate()
 
             elif func=="lorentz":
@@ -1456,11 +1449,8 @@ class MainWin(QtWidgets.QMainWindow):
               self.message.append(t+"Lorentz Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
                       "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
                       ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
-              # print(self.message)
-              self.log.checklog()
+
               self.log.write(self.message[-1])
-              #self.log.write('\n')
-              #
               self.outputupdate()
 
             elif func=="moffat":
@@ -1487,11 +1477,8 @@ class MainWin(QtWidgets.QMainWindow):
               self.message.append(t+"Moffat Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
                       "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
                       ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
-              # print(self.message)
-              self.log.checklog()
+
               self.log.write(self.message[-1])
-              #self.log.write('\n')
-              #
               self.outputupdate()
 
             else:
@@ -1898,19 +1885,20 @@ class MainWin(QtWidgets.QMainWindow):
             #K. Vollmann and T. Eversberg Astron. Nachr. AN 327, No. 9, 789-792,  DOI 10.1002/asna.2006
 
             t=self.filedate()
+            print('test')
             self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width*self.wavelength.unit)+\
                        ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(error*self.wavelength.unit))
 
             self.outputupdate()
-            self.log.checklog()
+            print('test2')
             self.log.write(self.message[-1])
-
-
+            print(self.message[-1])
         except:
             print('Exception occured in eqw_region')
 
     def eqw_err(self,message=None):
         """uses 4 clicks to define a region for fitting or measuring."""
+        self.log.checklog()
         try:
             if len(self.x) < 4:
                 if self.firstclick == False:
@@ -1941,7 +1929,6 @@ class MainWin(QtWidgets.QMainWindow):
     def normalize(self):
         """Continuum normalize by using selected points as continuum."""
         try:
-            # self.measuremode()
             self.goodfit=False
 
             try:
@@ -2030,7 +2017,6 @@ class MainWin(QtWidgets.QMainWindow):
 
     def savefits(self):
         try:
-            # self.stackforsaving=[]
             if self.suffix == False:
                 self.suffix, okPressed = QInputDialog.getText(self, "Save Stack Spectra","File suffix.", QLineEdit.Normal, "")
 
@@ -2412,6 +2398,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def stacker(self,func=False):
         """A helper function to automate tasks for many spectra."""
+        self.log.checklog()
         self.stack_startmessage()
         # self.message="Stack Operation in Progress"
         # self.outputupdate()

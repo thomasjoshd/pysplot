@@ -387,7 +387,7 @@ class Spectra(QtWidgets.QMainWindow):
             self.parent().database[file]['flux_orig']=f
         except:
             print('Exception occured in Spectra.writespec')
-            
+
     def setheader(self,header,layer):
         file=str(self.parent().fname)#+str(layer)
         try:
@@ -430,7 +430,10 @@ class Spectra(QtWidgets.QMainWindow):
                 savename, _ = QtWidgets.QFileDialog.getSaveFileName(self,"Save fits spectra",os.path.join(path_wo_ext,basename,"%s.fits"%(path_wo_ext)))
                 # hdu.writeto(savename,overwrite=True)
             else:
-                savename=path_wo_ext+extend+".fits"
+                if ".fit" in extend:
+                    savename=path_wo_ext+extend
+                else:
+                    savename=path_wo_ext+extend+".fits"
             hdu.writeto(savename,overwrite=True,output_verify='fix')
             self.parent().message.append("Saved to: %s"%savename)
             self.parent().outputupdate()
