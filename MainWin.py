@@ -1101,22 +1101,13 @@ class MainWin(QtWidgets.QMainWindow):
         self.log.checklog()
         try:
             self.measuremode()
-            # print("1")
             self.regionload()
-            # print("2")
             xg,yg=self.chopclick()
-            # print("3")
             s=snr(yg)
-            # print("4")
             t=self.filedate()
-            # print("5")
             self.message.append(t+"Signal to Noise Ratio, "+"{0.value:0.03f}".format(s))#+)
-            #\
-            #",Average, {0.value:0.03f}".format(mu)+",STD, {0.value:0.03f}".format(sigma))
-            # print("6")
             self.outputupdate()
             self.log.write(self.message[-1])
-            #self.log.write('\n')
         except:
             print('Exception occred in signal2noise')
 
@@ -1891,12 +1882,10 @@ class MainWin(QtWidgets.QMainWindow):
             #K. Vollmann and T. Eversberg Astron. Nachr. AN 327, No. 9, 789-792,  DOI 10.1002/asna.2006
 
             t=self.filedate()
-            print('test')
             self.message.append(t+"Equivalent Width, "+"{0.value:0.03f}, {0.unit:FITS}".format(width*self.wavelength.unit)+\
                        ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(error*self.wavelength.unit))
 
             self.outputupdate()
-            print('test2')
             self.log.write(self.message[-1])
             print(self.message[-1])
         except:
