@@ -1101,13 +1101,19 @@ class MainWin(QtWidgets.QMainWindow):
         self.log.checklog()
         try:
             self.measuremode()
+            # print("1")
             self.regionload()
+            # print("2")
             xg,yg=self.chopclick()
+            # print("3")
             s=snr(yg)
+            # print("4")
             t=self.filedate()
-            self.message.append(t+"Signal to Noise Ratio, "+"{0.value:0.03f}".format(s)+\
-            ",Average, {0.value:0.03f}".format(mu)+",STD, {0.value:0.03f}".format(sigma))
-
+            # print("5")
+            self.message.append(t+"Signal to Noise Ratio, "+"{0.value:0.03f}".format(s))#+)
+            #\
+            #",Average, {0.value:0.03f}".format(mu)+",STD, {0.value:0.03f}".format(sigma))
+            # print("6")
             self.outputupdate()
             self.log.write(self.message[-1])
             #self.log.write('\n')

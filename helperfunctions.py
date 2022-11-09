@@ -21,6 +21,9 @@ def julian(date):
     #     return self.height
 
 def snr(flux):
-    mu=np.average(flux)
-    sigma=np.std(flux)
-    return mu/sigma
+    try:
+        mu=np.average(flux)
+        sigma=np.std(flux)
+        return mu/sigma
+    except:
+        print("Excpetion in helperfunction.snr")
