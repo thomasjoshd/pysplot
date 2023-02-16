@@ -178,12 +178,17 @@ class Menu(QtWidgets.QMainWindow):
 
 
         # regionmenu = bar.addMenu('Measure')
-        defregion=QtWidgets.QAction("Define Region", self.parent())
+        defregion=QtWidgets.QAction("Define Fit Region", self.parent())
         defregion.setShortcut('x')
         defregion.setStatusTip('Define a measurement region.')
         defregion.triggered.connect(self.parent().regionload)
 
-        regionclear=QtWidgets.QAction("Clear Region", self.parent())
+        eqwdefregion=QtWidgets.QAction("Define Equivalent Width Region", self.parent())
+        eqwdefregion.setShortcut('d')
+        eqwdefregion.setStatusTip('Define a measurement region.')
+        eqwdefregion.triggered.connect(self.parent().eqw_err)
+
+        regionclear=QtWidgets.QAction("Clear Regions", self.parent())
         regionclear.setShortcut('z')
         regionclear.setStatusTip('Clears the region, without resizing the view.')
         regionclear.triggered.connect(self.parent().region_clear)
@@ -191,7 +196,7 @@ class Menu(QtWidgets.QMainWindow):
         equivalent=QtWidgets.QAction("Equivalent Width", self.parent())
         equivalent.setShortcut('e')
         equivalent.setStatusTip('Measure equivalent width, using 4 points. Def contiuum and line region.')
-        equivalent.triggered.connect(self.parent().eqw_err)
+        equivalent.triggered.connect(self.parent().eqw_region)
         #
         # equivalenterr=QtWidgets.QAction("Equivalent Width", self.parent())
         # equivalenterr.setShortcut('e')
@@ -223,11 +228,11 @@ class Menu(QtWidgets.QMainWindow):
         fitmoffat.setStatusTip('Fit Moffat function between two points.')
         fitmoffat.triggered.connect(partial(self.parent().fit,func="moffat"))
 
-        saveregion=QtWidgets.QAction("Save EQW/Fit Region", self.parent())
+        saveregion=QtWidgets.QAction("Save Fit Region", self.parent())
         saveregion.setShortcut('Shift+Ctrl+x')
         saveregion.triggered.connect(self.parent().SaveRegion)
 
-        loadregion=QtWidgets.QAction("Load EQW/Fit Region", self.parent())
+        loadregion=QtWidgets.QAction("Load Fit Region", self.parent())
         loadregion.setShortcut('Alt+Ctrl+x')
         loadregion.triggered.connect(self.parent().LoadRegion)
 
@@ -420,6 +425,7 @@ class Menu(QtWidgets.QMainWindow):
 
 
         regionmenu.addAction(defregion)
+        regionmenu.addAction(eqwdefregion)
         regionmenu.addAction(regionclear)
         regionmenu.addSeparator()
         regionmenu.addAction(equivalent)

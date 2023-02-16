@@ -1028,27 +1028,39 @@ class MainWin(QtWidgets.QMainWindow):
 
     def mouseclick_eqw(self,event):
         try:
-            if len(self.x) == 4:
-                self.eqw_region()
-            else:
-                if self.firstclick is False:
-                    self.x.append(event.xdata)
-                    self.y.append(event.ydata)
-                    self.firstclick=1
-                    # print('firstclick')
-                elif self.firstclick <=2:
-                    # print('elif',self.firstclick)
-                    self.x.append(event.xdata)
-                    self.y.append(event.ydata)
-                    self.firstclick=self.firstclick+1
-                    # print('elif2',self.firstclick)
-                elif self.firstclick == 3:
-                    # print('else',self.firstclick)
-                    self.x.append(event.xdata)
-                    self.y.append(event.ydata)
-                    self.fig.canvas.mpl_disconnect(self.click) #stops at second click
-                    self.firstclick=False
-                    self.eqw_region()
+            if self.firstclick is False:
+                self.x.append(event.xdata)
+                self.y.append(event.ydata)
+                self.firstclick=1
+                # print('firstclick')
+            elif self.firstclick <=2:
+                # print('elif',self.firstclick)
+                self.x.append(event.xdata)
+                self.y.append(event.ydata)
+                self.firstclick=self.firstclick+1
+                # print('elif2',self.firstclick)
+            elif self.firstclick == 3:
+                # print('else',self.firstclick)
+                self.x.append(event.xdata)
+                self.y.append(event.ydata)
+                self.fig.canvas.mpl_disconnect(self.click) #stops at second click
+                self.firstclick=False
+                # self.eqw_region()
+                #do the plotting
+                xsort=np.sort(self.x)
+                if len(xsort) != 4:
+                    print('wrong number of points')
+                xc1,yc1=self.chop(self.wavelength,self.flux,xsort[0],xsort[1])#continuum left
+                xc2,yc2=self.chop(self.wavelength,self.flux,xsort[2],xsort[3])#continuum right
+                x,y=self.chop(self.wavelength,self.flux,xsort[1],xsort[2]) # spectral feature
+
+                self.getlims()
+                self.ax.plot(xc1,yc1,'ks')
+                self.ax.plot(xc2,yc2,'ks')
+                self.ax.plot(x,y,'rs')
+                self.ax.set_xlim(self.xlim)
+                self.ax.set_ylim(self.ylim)
+                self.canvas.draw()
         except:
             print('Exception occred in mouseclick_eqw')
 
@@ -1114,9 +1126,8 @@ class MainWin(QtWidgets.QMainWindow):
     def eqw(self):
         """Measure equivalent width between two points IRAF style"""
         '''this function is now depreciated and not used, see eqw_err'''
-        self.log.checklog()
+        self.measuremode()
         try:
-            self.measuremode()
             self.regionload()
             xg,yg=self.chopclick()
 
@@ -1524,7 +1535,7 @@ class MainWin(QtWidgets.QMainWindow):
                 break
 
     def SaveRegion(self):
-        """Save the regions used for equivalent width measurements and for fitting line profiles."""
+        """Save the regions used for fitting line profiles."""
         try:
             path=os.path.dirname(self.fname)
             path_wo_ext=os.path.splitext(self.fname)[0]
@@ -1549,7 +1560,7 @@ class MainWin(QtWidgets.QMainWindow):
 
 
     def LoadRegion(self,file=False):
-        """Load the regions used for equivalent width measurements and for fitting line profiles."""
+        """Load the regions used for fitting line profiles."""
         self.region_clear()
         try:
             if file==False:
@@ -1819,6 +1830,7 @@ class MainWin(QtWidgets.QMainWindow):
         self.plotcontinuum()
 
     def eqw_region(self):
+        self.measuremode()
         try:
             xsort=np.sort(self.x)
             if len(xsort) != 4:
@@ -1827,13 +1839,13 @@ class MainWin(QtWidgets.QMainWindow):
             xc2,yc2=self.chop(self.wavelength,self.flux,xsort[2],xsort[3])#continuum right
             x,y=self.chop(self.wavelength,self.flux,xsort[1],xsort[2]) # spectral feature
 
-            self.getlims()
-            self.ax.plot(xc1,yc1,'ks')
-            self.ax.plot(xc2,yc2,'ks')
-            self.ax.plot(x,y,'rs')
-            self.ax.set_xlim(self.xlim)
-            self.ax.set_ylim(self.ylim)
-            self.canvas.draw()
+            # self.getlims()
+            # self.ax.plot(xc1,yc1,'ks')
+            # self.ax.plot(xc2,yc2,'ks')
+            # self.ax.plot(x,y,'rs')
+            # self.ax.set_xlim(self.xlim)
+            # self.ax.set_ylim(self.ylim)
+            # self.canvas.draw()
 
             continuumx=np.concatenate((xc1,xc2))
             continuumy=np.concatenate((yc1,yc2))
@@ -1892,9 +1904,15 @@ class MainWin(QtWidgets.QMainWindow):
             print('Exception occured in eqw_region')
 
     def eqw_err(self,message=None):
-        """uses 4 clicks to define a region for fitting or measuring."""
-        self.log.checklog()
-        try:
+        """uses 4 clicks to define an equivalent width region.
+        This function and eqw_region are named backwards
+        """
+        self.measuremode()
+        if len(self.x) < 4:
+            if self.script == True:
+                self.region_clear()
+        try:  #this builds the 4 points
+            # self.measuremode()
             if len(self.x) < 4:
                 if self.firstclick == False:
                     if message == None or message == False:
@@ -1904,9 +1922,9 @@ class MainWin(QtWidgets.QMainWindow):
                     self.message.append(regionmessage)
                     self.outputupdate()
                     self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_eqw)
-            #         self.eqw_region()
-            elif len(self.x) == 4:
-                self.eqw_region()
+
+            # elif len(self.x) == 4:
+            #     self.eqw_region() #now we can go measure
         except:
             print('Exception occured in eqw_err')
 
@@ -2416,7 +2434,7 @@ class MainWin(QtWidgets.QMainWindow):
                 elif func == "scopy":
                     self.scopy()
                 elif func == "eqw":
-                    self.eqw_err()
+                    self.eqw_region()
                 elif func == "gauss":
                     self.fit(func="gauss")
                 elif func == "voigt":
