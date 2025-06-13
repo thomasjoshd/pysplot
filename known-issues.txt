@@ -1,3 +1,11 @@
 saving fits not working, saves unreadable files, not sure what's going on
     Files read ok in ds9 now.  I can get pysplot to open headers with old method.
     can't figure out how to use the specutils metadata as astropy headers.
+
+
+both issues below require  1-click....
+  vel conversion not working (lets just have it ask for a number)
+  align with 1 click not working. (same option as above?)
+
+
+what is set height supposed to do?

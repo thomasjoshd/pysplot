@@ -614,33 +614,27 @@ class MainWin(QtWidgets.QMainWindow):
     def set_style_line(self):
         """Toggles the plot style."""
         try:
-            self.getlims()
             self.ax.clear()
             self.plotstyle='line'
-            # self.plotSpectra(spec=self.fname)
-            self.replot()
+            self.plotSpectra(spec=self.fname)
         except:
             print("Failed to change line style.")
 
     def set_style_point(self):
         """Toggles the plot style."""
         try:
-            self.getlims()
             self.ax.clear()
             self.plotstyle='point'
-            # self.plotSpectra(spec=self.fname)
-            self.replot()
+            self.plotSpectra(spec=self.fname)
         except:
             print("Failed to change line style.")
 
     def set_style_step(self):
         """Toggles the plot style."""
         try:
-            self.getlims()
             self.ax.clear()
             self.plotstyle='step'
-            # self.plotSpectra(spec=self.fname)
-            self.replot()
+            self.plotSpectra(spec=self.fname)
         except:
             print("Failed to change line style.")
 
@@ -1372,117 +1366,140 @@ class MainWin(QtWidgets.QMainWindow):
             print('Exception occured in MainWin.invert_check')
             return (None,None)
 
-    def gauss(self,xg,yg,xgf,ygf,reflevel,invert):
-        try:
-            g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[2]-xg[0])
-            fit_g = fitting.LevMarLSQFitter()
-            if invert == False:
-                g = fit_g(g_init, xg, yg)
-                if self.script == False:
-                    self.ax.plot(xgf, g(xgf), label='%s'%("Gaussian"))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
-                amp=g.amplitude*u.flx
-            elif invert == True:
-                g = fit_g(g_init, xg, reflevel-yg)
-                if self.script == False:
-                    self.ax.plot(xgf, (reflevel-g(xgf)), label='%s'%("Gaussian"))
-                amp=reflevel*u.flx - g.amplitude*u.flx
-            else:
-                pass
-            # s=0.412*np.sqrt(g.fwhm.value/amp)  #not so sure about this equation, need to look it up in the WR140 paper.
-            t=self.filedate()
-            self.message.append(t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
-                             "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm) + \
-                             ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp) #+ \
-                             # ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(s)
-                             )
-            self.log.write(self.message[-1])
-        except:
-            print("Exception in MainWin.gauss")
+    # def gauss(self):
 
-    def voigt(self,xg,yg,xgf,ygf,reflevel,invert):
-        try:
-            g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
-            fit_g = fitting.LevMarLSQFitter()
-            if invert == False:
-                g = fit_g(g_init, xg, yg)
-                if self.script == False:
-                    self.ax.plot(xgf, g(xgf), label='%s'%("Voigt"))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-                amp=g.amplitude_L*u.flx
-
-            elif invert == True:
-                g = fit_g(g_init, xg, reflevel-yg)
-                if self.script == False:
-                    self.ax.plot(xgf, (reflevel-g(xgf)), label='%s'%("Voigt"))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-                amp=reflevel*u.flx-g.amplitude_L*u.flx
-            t=self.filedate()
-            self.message.append(t+"Voigt Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM, "+\
-                      "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_L)+\
-                      ", Gaussian_FWHM, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_G)+\
-                      ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
-
-            self.log.write(self.message[-1])
-        except:
-            print("Exception in MainWin.voigt")
-
-    def lorentz(self,xg,yg,xgf,ygf,reflevel,invert):
-        try:
-            g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, fwhm=xg[1]-xg[0])
-            fit_g = fitting.LevMarLSQFitter()
-            if invert == False:
-                g = fit_g(g_init, xg, yg)
-                if self.script == False:
-                    self.ax.plot(xgf, g(xgf), label='%s'%("Lorentz"))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-                amp=g.amplitude*u.flx
-            elif invert == True:
-                g = fit_g(g_init, xg, reflevel-yg)
-                if self.script == False:
-                    self.ax.plot(xgf, (reflevel-g(xgf)), label='%s'%("Lorentz"))#*np.polyval(linecoeff,xgf), label='%s'%(func))
-                amp=reflevel*u.flx-g.amplitude*u.flx
-
-            t=self.filedate()
-            self.message.append(t+"Lorentz Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
-                  "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
-                  ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
-
-            self.log.write(self.message[-1])
-            self.outputupdate()
-        except:
-            print("Exception in MainWin.lorentz")
 
     def fit(self,func="gauss"):
         """wrapper function for fitting line profiles"""
         # Fit the data using a Gaussian, Voigt, or Lorentzian profile
         self.log.checklog()
-        self.measuremode()
         try:
+            self.measuremode()
             self.regionload()
             xg,yg=self.chopclick()
             reflevel,invert=self.invert_check(xg,yg)
 
             xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
             ygf=np.interp(xgf,xg,yg)#*u.flx
-        except:
-            self.message.append("Need to select region first, with keyboard shortcut: x")
-            self.log.write(self.message[-1])
-            self.outputupdate()
-            self.canvas.draw()
-        try:
+
             if func=="gauss":
-                self.gauss(xg,yg,xgf,ygf,reflevel,invert)
+              g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[2]-xg[0])
+              fit_g = fitting.LevMarLSQFitter()
+              if invert == False:
+                g = fit_g(g_init, xg, yg)
+                if self.script == False:
+                    self.ax.plot(xgf, g(xgf), label='%s'%(func))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
+                amp=g.amplitude
+                # self.ax.plot(xgf,ygfn)
+                # self.ax.plot(xgf,g(xgf))
+              elif invert == True:
+                g = fit_g(g_init, xg, reflevel-yg)
+                if self.script == False:
+                    self.ax.plot(xgf, (reflevel-g(xgf)), label='%s'%(func))
+                amp=reflevel-g.amplitude.value
+                # self.ax.plot(xgf,-ygfn)
+                # self.ax.plot(xgf,-g(xgf))
+              s=0.412*np.sqrt(g.fwhm.value,amp)
+              t=self.filedate()
+              self.message.append(t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
+                               "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+ \
+                               ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp) + \
+                               ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(s)
+                               )
+
+              self.log.write(self.message[-1])
+              self.outputupdate()
+
+
             elif func=="voigt":
-                self.voigt(xg,yg,xgf,ygf,reflevel,invert)
+              g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
+              fit_g = fitting.LevMarLSQFitter()
+              if invert == False:
+                g = fit_g(g_init, xg, yg)
+                if self.script == False:
+                    self.ax.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+                amp=g.amplitude_L
+                print("amp",amp,type(amp))
+                # self.ax.plot(xg,ygn)
+                # self.ax.plot(xgf,g(xgf))
+              elif invert == True:
+                g = fit_g(g_init, xg, reflevel-yg)
+                if self.script == False:
+                    self.ax.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+                # self.ax.plot(xg,-ygn)
+                # self.ax.plot(xgf,-g(xgf))
+
+                amp=reflevel-g.amplitude_L.value
+              t=self.filedate()
+              self.message.append(t+"Voigt Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", Lorentzian_FWHM, "+\
+                      "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_L)+\
+                      ", Gaussian_FWHM, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm_G)+\
+                      ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
+
+              self.log.write(self.message[-1])
+              self.outputupdate()
+
             elif func=="lorentz":
-                self.lorentz(xg,yg,xgf,ygf,reflevel,invert)
+              g_init = models.Lorentz1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, fwhm=xg[1]-xg[0])
+              fit_g = fitting.LevMarLSQFitter()
+              if invert == False:
+                g = fit_g(g_init, xg, yg)
+                if self.script == False:
+                    self.ax.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+                # self.ax.plot(xg,ygn)
+                # self.ax.plot(xgf,g(xgf))
+                amp=g.amplitude
+              elif invert == True:
+                g = fit_g(g_init, xg, reflevel-yg)
+                if self.script == False:
+                    self.ax.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+                # self.ax.plot(xg,-ygn)
+                # self.ax.plot(xgf,-g(xgf))
+                amp=reflevel-g.amplitude.value
+
+              t=self.filedate()
+              self.message.append(t+"Lorentz Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
+                      "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
+                      ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
+
+              self.log.write(self.message[-1])
+              self.outputupdate()
+
+            elif func=="moffat":
+              g_init = models.Moffat1D(x_0=np.mean(xg),amplitude=np.max(yg)-reflevel, gamma=xg[1]-xg[0],alpha=1)
+              fit_g = fitting.LevMarLSQFitter()
+              if invert == False:
+                g = fit_g(g_init, xg, yg)
+                if self.script == False:
+                    self.ax.plot(xgf, g(xgf))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+                # self.ax.plot(xg,ygn)
+                # self.ax.plot(xgf,g(xgf))
+                amp=g.amplitude
+              elif invert == True:
+                g = fit_g(g_init, xg, reflevel-yg)
+                if self.script == False:
+                    self.ax.plot(xgf, (reflevel-g(xgf)))#*np.polyval(linecoeff,xgf), label='%s'%(func))
+                # self.ax.plot(xg,-ygn)
+                # self.ax.plot(xgf,-g(xgf))
+                amp=reflevel-g.amplitude
+              # print('amp',amp)
+              # print('fwhm',g.fwhm)
+              # print('x0',g.x_0)
+              t=self.filedate()
+              self.message.append(t+"Moffat Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.x_0)+", FWHM, "+\
+                      "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm)+\
+                      ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp))
+
+              self.log.write(self.message[-1])
+              self.outputupdate()
+
             else:
-                pass
-            if self.legend == True:
-                self.ax.legend()
-            self.outputupdate()
+              print("Error with Fitting Function Selection")
+
             self.canvas.draw()
         except:
             print('Exception occured in MainWin.fit')
-
-
+            self.canvas.draw()
 
     def plotRegions(self):
         try:
@@ -1966,11 +1983,11 @@ class MainWin(QtWidgets.QMainWindow):
                         self.canvas.draw()
                         answer=QMessageBox.question(self, 'Question', "Proceed with the fit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                         if answer == QMessageBox.Yes:
-                           # self.ax.lines.remove(self.normtest)
+                           self.ax.lines.remove(self.normtest)
                            self.flux=nflux
                            self.splot()
                            self.ax.grid(self.gridvalue)
-
+                           self.canvas.draw()
                            # self.stackpane()
                            # self.plotRegions()
                            self.Spectra.updatespectrum()
@@ -1978,15 +1995,15 @@ class MainWin(QtWidgets.QMainWindow):
                            self.orderset=True
                            # self.reset()
                            self.goodfit = True
-                           self.canvas.draw()
                            # break
                         else:
-                           # self.ax.lines.remove(self.normtest)
-                           self.reset()
+                           self.ax.lines.remove(self.normtest)
+                           # self.reset()
                            self.canvas.draw()
                            self.orderset=False
                            self.goodfit = True
                            # break
+
                     elif self.script == True and self.orderset == True:
                         self.flux=nflux
                         self.Spectra.updatespectrum()
@@ -2443,9 +2460,9 @@ class MainWin(QtWidgets.QMainWindow):
                 elif func == "coord":
                     self.coord()
                 elif func == "boxcar":
-                    self.Spectra.smooth(func="boxcar")
+                    self.smooth(func="boxcar")
                 elif func == "gsmooth":
-                    self.Spectra.smooth(func="gaussian")
+                    self.smooth(func="gaussian")
                 elif func == "savepng":
                     self.saveImage()
                 elif func == "savefits":
