@@ -14,8 +14,6 @@ This program is very much still under development, feature requests are welcome,
 
 For the current development versions please use <a href="https://github.com/thomasjoshd/pysplot">github</a>.
 
-For some stand-alone versions you can check out the dropbox link that I will leave archived for a while.
-
 # Screenshots
 <img src="screenshot1.png" width="500">
 
