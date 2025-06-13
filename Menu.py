@@ -96,7 +96,7 @@ class Menu(QtWidgets.QMainWindow):
         singleplottoggle.triggered.connect(self.parent().singleplottoggle)
 
         style_line=QtWidgets.QAction("Plot as Line",self.parent())
-        style_line.setShortcut('i')
+        style_line.setShortcut('k')
         style_line.triggered.connect(self.parent().set_style_line)
 
         style_point=QtWidgets.QAction("Plot as Points",self.parent())
@@ -223,10 +223,10 @@ class Menu(QtWidgets.QMainWindow):
         fitlorentz.setStatusTip('Fit Lorentzian between two points.')
         fitlorentz.triggered.connect(partial(self.parent().fit,func="lorentz"))
 
-        fitmoffat=QtWidgets.QAction("Moffat Fit", self.parent())
-        fitmoffat.setShortcut('m')
-        fitmoffat.setStatusTip('Fit Moffat function between two points.')
-        fitmoffat.triggered.connect(partial(self.parent().fit,func="moffat"))
+        # fitmoffat=QtWidgets.QAction("Moffat Fit", self.parent())
+        # fitmoffat.setShortcut('m')
+        # fitmoffat.setStatusTip('Fit Moffat function between two points.')
+        # fitmoffat.triggered.connect(partial(self.parent().fit,func="moffat"))
 
         saveregion=QtWidgets.QAction("Save Fit Region", self.parent())
         saveregion.setShortcut('Shift+Ctrl+x')
@@ -302,9 +302,9 @@ class Menu(QtWidgets.QMainWindow):
         stacklorentz.setShortcut('Alt+l')
         stacklorentz.triggered.connect(partial(self.parent().stacker,func="lorentz"))
 
-        stackmoffat=QtWidgets.QAction("Moffat Fit",self.parent())
-        stackmoffat.setShortcut('Alt+m')
-        stackmoffat.triggered.connect(partial(self.parent().stacker,func="moffat"))
+        # stackmoffat=QtWidgets.QAction("Moffat Fit",self.parent())
+        # stackmoffat.setShortcut('Alt+m')
+        # stackmoffat.triggered.connect(partial(self.parent().stacker,func="moffat"))
 
         stackcrop=QtWidgets.QAction("Crop",self.parent())
         stackcrop.setShortcut('Alt+c')
@@ -434,7 +434,7 @@ class Menu(QtWidgets.QMainWindow):
         regionmenu.addAction(fitgaus)
         regionmenu.addAction(fitvoigt)
         regionmenu.addAction(fitlorentz)
-        regionmenu.addAction(fitmoffat)
+        # regionmenu.addAction(fitmoffat)
         regionmenu.addAction(crop)
         regionmenu.addAction(saveregion)
         regionmenu.addAction(loadregion)
@@ -480,7 +480,7 @@ class Menu(QtWidgets.QMainWindow):
         stackmeas.addAction(stackgaus)
         stackmeas.addAction(stackvoigt)
         stackmeas.addAction(stacklorentz)
-        stackmeas.addAction(stackmoffat)
+        # stackmeas.addAction(stackmoffat)
         stackmeas.addAction(stackbisect)
         stackmeas.addAction(stacksnr)
         stackmeas.addSeparator()
