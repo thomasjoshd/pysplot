@@ -27,6 +27,7 @@ import numpy as np
 # from astropy.table import Table
 
 import astropy.units as u
+import astropy.constants as const
 # from astropy.constants import c
 
 from astropy.modeling import models, fitting
@@ -855,8 +856,10 @@ class MainWin(QtWidgets.QMainWindow):
                 # clicks= np.array(clicks)
                 # print(self.clickx)
                 self.wavecenter=self.clickx*u.AA
+                # print(self.wavecenter)
                 self.wavelength_backup=self.wavelength
-                self.wavelength=(self.wavelength-self.wavecenter)/self.wavecenter*c.to('km/s')
+                # print(const.c.to('km/s'))
+                self.wavelength=(self.wavelength-self.wavecenter)/self.wavecenter*const.c.to('km/s')
                 # self.splot()
                 self.Spectra.updatespectrum()
                 self.plotSpectra()
@@ -887,15 +890,16 @@ class MainWin(QtWidgets.QMainWindow):
         except:
             print('Exception occred in pltregion')
 
-
-    def click_height(self):
-        try:
-            self.measuremode()
-            self.message.append("Click to set vertical height.")
-            self.outputupdate()
-            self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_height)
-        except:
-            print('Exception occred in click_height')
+    #
+    # def click_height(self):
+    #     #I think this was supposed to set a height for bisect line
+    #     try:
+    #         self.measuremode()
+    #         self.message.append("Click to set vertical height.")
+    #         self.outputupdate()
+    #         self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_height)
+    #     except:
+    #         print('Exception occred in click_height')
 
 
     def bisectheight(self):
@@ -1229,27 +1233,27 @@ class MainWin(QtWidgets.QMainWindow):
         except:
             print('Exception occured in MainWin.mouseclick_align')
 
-    def align_1(self):
-        """Align a spectrum to a feature.
-        Aligns off one click instead of gaussian, then alignes to reference wavelength."""
-        # ref_wave=5889.950
-        try:
-            if self.loadedalign == False:
-                if self.script == False:
-                    check=self.getalign()
-                elif self.script == True and self.stacknum == 0:
-                    check=self.getalign()
-            # print(lines)
-            #shift the spectrum and plot
-            if check == True:
-                shift=self.ref_wave-self.clickx
-                self.wavelength=self.wavelength+shift*self.wavelength[0]/self.wavelength[0].value
-                self.Spectra.updatespectrum()
-                if self.script == False:
-                    self.plotSpectra()
-                    self.reset()
-        except:
-            print('Exception occured in MainWin.align_1')
+    # def align_1(self):
+    #     """Align a spectrum to a feature.
+    #     Aligns off one click instead of gaussian, then alignes to reference wavelength."""
+    #     # ref_wave=5889.950
+    #     try:
+    #         if self.loadedalign == False:
+    #             if self.script == False:
+    #                 check=self.getalign()
+    #             elif self.script == True and self.stacknum == 0:
+    #                 check=self.getalign()
+    #         # print(lines)
+    #         #shift the spectrum and plot
+    #         if check == True:
+    #             shift=self.ref_wave-self.clickx
+    #             self.wavelength=self.wavelength+shift*self.wavelength[0]/self.wavelength[0].value
+    #             self.Spectra.updatespectrum()
+    #             if self.script == False:
+    #                 self.plotSpectra()
+    #                 self.reset()
+    #     except:
+    #         print('Exception occured in MainWin.align_1')
 
     def getalign(self):
         try:
@@ -1289,19 +1293,29 @@ class MainWin(QtWidgets.QMainWindow):
             y=1/yg-1/yg[0]
 
             g = fit_g(g_init, x, y)
-            if self.script==False:
-                self.ax.plot(x,y,drawstyle='steps-mid')
-                self.ax.plot(x, g(x), label='Gaussian')
+            # if self.script==False:
+            #     self.ax.plot(x,y,drawstyle='steps-mid')
+            #     self.ax.plot(x, g(x), label='Gaussian')
             lines.append(g.mean.value)
 
-            # print(lines)
+
             #shift the spectrum and plot
-            shift=self.ref_wave-lines[0] #sodium D1
-            self.wavelength=self.wavelength+shift*self.wavelength[0]/self.wavelength[0].value
+            shift=self.ref_wave-lines[0]
+            # print(type(lines[0]),type(self.ref_wave))
+            newwave=self.wavelength+shift*self.wavelength.unit
+            self.wavelength=newwave
             self.Spectra.updatespectrum()
+
+            # newwave=self.wavelength*slope+intercept*self.wavelength.unit
+
             if self.script == False:
-                self.plotSpectra()
+                # self.getlims()
+                # self.ax.clear()
+                # self.plotSpectra(spec=self.fname)
+                # self.replot()
                 self.reset()
+                self.region_clear()
+
         except:
             print('Exception occured in MainWin.align')
 
@@ -1454,6 +1468,13 @@ class MainWin(QtWidgets.QMainWindow):
         # Fit the data using a Gaussian, Voigt, or Lorentzian profile
         self.log.checklog()
         self.measuremode()
+        # if self.loadedregions == False :
+        #     self.regionload()
+        #     run = False
+        # else:
+        #     run = True
+        # while run == True:
+
         try:
             self.regionload()
             xg,yg=self.chopclick()
@@ -1462,10 +1483,13 @@ class MainWin(QtWidgets.QMainWindow):
             xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
             ygf=np.interp(xgf,xg,yg)#*u.flx
         except:
-            self.message.append("Need to select region first, with keyboard shortcut: x")
+            self.message.append("Need to select region first, click on left and right edges, then re-run the fit.")
             self.log.write(self.message[-1])
             self.outputupdate()
             self.canvas.draw()
+            # run=False
+
+
         try:
             if func=="gauss":
                 self.gauss(xg,yg,xgf,ygf,reflevel,invert)
@@ -1481,6 +1505,8 @@ class MainWin(QtWidgets.QMainWindow):
             self.canvas.draw()
         except:
             print('Exception occured in MainWin.fit')
+            # run=False
+        # run=False
 
 
 
@@ -2458,6 +2484,10 @@ class MainWin(QtWidgets.QMainWindow):
 
         if func == "norm":
             self.reset()
+            self.region_clear()
+        elif func == "align":
+            self.reset()
+            self.region_clear()
         self.message.append("Stack Operation Complete")
         self.outputupdate()
         self.script=False

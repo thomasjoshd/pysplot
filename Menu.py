@@ -145,11 +145,11 @@ class Menu(QtWidgets.QMainWindow):
         align.setShortcut('Ctrl+a')
         align.setStatusTip('Linear offset spectra to align features')
         align.triggered.connect(self.parent().align)
-
-        calign=QtWidgets.QAction("Align Click to a Wavelength", self.parent())
-        calign.setShortcut('2')
-        calign.setStatusTip('Linear offset spectra to align features')
-        calign.triggered.connect(self.parent().clickalign)
+        #
+        # calign=QtWidgets.QAction("Align Click to a Wavelength", self.parent())
+        # calign.setShortcut('2')
+        # calign.setStatusTip('Linear offset spectra to align features')
+        # calign.triggered.connect(self.parent().clickalign)
 
 
         crop=QtWidgets.QAction("Crop Spectra", self.parent())
@@ -252,10 +252,10 @@ class Menu(QtWidgets.QMainWindow):
         coords=QtWidgets.QAction("Print Coordinates of Click", self.parent())
         coords.setShortcut('space')
         coords.triggered.connect(self.parent().coord)
-
-        vert=QtWidgets.QAction("Set Height", self.parent())
-        vert.setShortcut('1')
-        vert.triggered.connect(self.parent().click_height)
+        #
+        # vert=QtWidgets.QAction("Set Height", self.parent())
+        # vert.setShortcut('1')
+        # vert.triggered.connect(self.parent().click_height)
 
 
 
@@ -411,7 +411,7 @@ class Menu(QtWidgets.QMainWindow):
         modmenu.addAction(gsmooth)
         modmenu.addSeparator()
         modmenu.addAction(align)
-        modmenu.addAction(calign)
+        # modmenu.addAction(calign)
         modmenu.addSeparator()
         modmenu.addAction(crop)
         modmenu.addSeparator()
@@ -444,7 +444,7 @@ class Menu(QtWidgets.QMainWindow):
         regionmenu.addAction(bisectload)
         regionmenu.addSeparator()
         regionmenu.addAction(coords)
-        regionmenu.addAction(vert)
+        # regionmenu.addAction(vert)
 
 
         # stackview = bar.addMenu('Stack')
