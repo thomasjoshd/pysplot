@@ -14,6 +14,10 @@ This program is very much still under development, feature requests are welcome,
 
 For the current development versions please use <a href="https://github.com/thomasjoshd/pysplot">github</a>.
 
+
+To get going, run the following command in the directory you installed to.
+pip install -r requirements.txt
+
 # Screenshots
 <img src="screenshot1.png" width="500">
 
