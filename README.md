@@ -14,8 +14,8 @@ This program is very much still under development, feature requests are welcome,
 
 For the current development versions please use <a href="https://github.com/thomasjoshd/pysplot">github</a>.
 
-For some stand-alone versions you can check out the dropbox link that I will leave archived for a while.
-Now hosting complied version via <a href="https://www.dropbox.com/sh/typny1czo7jrh8o/AACNHse9cJYSQ0-y5FOI963oa?dl=0">dropbox</a>.
+To get going, run:
+pip install -r requirements.txt
 
 # Tutorials
 
