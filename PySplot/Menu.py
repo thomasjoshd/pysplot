@@ -185,7 +185,7 @@ class Menu(QtWidgets.QMainWindow):
 
         eqwdefregion=QtWidgets.QAction("Define Equivalent Width Region", self.parent())
         eqwdefregion.setShortcut('d')
-        eqwdefregion.setStatusTip('Define a measurement region.')
+        eqwdefregion.setStatusTip('Define a measurement region for equivalent width that includes error.')
         eqwdefregion.triggered.connect(self.parent().eqw_err)
 
         regionclear=QtWidgets.QAction("Clear Regions", self.parent())

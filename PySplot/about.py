@@ -9,11 +9,11 @@ def about():
     t.setWindowTitle("About")
     L1="PySplot Version %s\n"%VERSION
     L2="Last Updated %s\n\n"%UPDATED
-    L3="Author: Dr. Joshua Thomas \n Clarkson University \n jthomas@clarkson.edu \n thomas.joshd@gmail.com\n\n"
+    L3="Author: Dr. Joshua Thomas \n Alfred University \n thomasjd@alfred.edu \n thomas.joshd@gmail.com\n\n"
     L4="This program was designed to emulate some basic IRAF splot functions for 1-D spectra.\n"
     L5="I made use of Astropy, Matplotlib, Scipy, and PyQT5, among others.\n"
-    L6="Check for updates at:  https://people.clarkson.edu/~jthomas/pysplot.html\n"
-    L7="Known issue: overwriting fits files does not work."
+    L6="Check for updates at:  https://github.com/thomasjoshd/pysplot\n"
+    L7=""
     t.setText(L1+L2+L3+L4+L5+L6+L7)
     # t.setStyleSheet("background-color: white")
     t.setStandardButtons(QMessageBox.Close)

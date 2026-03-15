@@ -23,7 +23,7 @@ import numpy as np
 
 
 # from astropy.wcs import WCS
-# from astropy.io import fits
+from astropy.io import fits
 # from astropy.table import Table
 
 import astropy.units as u
@@ -477,7 +477,25 @@ class MainWin(QtWidgets.QMainWindow):
     def animated(self):
         anim = animation.FuncAnimation(self.fig, self.plotSpectra(), init_func=self.plotSpectra(),frames=100,interval=20, blit=True)
 
-
+    def genheader(self):
+        try:
+            del self.header
+        except:
+            pass
+        try:
+            hdu=fits.PrimaryHDU()
+            self.header=self.database[self.fname]['header']=hdu.header
+            self.header['ORIGIN'] = "PySplot, Version %s"%str(VERSION)
+            self.header['CRVAL1'] =    self.wavelength[0].value
+            self.header['CD1_1'] =     self.wavelength[1].value-self.wavelength[0].value
+            self.header['CDELT1']=     self.wavelength[1].value-self.wavelength[0].value
+            self.header['CUNIT1']='%s'%self.wavelength.unit
+            self.header['CTYPE1']='WAVELENG'
+            self.header['CRPIX1'] = 1.
+            self.header['WAT0_001']='system=equispec'
+            self.header['WAT1_001']='wtype=linear label=waveleng Wavelength unit=angstroms'
+        except:
+            print("Error in MainWin.genheader")
 
     def grabSpectra(self,spec):
         """Grab spectra from database, separate from plotting"""
@@ -488,7 +506,10 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             self.header=self.database[self.fname]['header']
         except:
-            print('Exception occured getting header')
+            try:
+                self.genheader()
+            except:
+                print('Exception occured getting header MainWin.grabSpectra')
 
 
 
@@ -1848,7 +1869,8 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             xsort=np.sort(self.x)
             if len(xsort) != 4:
-                print('wrong number of points')
+                self.message.append("Run Equivalent Width Region first, D, and follow insturctions.")
+                self.outputupdate()
             xc1,yc1=self.chop(self.wavelength,self.flux,xsort[0],xsort[1])#continuum left
             xc2,yc2=self.chop(self.wavelength,self.flux,xsort[2],xsort[3])#continuum right
             x,y=self.chop(self.wavelength,self.flux,xsort[1],xsort[2]) # spectral feature
@@ -1874,15 +1896,17 @@ class MainWin(QtWidgets.QMainWindow):
             aa=[x1_ave.value,x2_ave.value]
             bb=[Fcont1_ave.value,Fcont2_ave.value]
 
-            # plt.figure()
-            # plt.plot(continuumx,continuumy,'s')
-            # plt.plot(aa,bb,'rx')
-
             #normalize spectrum
             linecoeff = np.polyfit(aa,bb,1)#linear fit
             # print('coeff',linecoeff)
             y_norm=y/np.polyval(linecoeff,x.value)
+
+            # plt.figure()
+            # plt.plot(continuumx,continuumy,'s')
+            # plt.plot(aa,bb,'rx')
             # plt.plot(x.value,np.polyval(linecoeff,x.value),'b-')
+            # plt.plot(x.value,y.value,'o')
+            # plt.plot(x.value,y_norm,'o')
             # plt.plot(continuumx,continuumy/np.polyval(linecoeff,continuumx.value),'r-')
             # plt.show()
 
@@ -1891,19 +1915,22 @@ class MainWin(QtWidgets.QMainWindow):
             # sigma2=np.std(yc2)
             # sigma=(sigma1+sigma2)/2.
             # snr=Fcont_ave/sigma #signal to noise
+
             s1=snr(yc1)
             s2=snr(yc2)
             s=(s1+s2)/2.
-
             dwidth=[]
-            for i,f in enumerate(y_norm):
-              if i ==0:
-                  pass
-              else:
-                  dwidth.append((1.-f.value/Fcont_ave)*np.abs(x[i].value-x[i-1].value))
+            for i,f in enumerate(y):
+                if i == 0:
+                    pass
+                else:
+                    fcont=np.polyval(linecoeff,x[i].value)
+                    val=f.value
+                    dwidth.append((1.-val/fcont)*np.abs(x[i].value-x[i-1].value))
             width=sum(dwidth)#equivalent width
             # print(self.wavelength.unit)
-            error=np.sqrt(1+Fcont_ave/Fline_ave)*(deltalambda-width)/s#*self.wavelength.unit
+
+            error=np.sqrt(1+(Fcont_ave)/(Fline_ave))*(deltalambda-width)/s#*self.wavelength.unit
             #error is calculated using equation 7 of "Remarks on statistical errors in equivalent widths"
             #K. Vollmann and T. Eversberg Astron. Nachr. AN 327, No. 9, 789-792,  DOI 10.1002/asna.2006
 
@@ -1915,7 +1942,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.log.write(self.message[-1])
             print(self.message[-1])
         except:
-            print('Exception occured in eqw_region')
+            print('Exception occured in MainWin.eqw_region')
 
     def eqw_err(self,message=None):
         """uses 4 clicks to define an equivalent width region.
@@ -1940,7 +1967,7 @@ class MainWin(QtWidgets.QMainWindow):
             # elif len(self.x) == 4:
             #     self.eqw_region() #now we can go measure
         except:
-            print('Exception occured in eqw_err')
+            print('Exception occured in MainWin.eqw_err')
 
     def plotcontinuum(self):
         self.ax.plot(self.x_norm,self.y_norm,'ks')
@@ -2097,14 +2124,13 @@ class MainWin(QtWidgets.QMainWindow):
                     addflux=newflux
                 else:
                     addflux=addflux+newflux
-
             self.database[outname]={}
             self.database[outname]['wavelength']=winterp*self.wavelength.unit
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
-            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
+
             self.stackrebuild()
             self.ax.clear()
             self.plotSpectra(spec=outname)
@@ -2168,7 +2194,6 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
-            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
@@ -2215,8 +2240,6 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
-            self.database[outname]['header']=self.header
-
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
@@ -2316,7 +2339,6 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=divflux*u.flx
             self.database[outname]['flux_orig']=divflux*u.flx
-            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
@@ -2357,7 +2379,6 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             self.database[outname]['flux']=divflux*u.flx
             self.database[outname]['flux_orig']=divflux*u.flx
-            self.database[outname]['header']=self.header
             self.Spectra.updatespectrum()
             self.stackrebuild()
             self.ax.clear()
