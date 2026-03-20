@@ -16,10 +16,12 @@ For the current development versions please use <a href="https://github.com/thom
 
 
 To get going, run the following command in the directory you installed to.
+pip install --upgrade pip
 pip install --upgrade -r requirements.txt
 
 or
 
+pip3 install --upgrade pip
 pip3 install --upgrade -r requirements.txt
 
 depending on your installation of python.
