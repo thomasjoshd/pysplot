@@ -25,7 +25,3 @@ Read the INSTALL file.
 # Tutorials
 
 More on the way!
-
-<a href="https://youtu.be/KVL70Wp-aKg">Bisect a feature</a>
-
-<a href="PySplot_Normalization_Tutorial.pdf">Normalization</a>
