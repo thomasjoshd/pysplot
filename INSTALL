@@ -1,13 +1,37 @@
 Installation Instructions for PySplot.
 
-To run PySplot you can use:
+Download the zip file and unzip.
+https://github.com/thomasjoshd/pysplot/archive/refs/heads/master.zip
 
-python PySplot.py
+Folder structure is something like:
+downloaded_location/pysplot-master/
+
+I created a folder called pysplotenv in the downloaded_location/, to hold my
+python environment.
+
+From downloaded_location/ Get a python3 environment going (if you wish).
+mkdir pysplotenv
+python3 -m venv pysplotenv
+source pysplotenv/bin/activate
+
+Then navigate to the pysplot-master/ folder.
+If you are on linux/mac you can run: bash pysplot-master/setup.sh
+
+Otherwise to get the necessary libraries,
+ run the following command in the directory you installed to.
+
+pip install --upgrade pip
+pip install --upgrade -r requirements.txt
 
 or
 
-python PySplot.py spectrum.fits
+pip3 install --upgrade pip
+pip3 install --upgrade -r requirements.txt
 
-or you can use the helper script
 
-Files can be dragged and dropoped into the window as well.
+Running PySplot from pysplot-master/ folder.
+If you are on linux/mac you can run: bash pysplot.sh
+
+Otherwise run PySplot from the commandline: python3 PySplot/PySplot.py
+
+Enjoy!
