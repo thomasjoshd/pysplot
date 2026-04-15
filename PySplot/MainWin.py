@@ -927,7 +927,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             stop=False
             # self.height, okPressed = QInputDialog.getDouble(self, "Float","Height To Measure Bisection: (Note, can use shortcut '1' (see region menu) to select a height before running task.", self.height, -10000, 10000, 30)
-            height, okPressed = QInputDialog.getText(self, "Set Bisect Height(s)","Height(s) To Measure Bisection comma separated.", QLineEdit.Normal, "%s"%str(self.height))
+            height, okPressed = QInputDialog.getText(self, "Set Bisect Height(s)","Height(s) To Measure Bisection comma separated.", QLineEdit.Normal)
             self.height=[]#float(height)
             hs=list(height.split(","))
             for h in hs:
@@ -956,7 +956,7 @@ class MainWin(QtWidgets.QMainWindow):
                         if self.script == False:
                             stop = self.bisectheight()
                             # print('no script')
-                        elif self.script == True and self.stacknum == 0:
+                        elif self.script == True and self.stacknum == 0: #stack mode
                             stop = self.bisectheight()
                             # print('script')
                     elif self.heightcheck == True:
