@@ -1042,7 +1042,7 @@ class MainWin(QtWidgets.QMainWindow):
                         self.log.write(self.message[-1])
                         stop=True
             except:
-                print('Exception occured in BisectLine')
+                print('Exception occured in MainWin.BisectLine')
         except:
             self.regionload()
 
@@ -1055,7 +1055,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.fig.canvas.mpl_disconnect(self.click)
             self.firstclick=False
         except:
-            print('Exception occred in mouseclick_height')
+            print('Exception occred in MainWin.mouseclick_height')
 
     def mouseclick_eqw(self,event):
         try:
@@ -1116,7 +1116,7 @@ class MainWin(QtWidgets.QMainWindow):
     def region(self):
         """uses two clicks to define a region for fitting or measuring."""
         try:
-            regionmessage="Define region first: Click on left and right edges of your region.  Then run your function."
+            regionmessage="Define region first (x): Click on left and right edges of your region.  Then run your function."
             self.message.append(regionmessage)
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_region)
@@ -1291,7 +1291,7 @@ class MainWin(QtWidgets.QMainWindow):
         """Align a spectrum to a feature. Based off sodium_shifted_norm_v3.py
         Fits a gaussian to a feature, then alignes to reference wavelength."""
         try:
-            #self.measuremode()
+            self.measuremode()
             self.regionload()
             xg,yg=self.chopclick()
             if self.loadedalign == False:
@@ -1338,6 +1338,9 @@ class MainWin(QtWidgets.QMainWindow):
                 self.region_clear()
 
         except:
+            regionmessage="Define region first (x): Click on left and right edges of your region.  Then run your function."
+            self.message.append(regionmessage)
+            self.outputupdate()
             print('Exception occured in MainWin.align')
 
     def linrescale(self):
@@ -1837,7 +1840,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             if self.firstclick == False:
                 if message == None or message == False:
-                    regionmessage="Define continuum region: Click on left and right edges of your regions. Press c again to stop."
+                    regionmessage="Define continuum region (c): Click on left and right edges of your regions. Press c again to stop."
                 else:
                     regionmessage=message
                 self.message.append(regionmessage)
@@ -2420,6 +2423,9 @@ class MainWin(QtWidgets.QMainWindow):
             self.ax.clear()
             self.plotSpectra(spec=self.fname)
             # self.plotRegions()
+            regionmessage="Linearize complete"
+            self.message.append(regionmessage)
+            self.outputupdate()
         except:
             print('Exception occured in linearize')
 
@@ -2482,6 +2488,8 @@ class MainWin(QtWidgets.QMainWindow):
                     self.BisectLine()
                 elif func == "align":
                     self.align()
+                elif func == "dop":
+                    self.Spectra.doppler()
                     # self.saveFits(extend='-align.fits')
                 elif func == "restoreall":
                     self.Spectra.restore()

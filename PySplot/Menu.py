@@ -318,6 +318,10 @@ class Menu(QtWidgets.QMainWindow):
         stackalign.setShortcut('Alt+a')
         stackalign.triggered.connect(partial(self.parent().stacker,func="align"))
 
+        stackdop=QtWidgets.QAction("Apply Doppler Shift",self.parent())
+        # dop.setShortcut('Shift+Ctrl+s')
+        stackdop.triggered.connect(partial(self.parent().stacker,func="dop"))
+
         stackrestore=QtWidgets.QAction("Reset to Original Spectra",self.parent())
         stackrestore.setShortcut('Alt+o')
         stackrestore.triggered.connect(partial(self.parent().stacker,func="restoreall"))
@@ -466,6 +470,7 @@ class Menu(QtWidgets.QMainWindow):
         stackmod.addAction(stacknorm)
         stackmod.addAction(stackalign)
         stackmod.addAction(stackcrop)
+        stackmod.addAction(stackdop)
         stackmod.addSeparator()
         stackmod.addAction(boxcarstack)
         stackmod.addAction(gaussstack)

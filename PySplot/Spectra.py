@@ -257,14 +257,28 @@ class Spectra(QtWidgets.QMainWindow):
             self.parent().database[self.parent().fname]['heliocentric']=self.parent().header['BSS_VHEL']
             self.parent().database[self.parent().fname]['wavelength']=wavelength
             # BESS keyword is plus not minus.
+            regionmessage="Doppler shfit applied."
+            self.parent().message.append(regionmessage)
+            self.parent().outputupdate()
+            self.parent().reset()
         except:
-            pass
+            regionmessage="Doppler shfit failed.  Missing header keyword BSS_VHEL"
+            self.parent().message.append(regionmessage)
+            self.parent().outputupdate()
         try:
             wavelength=self.parent().wavelength/(1.0-self.parent().header['VHELIO']/2.997925e05)
             self.parent().database[self.parent().fname]['heliocentric']=self.parent().header['VHELIO']
             self.parent().database[self.parent().fname]['wavelength']=wavelength
+            regionmessage="Doppler shfit applied."
+            self.parent().message.append(regionmessage)
+            self.parent().outputupdate()
+            self.parent().reset()
         except:
-            pass
+            regionmessage="Doppler shfit failed.  Missing header keyword VHELIO"
+            self.parent().message.append(regionmessage)
+            self.parent().outputupdate()
+
+
 
     def read_tabledata(self):
         try:
