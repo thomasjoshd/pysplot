@@ -108,6 +108,7 @@ class MainWin(QtWidgets.QMainWindow):
         self.boxwidth=False
         self.suffix=False
         self.color=True
+        self.gaussfit=()
 
     def dragEnterEvent(self, event):
         # print('drag-enter')
@@ -324,7 +325,6 @@ class MainWin(QtWidgets.QMainWindow):
             specforward=list(self.database)
             speclist=specforward.copy()
             speclist.reverse()
-
             for f in speclist: #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
                 b=QtWidgets.QPushButton("%s: %s"%(self.database[f]['stacknumber'],os.path.basename(f)))
                 # b=QtQidgets.QPushButton("<font color=%s> %s: %s</font>"%(colors.to_hex(self.database[self.fname]['plotcolor']),t,os.path.basename(s)))
@@ -1415,27 +1415,62 @@ class MainWin(QtWidgets.QMainWindow):
             g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[2]-xg[0])
             fit_g = fitting.LevMarLSQFitter()
             if invert == False:
-                g = fit_g(g_init, xg, yg)
+                self.g = fit_g(g_init, xg, yg)
                 if self.script == False:
-                    self.ax.plot(xgf, g(xgf), label='%s'%("Gaussian"))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
-                amp=g.amplitude*u.flx
+                    self.ax.plot(xgf, self.g(xgf), label='%s'%("Gaussian"))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
+                    self.gaussfit=(xgf,self.g(xgf))
+                self.amp=self.g.amplitude*u.flx
             elif invert == True:
-                g = fit_g(g_init, xg, reflevel-yg)
+                self.g = fit_g(g_init, xg, reflevel-yg)
                 if self.script == False:
-                    self.ax.plot(xgf, (reflevel-g(xgf)), label='%s'%("Gaussian"))
-                amp=reflevel*u.flx - g.amplitude*u.flx
+                    self.ax.plot(xgf, (reflevel-self.g(xgf)), label='%s'%("Gaussian"))
+                self.amp=reflevel*u.flx - self.g.amplitude*u.flx
             else:
                 pass
             # s=0.412*np.sqrt(g.fwhm.value/amp)  #not so sure about this equation, need to look it up in the WR140 paper.
             t=self.filedate()
-            self.message.append(t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(g.mean)+", FWHM, "+ \
-                             "{0.value:0.03f}, {0.unit:FITS}".format(g.fwhm) + \
-                             ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(amp) #+ \
+            self.message.append(t+"Gaussian Center, "+"{0.value:0.03f}, {0.unit:FITS}".format(self.g.mean)+", FWHM, "+ \
+                             "{0.value:0.03f}, {0.unit:FITS}".format(self.g.fwhm) + \
+                             ", Amplitude, "+"{0.value:0.03f}, {0.unit:FITS}".format(self.amp) #+ \
                              # ", Error, "+"{0.value:0.03f}, {0.unit:FITS}".format(s)
                              )
             self.log.write(self.message[-1])
         except:
             print("Exception in MainWin.gauss")
+
+    def subtract_fit(self):
+        '''Subtract current fit from current spectrum'''
+        # if outname in self.database:
+        #     outname=outname+str('1')
+        outname=self.fname+"GaussSub"
+        try:
+            wlist=[] #wavelength
+            flist=[] #flux
+            self.grabSpectra(self.fname)
+            wlist.append(self.wavelength.value)
+
+            wflat=[y for x in wlist for y in x]
+            winterp=np.arange(min(wflat),max(wflat),abs(wflat[1]-wflat[0]))
+            oldflux=np.interp(winterp,self.wavelength.value,self.flux.value)
+            avg=(self.gaussfit[1].value[0]+self.gaussfit[1].value[-1])/2.
+            newflux=np.interp(winterp,self.gaussfit[0].value,self.gaussfit[1].value,left=avg,right=avg)
+            addflux=(oldflux-newflux)+avg
+
+            self.database[outname]={}
+            self.database[outname]['wavelength']=winterp*self.wavelength.unit
+            self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
+            self.database[outname]['flux']=addflux*u.flx
+            self.database[outname]['flux_orig']=addflux*u.flx
+
+        except:
+            print('Exception occured in MainWin.subtract_fit')
+        self.Spectra.updatespectrum()
+        self.stackrebuild()
+        self.ax.clear()
+        self.plotSpectra(spec=outname)
+        self.reset()
+        self.singleplottoggle()
+
 
     def voigt(self,xg,yg,xgf,ygf,reflevel,invert):
         try:
@@ -2164,7 +2199,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.reset()
             self.singleplottoggle()
         except:
-            print('Exception occured in stackadd_const')
+            print('Exception occured in MainWin.stackadd_const')
 
     def stacksubtract(self,stack=False,outname='SubSpec'):
         '''Subtract spectra, subtract second spectrum from first spectrum.'''
@@ -2173,7 +2208,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             if stack == False:
                 stack=self.database
-                print('oops')
+                print('oops MainWin.stacksubtract')
             wlist=[]
             flist=[]
             for i,f in enumerate(stack):
@@ -2204,7 +2239,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.reset()
             self.singleplottoggle()
         except:
-            print('Exception occured in stacksubtract')
+            print('Exception occured in MainWin.stacksubtract')
 
     def stackcombine(self,stack=False,func='ave',outname='Combined'):
         '''Average spectra'''

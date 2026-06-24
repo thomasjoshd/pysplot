@@ -176,6 +176,10 @@ class Menu(QtWidgets.QMainWindow):
         # dop.setShortcut('Shift+Ctrl+s')
         dop.triggered.connect(self.parent().Spectra.doppler)
 
+        fitsub=QtWidgets.QAction("Subtract Gaussian Fit",self.parent())
+        fitsub.setShortcut('-')
+        fitsub.triggered.connect(self.parent().subtract_fit)
+
 
         # regionmenu = bar.addMenu('Measure')
         defregion=QtWidgets.QAction("Define Fit Region", self.parent())
@@ -426,6 +430,8 @@ class Menu(QtWidgets.QMainWindow):
         modmenu.addAction(dop)
         modmenu.addSeparator()
         modmenu.addAction(arith)
+        modmenu.addSeparator()
+        modmenu.addAction(fitsub)
 
 
         regionmenu.addAction(defregion)

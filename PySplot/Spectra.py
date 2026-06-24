@@ -14,7 +14,7 @@ import astropy.units as u
 from astropy.constants import c
 
 import numpy as np
-from specutils import Spectrum1D
+from specutils import Spectrum
 import csv
 
 class Spectra(QtWidgets.QMainWindow):
