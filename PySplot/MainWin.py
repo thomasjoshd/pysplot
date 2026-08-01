@@ -108,6 +108,7 @@ class MainWin(QtWidgets.QMainWindow):
         self.boxwidth=False
         self.suffix=False
         self.color=True
+        self.gaussfit=()
 
     def dragEnterEvent(self, event):
         # print('drag-enter')
@@ -324,7 +325,6 @@ class MainWin(QtWidgets.QMainWindow):
             specforward=list(self.database)
             speclist=specforward.copy()
             speclist.reverse()
-
             for f in speclist: #the syntax [::-1] reverses the list without modifying it so that  the button list is the same vertical order as the stack plotted spectra.
                 b=QtWidgets.QPushButton("%s: %s"%(self.database[f]['stacknumber'],os.path.basename(f)))
                 # b=QtQidgets.QPushButton("<font color=%s> %s: %s</font>"%(colors.to_hex(self.database[self.fname]['plotcolor']),t,os.path.basename(s)))
@@ -2207,7 +2207,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             if stack == False:
                 stack=self.database
-                print('oops')
+                print('oops MainWin.stacksubtract')
             wlist=[]
             flist=[]
             for i,f in enumerate(stack):

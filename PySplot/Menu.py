@@ -176,6 +176,10 @@ class Menu(QtWidgets.QMainWindow):
         # dop.setShortcut('Shift+Ctrl+s')
         dop.triggered.connect(self.parent().Spectra.doppler)
 
+        fitsub=QtWidgets.QAction("Subtract Gaussian Fit",self.parent())
+        fitsub.setShortcut('-')
+        fitsub.triggered.connect(self.parent().subtract_fit)
+
 
         fitsub=QtWidgets.QAction("Subtract Gaussian Fit",self.parent())
         fitsub.setShortcut('-')
