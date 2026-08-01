@@ -1289,7 +1289,7 @@ class MainWin(QtWidgets.QMainWindow):
 
     def align(self):
         """Align a spectrum to a feature. Based off sodium_shifted_norm_v3.py
-        Fits a gaussian to a feature, then alignes to reference wavelength."""
+        Fits a gaussian to a feature, then aligns to reference wavelength."""
         try:
             self.measuremode()
             self.regionload()
@@ -1300,25 +1300,35 @@ class MainWin(QtWidgets.QMainWindow):
                 elif self.script == True and self.stacknum == 0:
                     self.getalign()
 
-            min_peakind=find_nearest_index(xg.value,min(xg.value))
-            lines=[]
-            g_init = models.Gaussian1D(amplitude=1./min(yg), mean=xg[min_peakind], stddev=(xg[1]-xg[0])*4) #fits the peak
+            reflevel,invert=self.invert_check(xg,yg)
 
-            # print(1/min(yg),xg[min_peakind])
+            xgf=np.linspace(xg[0],xg[-1],len(xg)*3)
+            ygf=np.interp(xgf,xg,yg)#*u.flx
+
+            lines=[]
+
+            g_init = models.Gaussian1D(amplitude=np.max(yg), mean=np.mean(xg), stddev=xg[2]-xg[0])
             fit_g = fitting.LevMarLSQFitter()
-            # fit_g = fitting.SLSQPLSQFitter()
-            # fit_g = fitting.SimplexLSQFitter()
-            # fit_g = fitting.LinearLSQFitter()
+            if invert == False:
+                self.g = fit_g(g_init, xg, yg)
+                if self.script == False:
+                    self.ax.plot(xgf, self.g(xgf), label='%s'%("Gaussian"))#*np.polyval(linecoeff,xgf*xg[0]/xg[0].value)
+                    self.gaussfit=(xgf,self.g(xgf))
+                self.amp=self.g.amplitude*u.flx
+
+            elif invert == True:
+                self.g = fit_g(g_init, xg, reflevel-yg)
+                if self.script == False:
+                    self.ax.plot(xgf, (reflevel-self.g(xgf)), label='%s'%("Gaussian"))
+                self.amp=reflevel*u.flx - self.g.amplitude*u.flx
+            else:
+                pass
 
             x=xg
             y=1/yg-1/yg[0]
 
             g = fit_g(g_init, x, y)
-            # if self.script==False:
-            #     self.ax.plot(x,y,drawstyle='steps-mid')
-            #     self.ax.plot(x, g(x), label='Gaussian')
             lines.append(g.mean.value)
-
 
             #shift the spectrum and plot
             shift=self.ref_wave-lines[0]
@@ -1327,8 +1337,6 @@ class MainWin(QtWidgets.QMainWindow):
             self.wavelength=newwave
             self.Spectra.updatespectrum()
 
-            # newwave=self.wavelength*slope+intercept*self.wavelength.unit
-
             if self.script == False:
                 # self.getlims()
                 # self.ax.clear()
@@ -1336,7 +1344,6 @@ class MainWin(QtWidgets.QMainWindow):
                 # self.replot()
                 self.reset()
                 self.region_clear()
-
         except:
             regionmessage="Define region first (x): Click on left and right edges of your region.  Then run your function."
             self.message.append(regionmessage)
