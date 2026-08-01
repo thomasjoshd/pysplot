@@ -1471,7 +1471,6 @@ class MainWin(QtWidgets.QMainWindow):
         self.reset()
         self.singleplottoggle()
 
-
     def voigt(self,xg,yg,xgf,ygf,reflevel,invert):
         try:
             g_init = models.Voigt1D(x_0=np.mean(xg),amplitude_L=np.max(yg)-reflevel , fwhm_L=xg[1]-xg[0], fwhm_G=xg[1]-xg[0])
@@ -2199,7 +2198,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.reset()
             self.singleplottoggle()
         except:
-            print('Exception occured in MainWin.stackadd_const')
+            print('Exception MainWin.occured in stackadd_const')
 
     def stacksubtract(self,stack=False,outname='SubSpec'):
         '''Subtract spectra, subtract second spectrum from first spectrum.'''

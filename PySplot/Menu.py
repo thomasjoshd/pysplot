@@ -181,6 +181,10 @@ class Menu(QtWidgets.QMainWindow):
         fitsub.triggered.connect(self.parent().subtract_fit)
 
 
+        fitsub=QtWidgets.QAction("Subtract Gaussian Fit",self.parent())
+        fitsub.setShortcut('-')
+        fitsub.triggered.connect(self.parent().subtract_fit)
+
         # regionmenu = bar.addMenu('Measure')
         defregion=QtWidgets.QAction("Define Fit Region", self.parent())
         defregion.setShortcut('x')
