@@ -617,9 +617,11 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             if self.color == False:
                 self.color=True
+                self.stackrebuild()
                 self.plotSpectra()
             elif self.color == True:
                 self.color=False
+                self.stackrebuild()
                 self.getlims()
                 self.ax.clear()
                 if self.overplot == False and self.stackplot == False:
@@ -2484,7 +2486,11 @@ class MainWin(QtWidgets.QMainWindow):
         t=len(self.database)
         for i,row in enumerate(self.database):
             self.database[row]['stacknumber']=i+1
-            self.database[row]['plotcolor']=cm.gist_rainbow(i/t)
+
+            if self.color == False:
+                self.database[row]['plotcolor']=cm.gray(i/t)
+            else:
+                self.database[row]['plotcolor']=cm.gist_stern(i/t)
             self.stack.append(row)
 
     def stack_startmessage(self):
