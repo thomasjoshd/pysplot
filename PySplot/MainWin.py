@@ -1451,11 +1451,16 @@ class MainWin(QtWidgets.QMainWindow):
         '''Subtract current fit from current spectrum'''
         # if outname in self.database:
         #     outname=outname+str('1')
-        outname=self.fname+"GaussSub"
+        # if self.fname[-3::] == "sub":
+        #     outname=self.fname
+        # else:
+        outname=self.fname+"sub"
+
         try:
             wlist=[] #wavelength
             flist=[] #flux
             self.grabSpectra(self.fname)
+            print(self)
             wlist.append(self.wavelength.value)
 
             wflat=[y for x in wlist for y in x]
@@ -1471,14 +1476,15 @@ class MainWin(QtWidgets.QMainWindow):
             self.database[outname]['flux']=addflux*u.flx
             self.database[outname]['flux_orig']=addflux*u.flx
 
+            self.Spectra.updatespectrum()
+            self.stackrebuild()
+            self.ax.clear()
+            self.plotSpectra(spec=outname)
+            self.reset()
+            self.singleplottoggle()
         except:
             print('Exception occured in MainWin.subtract_fit')
-        self.Spectra.updatespectrum()
-        self.stackrebuild()
-        self.ax.clear()
-        self.plotSpectra(spec=outname)
-        self.reset()
-        self.singleplottoggle()
+
 
     def voigt(self,xg,yg,xgf,ygf,reflevel,invert):
         try:
@@ -2672,10 +2678,14 @@ class MainWin(QtWidgets.QMainWindow):
         except:
             print('Exception occured in delfromstack')
 
-    def removefromstack(self):
+    def removefromstack(self,spec=None):
         try:
-            self.stack.remove(self.fname)
-            self.database.pop(self.fname)
+            if spec == None:
+                self.stack.remove(self.fname)
+                self.database.pop(self.fname)
+            else:
+                self.stack.remove(spec)
+                self.database.pop(spec)
         except:
             self.message.append("Trouble Deleting from Stack.")
             self.outputupdate()
