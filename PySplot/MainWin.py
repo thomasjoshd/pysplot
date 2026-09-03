@@ -1470,18 +1470,20 @@ class MainWin(QtWidgets.QMainWindow):
             newflux=np.interp(winterp,self.gaussfit[0].value,self.gaussfit[1].value,left=avg,right=avg)
             addflux=(oldflux-newflux)+avg
 
-            self.database[outname]={}
-            self.database[outname]['wavelength']=winterp*self.wavelength.unit
-            self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
-            self.database[outname]['flux']=addflux*u.flx
-            self.database[outname]['flux_orig']=addflux*u.flx
+            self.flux=addflux*u.flx
+
+            # self.database[outname]={}
+            # self.database[outname]['wavelength']=winterp*self.wavelength.unit
+            # self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
+            # self.database[outname]['flux']=addflux*u.flx
+            # self.database[outname]['flux_orig']=addflux*u.flx
 
             self.Spectra.updatespectrum()
-            self.stackrebuild()
-            self.ax.clear()
-            self.plotSpectra(spec=outname)
-            self.reset()
-            self.singleplottoggle()
+            # self.stackrebuild()
+            # self.ax.clear()
+            self.plotSpectra(spec=self.fname)
+            # self.reset()
+            # self.singleplottoggle()
         except:
             print('Exception occured in MainWin.subtract_fit')
 
