@@ -343,7 +343,7 @@ class MainWin(QtWidgets.QMainWindow):
                 # b.setTextInteractionFlags(Qt.TextSelectableByMouse)
                 self.vbox.addWidget(b)
         except:
-            print('Exception occured in buildstack')
+            print('Exception occured in MainWin.buildstack')
 
     def create_output(self):
         self.outputbox=QtWidgets.QWidget()
@@ -561,7 +561,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.canvas.draw()
             self.stackpane()
         except:
-            print('Exception occured in plotSpectra')
+            print('Exception occured in MainWin.plotSpectra')
 
     def gridtoggle(self):
         """Toggles the plot grid on and off."""
@@ -575,7 +575,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.ax.grid(self.gridvalue)
             self.canvas.draw()
         except:
-            print('Exception occured in gridtoggle')
+            print('Exception occured in MainWin.gridtoggle')
 
     def titletoggle(self):
         """Toggles the plot title on and off."""
@@ -590,7 +590,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.titletog=False
             self.canvas.draw()
         except:
-            print('Exception occured in titletoggle')
+            print('Exception occured in MainWin.titletoggle')
 
     def legendtoggle(self):
         """Toggles the plot legend on and off."""
@@ -610,7 +610,7 @@ class MainWin(QtWidgets.QMainWindow):
             else:
                 pass
         except:
-            print('Exception occured in legendtoggle')
+            print('Exception occured in MainWin.legendtoggle')
 
     def colortoggle(self):
         """Toggles the plot colors on and off."""
@@ -631,7 +631,7 @@ class MainWin(QtWidgets.QMainWindow):
             else:
                 pass
         except:
-            print('Exception occured in colortoggle')
+            print('Exception occured in MainWin.colortoggle')
 
 
 
@@ -718,7 +718,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.xlim=self.ax.get_xlim()
             self.ylim=self.ax.get_ylim()
         except:
-            print('Exception at getlims')
+            print('Exception at MainWin.getlims')
 
 
     def stackreset(self):
@@ -754,7 +754,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append("%s"%self.database[self.fname].keys())
             self.outputupdate()
         except:
-            print('Exception at currentspectra')
+            print('Exception at MainWin.currentspectra')
 
     def rname(self):
         """renames the current spectrum"""
@@ -783,7 +783,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append("End Stack.")
             self.outputupdate()
         except:
-            print('Exception at stackprint')
+            print('Exception at MainWin.stackprint')
 
 
     def savestack(self,name="stack.list",stack=False):
@@ -806,14 +806,52 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append("Stack is empty.")
             self.outputupdate()
 
+    def coordclip(self):
+        """Replaced a point with the average of adjacent points."""
+        try:
+            self.measuremode()
+            self.click_1_text()
+            self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_coordsub)
+        except:
+            print('Exception occred in MainWin.coordclip')
+
+    def mouseclick_coordsub(self,event):
+        try:
+            self.clickx,self.clicky=event.xdata,event.ydata
+            self.coord_sub()
+            self.fig.canvas.mpl_disconnect(self.click)
+        except:
+            print('Exception occred in MainWin.mouseclick_coordsub')
+
+    def coord_sub(self):
+        try:
+            idx=find_nearest_index(self.wavelength,self.clickx)
+            self.x=self.wavelength[idx]
+            self.y=self.flux[idx]
+            self.flux[idx]=(self.flux[idx-1]+self.flux[idx+1])/2. #average
+
+
+            # self.message.append(t+"Mouse Position Wavelength,"+"{0.value:0.03f}, {0.unit:FITS}".format(self.x)+\
+            # ", Flux, "+"{0.value:0.03f}, {0.unit:FITS}".format(self.y))
+            # self.outputupdate()
+            # # print(self.message)
+            # self.log.write(self.message[-1])
+            # #self.log.write('\n')
+            self.Spectra.updatespectrum()
+            self.plotSpectra()
+
+
+        except:
+            print('Exception occured in MainWin.coord_sub')
 
     def click_1_text(self):
+        """Select a point"""
         try:
-            self.message.append("Click on a point to display the coordinates.")
+            self.message.append("Click on a point to select a coordinate.")
             self.outputupdate()
             self.region_clear()
         except:
-            print('Exception occred in click_1_text')
+            print('Exception occred in MainWin.click_1_text')
 
     def coord(self):
         try:
@@ -821,7 +859,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.click_1_text()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_coord)
         except:
-            print('Exception occred in coord')
+            print('Exception occred in MainWin.coord')
 
     def mouseclick_coord(self,event):
         try:
@@ -829,7 +867,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.coord_plot()
             self.fig.canvas.mpl_disconnect(self.click)
         except:
-            print('Exception occred in mouseclick_coord')
+            print('Exception occred in MainWin.mouseclick_coord')
 
     def coord_plot(self):
         """uses one click to print mouse position in the text box, and log.  Only
@@ -837,20 +875,20 @@ class MainWin(QtWidgets.QMainWindow):
         self.log.checklog()
         try:
             idx=find_nearest_index(self.wavelength,self.clickx)
-            xg=self.wavelength[idx]
-            yg=self.flux[idx]
-            self.ax.plot(xg,yg,'ks')
+            self.x=self.wavelength[idx]
+            self.y=self.flux[idx]
+            self.ax.plot(self.x,self.y,'ks')
             t=self.filedate()
             #this doesn't work correctly.  Check that its using data or mouse position.
-            self.message.append(t+"Mouse Position Wavelength,"+"{0.value:0.03f}, {0.unit:FITS}".format(xg)+\
-            ", Flux, "+"{0.value:0.03f}, {0.unit:FITS}".format(yg))
+            self.message.append(t+"Mouse Position Wavelength,"+"{0.value:0.03f}, {0.unit:FITS}".format(self.x)+\
+            ", Flux, "+"{0.value:0.03f}, {0.unit:FITS}".format(self.y))
             self.outputupdate()
             # print(self.message)
             self.log.write(self.message[-1])
             #self.log.write('\n')
             self.canvas.draw()
         except:
-            print('Exception occred in coord_plot')
+            print('Exception occred in MainWin.coord_plot')
 
     def velocity(self):
         try:
@@ -858,7 +896,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_vel)
         except:
-            print('Exception occred in  velocity')
+            print('Exception occred in MainWin.velocity')
 
     def mouseclick_vel(self,event):
         try:
@@ -866,7 +904,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.vel_plot()
             self.fig.canvas.mpl_disconnect(self.click)
         except:
-            print('Exception occred in mouseclick_vel')
+            print('Exception occred in MainWin.mouseclick_vel')
 
     def vel_plot(self):
         """uses one click to convert wavelength to velocity and vice versa"""
@@ -899,7 +937,7 @@ class MainWin(QtWidgets.QMainWindow):
                 # self.canvas.draw()
                 # self.stackpane()
         except:
-            print('Exception occred in vel_plot')
+            print('Exception occred in MainWin.vel_plot')
 
 
 
@@ -911,7 +949,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.ax.plot(x,y,sym,color=c)
             self.canvas.draw()
         except:
-            print('Exception occred in pltregion')
+            print('Exception occred in MainWin.pltregion')
 
     #
     # def click_height(self):
@@ -940,7 +978,7 @@ class MainWin(QtWidgets.QMainWindow):
                 stop=True #if cancelled don't try to run the rest of the bisect.
             return stop
         except:
-            print('Exception occred in bisectheight')
+            print('Exception occred in MainWin.bisectheight')
             return True
 
     def BisectLine(self):
@@ -1095,7 +1133,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.ax.set_ylim(self.ylim)
                 self.canvas.draw()
         except:
-            print('Exception occred in mouseclick_eqw')
+            print('Exception occred in MainWin.mouseclick_eqw')
 
 
     def mouseclick_region(self,event):
@@ -1112,7 +1150,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.loadedregions=True
                 self.firstclick=False
         except:
-            print('Exception occred in mouseclick_region')
+            print('Exception occred in MainWin.mouseclick_region')
 
 
     def region(self):
@@ -1123,7 +1161,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.outputupdate()
             self.click=self.fig.canvas.mpl_connect('button_press_event', self.mouseclick_region)
         except:
-            print('Exception occred in region')
+            print('Exception occred in MainWin.region')
 
     def chopclick(self):
         return self.chop(self.wavelength,self.flux,self.x[0],self.x[1])
@@ -1154,7 +1192,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.outputupdate()
             self.log.write(self.message[-1])
         except:
-            print('Exception occred in signal2noise')
+            print('Exception occred in MainWin.signal2noise')
 
     def eqw(self):
         """Measure equivalent width between two points IRAF style"""
@@ -1451,11 +1489,16 @@ class MainWin(QtWidgets.QMainWindow):
         '''Subtract current fit from current spectrum'''
         # if outname in self.database:
         #     outname=outname+str('1')
-        outname=self.fname+"GaussSub"
+        # if self.fname[-3::] == "sub":
+        #     outname=self.fname
+        # else:
+        outname=self.fname+"sub"
+
         try:
             wlist=[] #wavelength
             flist=[] #flux
             self.grabSpectra(self.fname)
+            print(self)
             wlist.append(self.wavelength.value)
 
             wflat=[y for x in wlist for y in x]
@@ -1465,20 +1508,23 @@ class MainWin(QtWidgets.QMainWindow):
             newflux=np.interp(winterp,self.gaussfit[0].value,self.gaussfit[1].value,left=avg,right=avg)
             addflux=(oldflux-newflux)+avg
 
-            self.database[outname]={}
-            self.database[outname]['wavelength']=winterp*self.wavelength.unit
-            self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
-            self.database[outname]['flux']=addflux*u.flx
-            self.database[outname]['flux_orig']=addflux*u.flx
+            self.flux=addflux*u.flx
 
+            # self.database[outname]={}
+            # self.database[outname]['wavelength']=winterp*self.wavelength.unit
+            # self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
+            # self.database[outname]['flux']=addflux*u.flx
+            # self.database[outname]['flux_orig']=addflux*u.flx
+
+            self.Spectra.updatespectrum()
+            # self.stackrebuild()
+            # self.ax.clear()
+            self.plotSpectra(spec=self.fname)
+            # self.reset()
+            # self.singleplottoggle()
         except:
             print('Exception occured in MainWin.subtract_fit')
-        self.Spectra.updatespectrum()
-        self.stackrebuild()
-        self.ax.clear()
-        self.plotSpectra(spec=outname)
-        self.reset()
-        self.singleplottoggle()
+
 
     def voigt(self,xg,yg,xgf,ygf,reflevel,invert):
         try:
@@ -1864,7 +1910,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.x.append(event.xdata)
             self.y.append(event.ydata)
         except:
-            print('Exception occured in mouseclick_cont')
+            print('Exception occured in MainWin.mouseclick_cont')
 
     def continuum(self,message=None):
         """uses two clicks to define a region for fitting or measuring."""
@@ -1878,7 +1924,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.x.pop()
                 self.y.pop()
         except:
-            print('Exception occured in continuum')
+            print('Exception occured in MainWin.continuum')
 
         try:
             if self.firstclick == False:
@@ -1895,7 +1941,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.firstclick=False
                 self.continuum_region()
         except:
-            print('Exception occured in continuum')
+            print('Exception occured in MainWin.continuum')
 
     def continuum_region(self):
         for i,value in enumerate(self.x):
@@ -2097,7 +2143,7 @@ class MainWin(QtWidgets.QMainWindow):
                 else:
                     self.goodfit=True
         except:
-            print('Exception occured in normalize')
+            print('Exception occured in MainWin.normalize')
 
     def saveImage(self):
         try:
@@ -2113,7 +2159,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.plotSpectra(spec=self.fname,savename=self.fname[:-5]+self.suffix)
 
         except:
-            print('Exception occured in savepng')
+            print('Exception occured in MainWin.savepng')
 
     def savefits(self):
         try:
@@ -2207,7 +2253,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.reset()
             self.singleplottoggle()
         except:
-            print('Exception MainWin.occured in stackadd_const')
+            print('Exception MainWin.occured in MainWin.stackadd_const')
 
     def stacksubtract(self,stack=False,outname='SubSpec'):
         '''Subtract spectra, subtract second spectrum from first spectrum.'''
@@ -2294,7 +2340,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.singleplottoggle()
             # self.plotRegions()
         except:
-            print('Exception occured in stackcombine')
+            print('Exception occured in MainWin.stackcombine')
 
 
     def divide_const(self,spec=False,divisor=0,outname='DividedSpec'):
@@ -2324,7 +2370,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.reset()
                 self.singleplottoggle()
         except:
-            print('Exception occured in divide_const')
+            print('Exception occured in MainWin.divide_const')
 
     def mult_const(self,spec=False,multiplier=0,outname='MultSpec'):
         """divde a spectrum by a constant"""
@@ -2353,7 +2399,7 @@ class MainWin(QtWidgets.QMainWindow):
                 self.reset()
                 self.singleplottoggle()
         except:
-            print('Exception occured in mult_const')
+            print('Exception occured in MainWin.mult_const')
 
     def dividespec(self,stack=False,outname='Divided'):
         '''Divide one spectrum by another. First in stack is numerator.'''
@@ -2392,7 +2438,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.reset()
             self.singleplottoggle()
         except:
-            print('Exception occured in dividespec')
+            print('Exception occured in MainWin.dividespec')
 
 
     def multiplyspec(self,stack=False,outname='Multiplied'):
@@ -2432,7 +2478,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.reset()
             self.singleplottoggle()
         except:
-            print('Exception occured in multiplyspec')
+            print('Exception occured in MainWin.multiplyspec')
 
 
     def linearize(self):
@@ -2470,7 +2516,7 @@ class MainWin(QtWidgets.QMainWindow):
             self.message.append(regionmessage)
             self.outputupdate()
         except:
-            print('Exception occured in linearize')
+            print('Exception occured in MainWin.linearize')
 
 
     def abort_stack(self):
@@ -2643,7 +2689,7 @@ class MainWin(QtWidgets.QMainWindow):
         try:
             self.openSpectra()
         except:
-            print('Exception occured in stackwindowopenspectra')
+            print('Exception occured in MainWin.stackwindowopenspectra')
 
     def delfromstack(self):
         try:
@@ -2670,12 +2716,16 @@ class MainWin(QtWidgets.QMainWindow):
                 self.canvas.draw()
                 self.stackpane()
         except:
-            print('Exception occured in delfromstack')
+            print('Exception occured in MainWin.delfromstack')
 
-    def removefromstack(self):
+    def removefromstack(self,spec=None):
         try:
-            self.stack.remove(self.fname)
-            self.database.pop(self.fname)
+            if spec == None:
+                self.stack.remove(self.fname)
+                self.database.pop(self.fname)
+            else:
+                self.stack.remove(spec)
+                self.database.pop(spec)
         except:
             self.message.append("Trouble Deleting from Stack.")
             self.outputupdate()

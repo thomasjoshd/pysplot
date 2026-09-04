@@ -260,6 +260,10 @@ class Menu(QtWidgets.QMainWindow):
         coords=QtWidgets.QAction("Print Coordinates of Click", self.parent())
         coords.setShortcut('space')
         coords.triggered.connect(self.parent().coord)
+
+        coordclip=QtWidgets.QAction("Replace a value with the average of adjacent points", self.parent())
+        coordclip.setShortcut('b')
+        coordclip.triggered.connect(self.parent().coordclip)
         #
         # vert=QtWidgets.QAction("Set Height", self.parent())
         # vert.setShortcut('1')
@@ -436,6 +440,7 @@ class Menu(QtWidgets.QMainWindow):
         modmenu.addAction(arith)
         modmenu.addSeparator()
         modmenu.addAction(fitsub)
+        modmenu.addAction(coordclip)
 
 
         regionmenu.addAction(defregion)
