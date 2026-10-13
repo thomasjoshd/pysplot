@@ -399,69 +399,85 @@ class MainWin(QtWidgets.QMainWindow):
         self.overplot=False
 
     def plotting_guts(self,sym='-',basename=''):
-        if self.plotstyle == 'step':
-            if self.stackplot == True:
-                self.spec,=self.ax.step(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+        try:
+            wlen=np.shape(self.wavelength)[0]
+            flen=np.shape(self.flux)[0]
+            if wlen == flen:
+                pass
             else:
-                if self.color == True:
-                    self.spec,=self.ax.step(self.wavelength,self.flux,color=self.database[self.fname]['plotcolor'],\
-                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                print("Attempting to plot arrays with different dimensions.")
+        except:
+            print("Error in MainWin.plotting_guts.arracheck")
+        try:
+            if self.plotstyle == 'step':
+                if self.stackplot == True:
+                    self.spec,=self.ax.step(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),\
+                        sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
                 else:
-                    spec,=self.ax.step(self.wavelength,self.flux,color="black",\
-                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
-        else:
-            if self.stackplot == True:
-                self.spec,=self.ax.plot(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                    if self.color == True:
+                        self.spec,=self.ax.step(self.wavelength,self.flux.value,color=self.database[self.fname]['plotcolor'],\
+                        label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                    else:
+                        spec,=self.ax.step(self.wavelength,self.flux.value,color="black",\
+                        label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
             else:
-                if self.color == True:
-                    self.spec,=self.ax.plot(self.wavelength,self.flux,sym,color=self.database[self.fname]['plotcolor'],\
-                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                if self.stackplot == True:
+                    self.spec,=self.ax.plot(self.wavelength,self.flux.value+(self.database[self.fname]['stacknumber']-1),\
+                        sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
                 else:
-                    self.spec,=self.ax.plot(self.wavelength,self.flux,sym,color="black",\
-                    label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
-
-
-
+                    if self.color == True:
+                        self.spec,=self.ax.plot(self.wavelength,self.flux.value,sym,color=self.database[self.fname]['plotcolor'],\
+                        label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                    else:
+                        self.spec,=self.ax.plot(self.wavelength,self.flux.value,sym,color="black",\
+                        label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+        except:
+            print("Error in MainWin.plotting_guts")
 
     def splot(self):
         """Sets up the plot"""
         # print(self.plotstyle)
-        basename=os.path.basename(self.fname)
-        #Normal plot mode
-        if self.plotstyle=='point':
-            sym='.-'
-        elif self.plotstyle=='line':
-            sym='-'
-        else:
-            sym='-'
-        if self.overplot == False and self.stackplot == False:
-            self.ax.clear()
-            self.titlevalue="%s:%s"%(self.database[self.fname]['stacknumber'],basename)
-            self.plotting_guts(sym,basename)
-            self.ax.set_ylabel("Flux")
+        try:
+            basename=os.path.basename(self.fname)
+            #Normal plot mode
+            if self.plotstyle=='point':
+                sym='.-'
+            elif self.plotstyle=='line':
+                sym='-'
+            else:
+                sym='-'
 
-        #Overplot Mode
-        elif self.overplot == True and self.stackplot == False:
-            self.titlevalue="Overplot Mode, Display For Qualitative Comparison Only"
-            self.plotting_guts(sym,basename)
-            self.ax.set_ylabel("Flux")
+            if self.overplot == False and self.stackplot == False:
+                self.ax.clear()
+                self.titlevalue="%s:%s"%(self.database[self.fname]['stacknumber'],basename)
+                self.plotting_guts(sym,basename)
+                self.ax.set_ylabel("Flux")
 
-        #Stackplot Mode
-        elif self.overplot == False and self.stackplot == True:
-            # if self.plotstyle == 'step':
-            #     spec,=self.ax.step(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,\
-            #     color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
-            # else:
-            self.titlevalue="Stack Plot Mode, Display For Qualitative Comparison Only"
-            self.plotting_guts(sym,basename)
-            # spec,=self.ax.plot(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
-            self.ax.set_ylabel("Stack Plot Flux")
+            #Overplot Mode
+            elif self.overplot == True and self.stackplot == False:
+                self.titlevalue="Overplot Mode, Display For Qualitative Comparison Only"
+                self.plotting_guts(sym,basename)
+                self.ax.set_ylabel("Flux")
 
-        if self.titletog == True:
-            self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
-            self.ax.set_title(self.titlevalue)#,fontsize=10)
-        else:
-            pass
+            #Stackplot Mode
+            elif self.overplot == False and self.stackplot == True:
+                # if self.plotstyle == 'step':
+                #     spec,=self.ax.step(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,\
+                #     color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                # else:
+                self.titlevalue="Stack Plot Mode, Display For Qualitative Comparison Only"
+                self.plotting_guts(sym,basename)
+                # spec,=self.ax.plot(self.wavelength,self.flux+(self.database[self.fname]['stacknumber']-1)*u.flx,sym,color=self.database[self.fname]['plotcolor'],label="%s: %s"%(self.database[self.fname]['stacknumber'],basename))
+                self.ax.set_ylabel("Stack Plot Flux")
+            else:
+                print("No Plot Mode Set")
+            if self.titletog == True:
+                self.fig.suptitle("PySplot - Date: "+'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now(),fontsize=10))
+                self.ax.set_title(self.titlevalue)#,fontsize=10)
+            else:
+                print("No titles")
+        except:
+            print("Error in MainWin.splot")
 
 
     def xaxislabel(self):
@@ -538,7 +554,6 @@ class MainWin(QtWidgets.QMainWindow):
                 else:
                     pass
             self.plotRegions()
-
 
             if self.xlim[0] != 0:
                 #setting previously set limits
@@ -1498,7 +1513,7 @@ class MainWin(QtWidgets.QMainWindow):
             wlist=[] #wavelength
             flist=[] #flux
             self.grabSpectra(self.fname)
-            print(self)
+
             wlist.append(self.wavelength.value)
 
             wflat=[y for x in wlist for y in x]
@@ -1507,21 +1522,21 @@ class MainWin(QtWidgets.QMainWindow):
             avg=(self.gaussfit[1].value[0]+self.gaussfit[1].value[-1])/2.
             newflux=np.interp(winterp,self.gaussfit[0].value,self.gaussfit[1].value,left=avg,right=avg)
             addflux=(oldflux-newflux)+avg
-
+            # print(np.shape(addflux))
+            # print(np.shape(oldflux))
+            # print(np.shape(self.flux))
             self.flux=addflux*u.flx
-
+            self.wavelength=winterp*self.wavelength.unit
             # self.database[outname]={}
             # self.database[outname]['wavelength']=winterp*self.wavelength.unit
             # self.database[outname]['wavelength_orig']=winterp*self.wavelength.unit
             # self.database[outname]['flux']=addflux*u.flx
-            # self.database[outname]['flux_orig']=addflux*u.flx
-
+            # self.database[outname]['flux_orig']=self.flux
             self.Spectra.updatespectrum()
-            # self.stackrebuild()
-            # self.ax.clear()
+            self.stackrebuild()
+            self.ax.clear()
             self.plotSpectra(spec=self.fname)
-            # self.reset()
-            # self.singleplottoggle()
+
         except:
             print('Exception occured in MainWin.subtract_fit')
 
